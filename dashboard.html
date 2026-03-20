@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okan Admin | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+<body class="dashboard-body">
+    
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Okan<span style="color: #00e676;">.Admin</span></h2>
+        </div>
+        <ul class="nav-links">
+            <li class="active"><span class="material-symbols-outlined">dashboard</span> Início</li>
+            <li><span class="material-symbols-outlined">storefront</span> Academias</li>
+            <li><span class="material-symbols-outlined">sports_martial_arts</span> Professores</li>
+            <li><span class="material-symbols-outlined">fitness_center</span> Templates</li>
+        </ul>
+        <div class="sidebar-footer">
+            <button id="logout-btn" class="btn-outline">
+                <span class="material-symbols-outlined">logout</span> Sair
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <h1 id="page-title">Visão Geral</h1>
+            <div class="user-info">
+                <span class="material-symbols-outlined">account_circle</span>
+                <span id="admin-name">Carregando...</span>
+            </div>
+        </header>
+
+        <section class="content-area">
+            <div class="cards-grid">
+                <div class="stat-card">
+                    <h3>Academias Parceiras</h3>
+                    <h2 id="total-gyms">--</h2>
+                </div>
+                <div class="stat-card">
+                    <h3>Professores Premium</h3>
+                    <h2 id="total-profs">--</h2>
+                </div>
+                <div class="stat-card">
+                    <h3>Total de Alunos</h3>
+                    <h2 id="total-students">--</h2>
+                </div>
+            </div>
+
+            <div class="panel-box" style="margin-top: 24px;">
+                <h2>Bem-vindo ao Centro de Comando</h2>
+                <p style="color: #aaa; margin-top: 8px;">Selecione uma opção no menu lateral para começar a gerir a plataforma Okan.</p>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="dashboard.js"></script>
+</body>
+</html>

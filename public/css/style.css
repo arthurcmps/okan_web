@@ -1,0 +1,236 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #121212;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.login-box {
+    background-color: #1e1e1e;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.login-box h1 {
+    color: #00e676; /* O verde primário do Okan (ajuste se for outra cor) */
+    margin-bottom: 8px;
+}
+
+.login-box p {
+    color: #aaaaaa;
+    margin-bottom: 32px;
+    font-size: 14px;
+}
+
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #cccccc;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #333333;
+    background-color: #2c2c2c;
+    color: white;
+    outline: none;
+    transition: border 0.3s;
+}
+
+.input-group input:focus {
+    border-color: #00e676;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background-color: #00e676;
+    color: #000000;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #00c853;
+}
+
+.error {
+    color: #ff5252;
+    margin-top: 16px;
+    font-size: 14px;
+    min-height: 20px;
+}
+
+/* --- ESTILOS DO DASHBOARD --- */
+.dashboard-body {
+    display: flex;
+    justify-content: flex-start;
+    align-items: stretch;
+    background-color: #0d0d0d;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    background-color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #333;
+}
+
+.sidebar-header {
+    padding: 24px;
+    border-bottom: 1px solid #333;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 16px 0;
+    flex-grow: 1;
+}
+
+.nav-links li {
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-links li:hover, .nav-links li.active {
+    background-color: rgba(0, 230, 118, 0.1);
+    color: #00e676;
+    border-right: 4px solid #00e676;
+}
+
+.sidebar-footer {
+    padding: 24px;
+    border-top: 1px solid #333;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #ff5252;
+    color: #ff5252;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-outline:hover {
+    background: #ff5252;
+    color: white;
+}
+
+/* Área Principal */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 40px;
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #333;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #aaa;
+}
+
+.content-area {
+    padding: 40px;
+}
+
+/* Cards de Estatísticas */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.stat-card {
+    background-color: #1e1e1e;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #333;
+}
+
+.stat-card h3 {
+    color: #aaa;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.stat-card h2 {
+    color: white;
+    font-size: 32px;
+    margin-top: 12px;
+}
+
+.panel-box {
+    background-color: #1e1e1e;
+    padding: 32px;
+    border-radius: 12px;
+    border: 1px solid #333;
+}
+
+/* Estilos do Botão Google */
+.divider {
+    text-align: center;
+    margin: 20px 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.btn-google {
+    background-color: #ffffff;
+    color: #444444;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-google:hover {
+    background-color: #f1f1f1;
+}
