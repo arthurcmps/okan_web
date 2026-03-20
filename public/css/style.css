@@ -234,3 +234,55 @@ button:hover {
 .btn-google:hover {
     background-color: #f1f1f1;
 }
+
+/* --- COMPONENTES GERAIS --- */
+.btn-primary {
+    background-color: #00e676;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #00c853;
+}
+
+/* --- TABELAS DE DADOS --- */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #fff;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 16px;
+    border-bottom: 2px solid #333;
+    color: #aaa;
+    font-weight: 500;
+}
+
+.data-table td {
+    padding: 16px;
+    border-bottom: 1px solid #222;
+}
+
+.data-table tr:hover td {
+    background-color: #2a2a2a;
+}
+
+/* Ações da Tabela */
+.action-btn {
+    background: transparent;
+    border: none;
+    color: #00e676;
+    cursor: pointer;
+    margin-right: 8px;
+}
+.action-btn:hover {
+    color: #ffffff;
+}
