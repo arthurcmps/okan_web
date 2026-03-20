@@ -37,7 +37,7 @@ googleLoginBtn.addEventListener('click', async () => {
         const user = result.user;
         
         // Se der certo, envia para o Dashboard (o dashboard.js vai barrar se não for super_admin)
-        window.location.href = "dashboard.html";
+        window.location.href = "../dashboard.html";
         
     } catch (error) {
         console.error("Erro no login com Google:", error);
