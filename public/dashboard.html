@@ -14,10 +14,10 @@
             <h2>Okan<span style="color: #00e676;">.Admin</span></h2>
         </div>
         <ul class="nav-links">
-            <li class="active"><span class="material-symbols-outlined">dashboard</span> Início</li>
-            <li><span class="material-symbols-outlined">storefront</span> Academias</li>
-            <li><span class="material-symbols-outlined">sports_martial_arts</span> Professores</li>
-            <li><span class="material-symbols-outlined">fitness_center</span> Templates</li>
+            <li class="active" data-target="inicio"><span class="material-symbols-outlined">dashboard</span> Início</li>
+            <li data-target="academias"><span class="material-symbols-outlined">storefront</span> Academias</li>
+            <li data-target="professores"><span class="material-symbols-outlined">sports_martial_arts</span> Professores</li>
+            <li data-target="templates"><span class="material-symbols-outlined">fitness_center</span> Templates</li>
         </ul>
         <div class="sidebar-footer">
             <button id="logout-btn" class="btn-outline">
@@ -85,6 +85,30 @@
         </section>
     </main>
 
-    <script type="module" src="js/dashboard.js"></script>
+    <div id="modal-nova-academia" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cadastrar Academia</h2>
+                <span class="close-btn" id="fechar-modal">&times;</span>
+            </div>
+            <form id="form-nova-academia">
+                <div class="input-group">
+                    <label>Nome da Academia</label>
+                    <input type="text" id="acad-nome" required placeholder="Ex: SmartFit Centro">
+                </div>
+                <div class="input-group">
+                    <label>E-mail do Gestor (Login da Academia)</label>
+                    <input type="email" id="acad-email" required placeholder="gestor@smartfit.com">
+                </div>
+                <div class="input-group">
+                    <label>Número de Licenças (Para Professores)</label>
+                    <input type="number" id="acad-licencas" required min="1" placeholder="Ex: 15">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 16px;">Salvar Academia no Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="script/dashboard.js"></script>
 </body>
 </html>
