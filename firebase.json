@@ -15,5 +15,14 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "okan_web",
+        "supportEmail": "arthur.felipe1993@gmail.com"
+      }
+    }
   }
 }

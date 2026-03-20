@@ -64,7 +64,7 @@ loginForm.addEventListener('submit', async (e) => {
 
         // 2. O SUCESSO: Redirecionar para o painel (vamos criar o painel no próximo passo)
         alert(`Bem-vindo! Login efetuado com o UID: ${user.uid}`);
-        window.location.href = "dashboard.html";
+        window.location.href = "../dashboard.html";
 
     } catch (error) {
         console.error("Erro no login:", error);
