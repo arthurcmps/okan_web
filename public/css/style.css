@@ -33,8 +33,10 @@ button { font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer
 .btn-primary:hover { background-color: #00c853; }
 .btn-outline { background: transparent; border: 1px solid #ff5252; color: #ff5252; padding: 12px 24px; }
 .btn-outline:hover { background: #ff5252; color: white; }
+.btn-danger { background-color: #ff5252; color: white; border: none; padding: 12px 24px; }
+.btn-danger:hover { background-color: #ff1744; }
 
-/* Formulários (Novos) */
+/* Formulários */
 .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
 .input-group { text-align: left; margin-bottom: 16px; flex: 1; }
 .form-row .input-group { margin-bottom: 0; }
@@ -58,7 +60,7 @@ button { font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer
 .modal-header h2 { color: #00e676; }
 .close-btn { color: #aaa; font-size: 28px; cursor: pointer; }
 
-/* TELA DE DETALHES (Novo - Resolve o layout ruim) */
+/* TELA DE DETALHES */
 .details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
 .detail-item label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 .detail-item p { font-size: 16px; color: white; font-weight: 500; }
