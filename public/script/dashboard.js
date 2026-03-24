@@ -22,9 +22,8 @@ const adminNameEl = document.getElementById('admin-name');
 // =========================================================
 const modalExclusao = document.getElementById('modal-confirmar-exclusao');
 const textoConfirmacao = document.getElementById('texto-confirmacao-exclusao');
-let acaoExclusaoPendente = null; // Guarda a função que deve ser executada
+let acaoExclusaoPendente = null;
 
-// Função mágica que recebe o texto e o que deve fazer se o user disser SIM
 function confirmarExclusao(mensagemHtml, acaoConfirmada) {
     textoConfirmacao.innerHTML = mensagemHtml;
     acaoExclusaoPendente = acaoConfirmada;
@@ -42,7 +41,7 @@ document.getElementById('btn-confirmar-exclusao').addEventListener('click', asyn
     btnConf.textContent = "A processar..."; btnConf.disabled = true;
 
     try {
-        await acaoExclusaoPendente(); // Executa a função guardada
+        await acaoExclusaoPendente(); 
         modalExclusao.style.display = 'none';
     } catch (error) { 
         console.error("Erro na exclusão:", error); 
@@ -52,7 +51,6 @@ document.getElementById('btn-confirmar-exclusao').addEventListener('click', asyn
         acaoExclusaoPendente = null;
     }
 });
-
 
 // =========================================================
 // 2. SEGURANÇA E NAVEGAÇÃO
@@ -106,7 +104,6 @@ document.getElementById('btn-voltar-academias').addEventListener('click', () => 
     document.querySelector('[data-target="academias"]').click(); 
 });
 
-
 // =========================================================
 // 3. MÁSCARAS
 // =========================================================
@@ -144,9 +141,8 @@ document.getElementById('acad-cep').addEventListener('input', async (e) => {
     }
 });
 
-
 // =========================================================
-// 4. ACADEMIAS E PROFESSORES (Usando o Novo Modal de Exclusão)
+// 4. ACADEMIAS E PROFESSORES
 // =========================================================
 let modoEdicaoAcademia = false;
 let idAcademiaEditando = null;
@@ -236,7 +232,6 @@ async function carregarAcademias() {
                 modalNovaAcademia.style.display = 'flex';
             });
             
-            // USO DO NOVO MOTOR DE EXCLUSÃO
             tr.querySelector('.btn-delete').addEventListener('click', () => {
                 confirmarExclusao(
                     `Tem a certeza que deseja excluir a academia <strong>"${acad.nome}"</strong>?<br>Esta ação não pode ser desfeita e os acessos serão removidos.`,
@@ -269,7 +264,6 @@ function abrirDetalhesAcademia(acad, id) {
     carregarProfessoresDaAcademia(); 
 }
 
-// Professores da Academia
 const modalNovoProfessor = document.getElementById('modal-novo-professor');
 document.getElementById('btn-adicionar-professor').addEventListener('click', () => {
     if (academiaAtualLicencasUsadas >= academiaAtualLicencasTotais) { alert("Limite de licenças atingido!"); return; }
@@ -310,7 +304,6 @@ async function carregarProfessoresDaAcademia() {
                 <td><span style="color: ${statusColor}; border: 1px solid ${statusColor}; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${prof.status}</span></td>
                 <td><button class="action-btn btn-delete-prof" style="color: #ff5252;" title="Remover Licença"><span class="material-symbols-outlined" style="font-size: 18px;">person_remove</span></button></td>
             `;
-            // USO DO NOVO MOTOR DE EXCLUSÃO PARA PROFESSORES
             tr.querySelector('.btn-delete-prof').addEventListener('click', async () => {
                 confirmarExclusao(
                     `Remover o acesso Premium de <strong>${prof.email}</strong> e libertar a licença para a academia?`,
@@ -328,7 +321,6 @@ async function carregarProfessoresDaAcademia() {
     } catch (error) { console.error(error); }
 }
 
-// Professores Global
 async function carregarTodosProfessores() {
     const tbody = document.getElementById('table-todos-professores-body');
     try {
@@ -358,15 +350,13 @@ async function carregarTodosProfessores() {
     } catch (error) { console.error(error); }
 }
 
-
 // =========================================================
-// 5. LOJA OFICIAL E TEMPLATES (Adicionar, Editar e Excluir)
+// 5. LOJA OFICIAL E TEMPLATES
 // =========================================================
 let idTemplateEditando = null;
 let exerciciosDoTemplateAtual = []; 
 const tagsDisponiveis = ['Hipertrofia', 'Emagrecimento', 'Condicionamento', 'Iniciante', 'Intermediário', 'Avançado', 'Casa', 'Academia', 'Sem Impacto'];
 
-// Gerar as Tags no HTML do Modal
 const tagsContainer = document.getElementById('tpl-tags-container');
 tagsDisponiveis.forEach(tag => {
     const label = document.createElement('label');
@@ -376,7 +366,6 @@ tagsDisponiveis.forEach(tag => {
     tagsContainer.appendChild(label);
 });
 
-// ABRIR MODAL PARA NOVO TEMPLATE
 const modalTemplate = document.getElementById('modal-template-builder');
 document.getElementById('btn-novo-template').addEventListener('click', () => {
     idTemplateEditando = null;
@@ -393,7 +382,6 @@ document.getElementById('btn-novo-template').addEventListener('click', () => {
 
 document.getElementById('fechar-modal-template').addEventListener('click', () => modalTemplate.style.display = 'none');
 
-// SALVAR OU ATUALIZAR TEMPLATE
 document.getElementById('btn-salvar-template').addEventListener('click', async () => {
     const nome = document.getElementById('tpl-nome').value.trim();
     if(!nome || exerciciosDoTemplateAtual.length === 0) { alert("Preencha o nome e adicione pelo menos 1 exercício."); return; }
@@ -415,10 +403,8 @@ document.getElementById('btn-salvar-template').addEventListener('click', async (
 
     try {
         if (idTemplateEditando) {
-            // Se estiver a editar, faz um update
             await updateDoc(doc(db, "workout_templates", idTemplateEditando), dataMap);
         } else {
-            // Se for novo, faz um add e coloca o carimbo de tempo
             dataMap.timestamp = serverTimestamp();
             await addDoc(collection(db, "workout_templates"), dataMap);
         }
@@ -428,7 +414,6 @@ document.getElementById('btn-salvar-template').addEventListener('click', async (
     finally { btnSalvar.textContent = "Salvar na Loja"; btnSalvar.disabled = false; }
 });
 
-// LISTAR TEMPLATES NA TABELA
 async function carregarTemplatesLoja() {
     const tbody = document.getElementById('table-templates-body');
     try {
@@ -454,7 +439,6 @@ async function carregarTemplatesLoja() {
                 </td>
             `;
 
-            // ABRIR EDIÇÃO
             tr.querySelector('.btn-edit-tpl').addEventListener('click', () => {
                 idTemplateEditando = id;
                 exerciciosDoTemplateAtual = [...(tpl.exercicios || [])];
@@ -474,10 +458,9 @@ async function carregarTemplatesLoja() {
                 modalTemplate.style.display = 'flex';
             });
 
-            // USO DO NOVO MOTOR DE EXCLUSÃO PARA TEMPLATES
             tr.querySelector('.btn-delete-tpl').addEventListener('click', () => {
                 confirmarExclusao(
-                    `Remover o treino <strong>"${tpl.nome}"</strong> da loja oficial?<br>Os alunos que já compraram este treino continuarão a ter acesso.`,
+                    `Remover o treino <strong>"${tpl.nome}"</strong> da loja oficial?<br>Os professores que já compraram este treino continuarão a ter acesso.`,
                     async () => {
                         await deleteDoc(doc(db, "workout_templates", id));
                         carregarTemplatesLoja();
@@ -552,10 +535,60 @@ window.removerExercicioDoTemplate = function(index) {
     atualizarListaExerciciosUI();
 }
 
+// ---------------------------------------------------------
+// CRIAR NOVO EXERCÍCIO GLOBAL NO BANCO DE DADOS
+// ---------------------------------------------------------
+const modalNovoExercicio = document.getElementById('modal-novo-exercicio-global');
+const formNovoExercicio = document.getElementById('form-novo-exercicio-global');
+
+document.getElementById('btn-novo-exercicio-global').addEventListener('click', () => {
+    modalCatalogo.style.display = 'none'; 
+    formNovoExercicio.reset();
+    modalNovoExercicio.style.display = 'flex';
+});
+
+document.getElementById('fechar-modal-novo-exercicio').addEventListener('click', () => {
+    modalNovoExercicio.style.display = 'none';
+    modalCatalogo.style.display = 'flex'; 
+});
+
+formNovoExercicio.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btnSalvar = document.getElementById('btn-salvar-novo-exercicio');
+    btnSalvar.textContent = "A salvar..."; 
+    btnSalvar.disabled = true;
+
+    const nome = document.getElementById('novo-ex-nome').value.trim();
+    const grupo = document.getElementById('novo-ex-grupo').value.trim();
+    const videoUrl = document.getElementById('novo-ex-video').value.trim();
+
+    try {
+        await addDoc(collection(db, "exercises"), {
+            nome: nome,
+            grupo: grupo,
+            videoUrl: videoUrl,
+            criadoEm: serverTimestamp()
+        });
+
+        modalNovoExercicio.style.display = 'none';
+        
+        // Reabre o catálogo automaticamente (vai fazer nova pesquisa)
+        document.getElementById('btn-abrir-catalogo').click();
+        
+    } catch (error) {
+        console.error("Erro ao salvar exercício:", error);
+        alert("Ocorreu um erro ao salvar o exercício.");
+    } finally {
+        btnSalvar.textContent = "Salvar no Catálogo"; 
+        btnSalvar.disabled = false;
+    }
+});
+
 // Fechar modais genéricos clicando fora
 window.addEventListener('click', (e) => {
     if (e.target === modalExclusao) modalExclusao.style.display = 'none';
     if (e.target === document.getElementById('modal-novo-professor')) document.getElementById('modal-novo-professor').style.display = 'none';
     if (e.target === modalTemplate) modalTemplate.style.display = 'none';
     if (e.target === modalCatalogo) modalCatalogo.style.display = 'none';
+    if (e.target === modalNovoExercicio) modalNovoExercicio.style.display = 'none';
 });

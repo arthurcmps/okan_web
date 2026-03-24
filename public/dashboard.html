@@ -14,10 +14,10 @@
             <h2>Okan<span style="color: #00e676;">.Admin</span></h2>
         </div>
         <ul class="nav-links">
-            <li class="active" data-target="inicio"><span class="material-symbols-outlined">dashboard</span> Início</li>
-            <li data-target="academias"><span class="material-symbols-outlined">storefront</span> Academias</li>
-            <li data-target="professores"><span class="material-symbols-outlined">sports_martial_arts</span> Professores</li>
-            <li data-target="templates"><span class="material-symbols-outlined">fitness_center</span> Loja (Templates)</li>
+            <li class="active" data-target="inicio"><span class="material-symbols-outlined"></span> Início</li>
+            <li data-target="academias"><span class="material-symbols-outlined"></span> Academias</li>
+            <li data-target="professores"><span class="material-symbols-outlined"></span> Professores</li>
+            <li data-target="templates"><span class="material-symbols-outlined"></span> Loja (Templates)</li>
         </ul>
         <div class="sidebar-footer">
             <button id="logout-btn" class="btn-outline">
@@ -228,6 +228,11 @@
                 <h2 style="color: #ff5252; font-size: 20px;">Catálogo de Exercícios</h2>
                 <span class="close-btn" id="fechar-modal-catalogo">&times;</span>
             </div>
+            
+            <button type="button" id="btn-novo-exercicio-global" class="btn-primary" style="width: 100%; margin-bottom: 16px; background-color: #2c2c2c; color: #ff5252;">
+                + Criar Novo Exercício Global
+            </button>
+            
             <div id="lista-catalogo" style="max-height: 300px; overflow-y: auto;">
                 </div>
         </div>
@@ -241,6 +246,30 @@
                 <div class="input-group"><label>Repetições</label><input type="text" id="config-reps" value="12"></div>
             </div>
             <button type="button" id="btn-confirmar-exercicio" class="btn-primary" style="width: 100%; background-color: #ff5252; color: white;">Adicionar ao Treino</button>
+        </div>
+    </div>
+
+    <div id="modal-novo-exercicio-global" class="modal-overlay" style="display: none; z-index: 1003;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 style="color: #ff5252; font-size: 20px;">Novo Exercício</h2>
+                <span class="close-btn" id="fechar-modal-novo-exercicio">&times;</span>
+            </div>
+            <form id="form-novo-exercicio-global">
+                <div class="input-group">
+                    <label>Nome do Exercício</label>
+                    <input type="text" id="novo-ex-nome" required placeholder="Ex: Supino Reto">
+                </div>
+                <div class="input-group">
+                    <label>Grupo Muscular</label>
+                    <input type="text" id="novo-ex-grupo" required placeholder="Ex: Peito">
+                </div>
+                <div class="input-group">
+                    <label>Link do Vídeo (YouTube)</label>
+                    <input type="url" id="novo-ex-video" placeholder="https://youtube.com/...">
+                </div>
+                <button type="submit" id="btn-salvar-novo-exercicio" class="btn-primary" style="width: 100%; margin-top: 16px; background-color: #ff5252; color: white;">Salvar no Catálogo</button>
+            </form>
         </div>
     </div>
 
