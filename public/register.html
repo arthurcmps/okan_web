@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okan Admin | Cadastro de Academia</title>
+    <link rel="stylesheet" href="css/style.css?v=1.0">
+</head>
+<body style="height: auto; min-height: 100vh; padding: 40px 0;">
+    <div class="login-container" style="max-width: 600px; margin: 0 auto;">
+        <div class="login-box" style="text-align: left;">
+            <h1 style="text-align: center;">Nova Academia</h1>
+            <p style="text-align: center;">Preencha os dados da unidade para ativar o seu período de teste.</p>
+            
+            <form id="register-form">
+                <h3 style="color: #00e676; margin-bottom: 16px; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px;">1. Dados da Academia</h3>
+                
+                <div class="input-group">
+                    <label>Nome da Academia</label>
+                    <input type="text" id="reg-gym-name" required placeholder="Ex: SmartFit Centro">
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>CNPJ</label>
+                        <input type="text" id="reg-cnpj" required maxlength="18" placeholder="00.000.000/0000-00">
+                    </div>
+                    <div class="input-group">
+                        <label>Telefone da Unidade</label>
+                        <input type="tel" id="reg-telefone" required maxlength="15" placeholder="(00) 00000-0000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group" style="flex: 0.4;">
+                        <label>CEP</label>
+                        <input type="text" id="reg-cep" required maxlength="9" placeholder="00000-000">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>Rua/Av. e Número</label>
+                        <input type="text" id="reg-endereco" required placeholder="Sua rua, 123">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>Bairro</label>
+                        <input type="text" id="reg-bairro" required placeholder="Bairro">
+                    </div>
+                    <div class="input-group" style="flex: 0.3;">
+                        <label>UF</label>
+                        <input type="text" id="reg-uf" required maxlength="2" style="text-transform: uppercase;" placeholder="RJ">
+                    </div>
+                </div>
+
+                <h3 style="color: #00e676; margin-top: 32px; margin-bottom: 16px; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px;">2. Dados de Acesso (Gestor)</h3>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>Seu Nome (Gestor)</label>
+                        <input type="text" id="reg-admin-name" required placeholder="Ex: João Silva">
+                    </div>
+                    <div class="input-group">
+                        <label>E-mail Corporativo</label>
+                        <input type="email" id="reg-email" required placeholder="contato@smartfit.com">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>Criar Senha</label>
+                        <input type="password" id="reg-password" required placeholder="Mínimo 6 letras">
+                    </div>
+                    <div class="input-group">
+                        <label>Confirmar Senha</label>
+                        <input type="password" id="reg-confirm-password" required placeholder="••••••••">
+                    </div>
+                </div>
+                
+                <button type="submit" id="register-btn" class="btn-primary" style="width: 100%; margin-top: 24px; padding: 16px; font-size: 16px;">Criar Conta e Acessar Painel</button>
+            </form>
+            <p id="error-message" class="error" style="text-align: center;"></p>
+
+            <div style="margin-top: 32px; font-size: 14px; color: #aaa; text-align: center;">
+                Já tem conta? <a href="index.html" style="color: #00e676; text-decoration: none; font-weight: bold;">Faça Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script/register.js?v=1.0"></script>
+</body>
+</html>

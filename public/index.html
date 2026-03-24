@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Okan Admin | Login</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=1.0">
 </head>
 <body>
     <div class="login-container">
@@ -25,15 +25,22 @@
                 
                 <button type="submit" id="login-btn">Entrar no Painel</button>
                 
-                <div class="divider">ou</div>
+            </form>
+            <p id="error-message" class="error"></p>
+            <div class="divider">ou</div>
                 <button type="button" id="google-login-btn" class="btn-google">
+                    <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google" style="width: 20px;">
                     Entrar com o Google
                 </button>
             </form>
             <p id="error-message" class="error"></p>
+
+            <div style="margin-top: 24px; font-size: 14px; color: #aaa;">
+                É dono de uma academia? <a href="register.html" style="color: #00e676; text-decoration: none; font-weight: bold;">Cadastre-se aqui</a>
+            </div>
+
         </div>
     </div>
-
-    <script type="module" src="script/script.js"></script>
+    <script type="module" src="script/script.js?v=1.0"></script>
 </body>
 </html>

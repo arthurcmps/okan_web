@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Okan Admin | Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=1.0">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 </head>
 <body class="dashboard-body">
@@ -14,10 +14,12 @@
             <h2>Okan<span style="color: #00e676;">.Admin</span></h2>
         </div>
         <ul class="nav-links">
-            <li class="active" data-target="inicio"><span class="material-symbols-outlined"></span> Início</li>
-            <li data-target="academias"><span class="material-symbols-outlined"></span> Academias</li>
-            <li data-target="professores"><span class="material-symbols-outlined"></span> Professores</li>
-            <li data-target="templates"><span class="material-symbols-outlined"></span> Loja (Templates)</li>
+            <li id="menu-inicio" class="active" data-target="inicio"><span class="material-symbols-outlined">dashboard</span> Início</li>
+            <li id="menu-academias" data-target="academias"><span class="material-symbols-outlined">storefront</span> Academias</li>
+            <li id="menu-professores" data-target="professores"><span class="material-symbols-outlined">sports_martial_arts</span> Professores</li>
+            <li id="menu-templates" data-target="templates"><span class="material-symbols-outlined">fitness_center</span> Loja (Templates)</li>
+            
+            <li id="menu-minha-academia" data-target="detalhes-academia" style="display: none;"><span class="material-symbols-outlined">home_work</span> Minha Academia</li>
         </ul>
         <div class="sidebar-footer">
             <button id="logout-btn" class="btn-outline">
@@ -273,6 +275,6 @@
         </div>
     </div>
 
-    <script type="module" src="script/dashboard.js"></script>
+    <script type="module" src="script/dashboard.js?v=1.0"></script>
 </body>
 </html>

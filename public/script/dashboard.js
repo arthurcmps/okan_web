@@ -16,6 +16,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const adminNameEl = document.getElementById('admin-name');
+let userRole = null; // Guarda o papel do utilizador logado
 
 // =========================================================
 // 1. SISTEMA DE EXCLUSÃO UNIVERSAL (Modal Bonito)
@@ -53,20 +54,33 @@ document.getElementById('btn-confirmar-exclusao').addEventListener('click', asyn
 });
 
 // =========================================================
-// 2. SEGURANÇA E NAVEGAÇÃO
+// 2. SEGURANÇA E NAVEGAÇÃO (Com Role-Based Access)
 // =========================================================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         try {
             const docRef = doc(db, "users", user.uid);
             const docSnap = await getDoc(docRef);
-            if (docSnap.exists() && (docSnap.data().role === 'super_admin' || docSnap.data().role === 'gym_admin')) {
+            
+            if (docSnap.exists()) {
+                userRole = docSnap.data().role;
                 adminNameEl.textContent = docSnap.data().name || user.email;
-                carregarAcademias();
-                carregarTodosProfessores();
-                carregarTemplatesLoja(); 
+
+                if (userRole === 'super_admin') {
+                    // SUPER ADMIN: Carrega o painel completo
+                    carregarAcademias();
+                    carregarTodosProfessores();
+                    carregarTemplatesLoja(); 
+                } else if (userRole === 'gym_admin') {
+                    // GYM ADMIN: Configura o ambiente restrito e isolado da academia
+                    configurarPainelAcademia(user.email);
+                } else {
+                    alert("Acesso Negado. Este perfil não tem permissões de gestão.");
+                    await signOut(auth);
+                    window.location.href = "index.html";
+                }
             } else {
-                alert("Acesso Negado.");
+                alert("Utilizador não encontrado no banco de dados.");
                 await signOut(auth);
                 window.location.href = "index.html";
             }
@@ -89,6 +103,9 @@ const sectionMap = {
 
 menuLinks.forEach(link => {
     link.addEventListener('click', () => {
+        // Bloqueio de Segurança: Impede que a academia clique em menus escondidos
+        if (userRole === 'gym_admin' && link.id !== 'menu-minha-academia') return;
+
         menuLinks.forEach(item => item.classList.remove('active'));
         link.classList.add('active');
         Object.values(sectionMap).forEach(section => { if(section) section.style.display = 'none'; });
@@ -103,6 +120,40 @@ menuLinks.forEach(link => {
 document.getElementById('btn-voltar-academias').addEventListener('click', () => {
     document.querySelector('[data-target="academias"]').click(); 
 });
+
+// A "Mágica" do Painel da Academia
+async function configurarPainelAcademia(emailGestor) {
+    // 1. Esconde todos os menus globais do Super Admin
+    document.getElementById('menu-inicio').style.display = 'none';
+    document.getElementById('menu-academias').style.display = 'none';
+    document.getElementById('menu-professores').style.display = 'none';
+    document.getElementById('menu-templates').style.display = 'none';
+
+    // 2. Mostra e ativa o menu "Minha Academia"
+    const menuMinha = document.getElementById('menu-minha-academia');
+    menuMinha.style.display = 'flex';
+    menuMinha.click(); // Força o clique no menu para abrir a aba correspondente
+
+    try {
+        // 3. Busca a academia que pertence a este e-mail logado
+        const q = query(collection(db, "academias"), where("emailGestor", "==", emailGestor));
+        const snapshot = await getDocs(q);
+
+        if (!snapshot.empty) {
+            const docAcademia = snapshot.docs[0];
+            abrirDetalhesAcademia(docAcademia.data(), docAcademia.id);
+        } else {
+            // Se o e-mail não estiver em nenhuma academia (Erro de sistema/cadastro)
+            Object.values(sectionMap).forEach(s => { if(s) s.style.display = 'none'; });
+            const sec = document.getElementById('section-detalhes-academia');
+            sec.innerHTML = `<div style="padding: 60px; text-align: center;"><span class="material-symbols-outlined" style="font-size: 64px; color: #ff5252; margin-bottom: 16px;">error</span><h2 style="color: #fff;">Academia Não Encontrada</h2><p style="color: #aaa; margin-top: 16px;">O seu e-mail não está vinculado a nenhuma academia no momento.<br>Contate o suporte Okan.</p></div>`;
+            sec.style.display = 'block';
+            document.getElementById('page-title').textContent = "Erro de Vínculo";
+        }
+    } catch (error) {
+        console.error("Erro ao buscar academia do gestor:", error);
+    }
+}
 
 // =========================================================
 // 3. MÁSCARAS
@@ -247,6 +298,9 @@ async function carregarAcademias() {
 }
 
 function abrirDetalhesAcademia(acad, id) {
+    // Esconde o botão Voltar se o usuário logado for a própria academia (para ele não voltar pra lista global)
+    document.getElementById('btn-voltar-academias').style.display = (userRole === 'super_admin') ? 'inline-flex' : 'none';
+
     academiaAtualId = id; academiaAtualLicencasTotais = acad.licencasTotais || 0; academiaAtualLicencasUsadas = acad.licencasUsadas || 0;
     document.getElementById('detalhe-nome-titulo').textContent = acad.nome;
     document.getElementById('detalhe-cnpj').textContent = acad.cnpj || '--';
@@ -283,7 +337,8 @@ document.getElementById('form-novo-professor').addEventListener('submit', async 
         academiaAtualLicencasUsadas++;
         document.getElementById('detalhe-licencas').textContent = `${academiaAtualLicencasUsadas} de ${academiaAtualLicencasTotais} em uso`;
         modalNovoProfessor.style.display = 'none';
-        carregarProfessoresDaAcademia(); carregarAcademias(); 
+        carregarProfessoresDaAcademia(); 
+        if (userRole === 'super_admin') carregarAcademias(); 
     } catch (error) { console.error(error); alert("Erro ao adicionar.");
     } finally { btnSubmit.textContent = "Conceder Licença"; btnSubmit.disabled = false; }
 });
@@ -312,7 +367,8 @@ async function carregarProfessoresDaAcademia() {
                         await updateDoc(doc(db, "academias", academiaAtualId), { licencasUsadas: increment(-1) });
                         academiaAtualLicencasUsadas--;
                         document.getElementById('detalhe-licencas').textContent = `${academiaAtualLicencasUsadas} de ${academiaAtualLicencasTotais} em uso`;
-                        carregarProfessoresDaAcademia(); carregarAcademias();
+                        carregarProfessoresDaAcademia(); 
+                        if (userRole === 'super_admin') carregarAcademias();
                     }
                 );
             });
