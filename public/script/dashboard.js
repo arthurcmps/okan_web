@@ -66,24 +66,33 @@ onAuthStateChanged(auth, async (user) => {
                 userRole = docSnap.data().role;
                 adminNameEl.textContent = docSnap.data().name || user.email;
 
+                // Informa o módulo de academias sobre quem está logado
+                initAcademiasContext(userRole, user.email, confirmarExclusao);
+
                 if (userRole === 'super_admin') {
-                    // SUPER ADMIN: Carrega o painel completo
                     carregarAcademias();
                     carregarTodosProfessores();
-                    carregarTemplatesLoja(); 
+                    carregarTemplatesLoja();
+                    carregarFeedbacksBeta();
+                    
+                    // Remove a cortina de carregamento com fade out
+                    document.getElementById('loader-overlay').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 300);
+
                 } else if (userRole === 'gym_admin') {
-                    // GYM ADMIN: Configura o ambiente restrito e isolado da academia
-                    configurarPainelAcademia(user.email);
+                    document.getElementById('menu-feedbacks').style.display = 'none';
+                    
+                    // O await garante que ele esconda os menus do Super Admin ANTES da cortina subir
+                    await configurarPainelAcademia(user.email);
+                    
+                    // Remove a cortina de carregamento com fade out
+                    document.getElementById('loader-overlay').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 300);
+
                 } else {
-                    alert("Acesso Negado. Este perfil não tem permissões de gestão.");
-                    await signOut(auth);
-                    window.location.href = "index.html";
+                    alert("Acesso Negado."); await signOut(auth); window.location.href = "index.html";
                 }
-            } else {
-                alert("Utilizador não encontrado no banco de dados.");
-                await signOut(auth);
-                window.location.href = "index.html";
-            }
+            } else { await signOut(auth); window.location.href = "index.html"; }
         } catch (error) { console.error(error); }
     } else { window.location.href = "index.html"; }
 });
