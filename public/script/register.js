@@ -53,7 +53,6 @@ document.getElementById('reg-cep').addEventListener('input', async (e) => {
     }
 });
 
-
 // =========================================================
 // 2. LÓGICA DE REGISTRO
 // =========================================================
@@ -64,13 +63,11 @@ const errorMessage = document.getElementById('error-message');
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Captura Dados de Acesso
     const adminName = document.getElementById('reg-admin-name').value.trim();
     const email = document.getElementById('reg-email').value.trim().toLowerCase();
     const password = document.getElementById('reg-password').value;
     const confirmPassword = document.getElementById('reg-confirm-password').value;
 
-    // Captura Dados da Academia
     const gymName = document.getElementById('reg-gym-name').value.trim();
     const cnpj = document.getElementById('reg-cnpj').value;
     const telefone = document.getElementById('reg-telefone').value;
@@ -94,11 +91,9 @@ registerForm.addEventListener('submit', async (e) => {
     errorMessage.textContent = "";
 
     try {
-        // 1. Cria a conta de Autenticação no Firebase
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // 2. Salva as regras de acesso do Gestor (Role: gym_admin)
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             name: adminName,
@@ -107,7 +102,7 @@ registerForm.addEventListener('submit', async (e) => {
             createdAt: serverTimestamp()
         });
 
-        // 3. Salva a Academia com todos os dados preenchidos
+        // 3. Salva a Academia SEM LICENÇAS GRATUITAS (Plano travado)
         await addDoc(collection(db, "academias"), {
             nome: gymName,
             emailGestor: email,
@@ -117,12 +112,11 @@ registerForm.addEventListener('submit', async (e) => {
             endereco: endereco,
             bairro: bairro,
             uf: uf,
-            licencasTotais: 3, // O bónus inicial de 3 licenças
+            licencasTotais: 0, // <--- ZERO LICENÇAS
             licencasUsadas: 0,
             dataCadastro: serverTimestamp()
         });
 
-        // 4. Redireciona o gestor direto para o painel dele
         window.location.href = "dashboard.html";
 
     } catch (error) {
@@ -132,7 +126,7 @@ registerForm.addEventListener('submit', async (e) => {
         } else {
             errorMessage.textContent = "Erro ao criar conta. Verifique os dados e tente novamente.";
         }
-        btnRegister.textContent = "Criar Conta e Acessar Painel";
+        btnRegister.textContent = "Cadastrar Academia";
         btnRegister.disabled = false;
     }
 });

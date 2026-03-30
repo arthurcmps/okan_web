@@ -14,16 +14,18 @@
             <h2>Okan<span style="color: #00e676;">.Admin</span></h2>
         </div>
         <ul class="nav-links">
-            <li id="menu-inicio" class="active" data-target="inicio"><span class="material-symbols-outlined">dashboard</span> Início</li>
-            <li id="menu-academias" data-target="academias"><span class="material-symbols-outlined">storefront</span> Academias</li>
-            <li id="menu-professores" data-target="professores"><span class="material-symbols-outlined">sports_martial_arts</span> Professores</li>
-            <li id="menu-templates" data-target="templates"><span class="material-symbols-outlined">fitness_center</span> Loja (Templates)</li>
+            <li id="menu-inicio" class="active" data-target="inicio"><span class="material-symbols-outlined"></span> Início</li>
+            <li id="menu-academias" data-target="academias"><span class="material-symbols-outlined"></span> Academias</li>
+            <li id="menu-professores" data-target="professores"><span class="material-symbols-outlined"></span> Professores</li>
+            <li id="menu-templates" data-target="templates"><span class="material-symbols-outlined"></span> Loja (Templates)</li>
             
-            <li id="menu-minha-academia" data-target="detalhes-academia" style="display: none;"><span class="material-symbols-outlined">home_work</span> Minha Academia</li>
+            <li id="menu-feedbacks" data-target="feedbacks"><span class="material-symbols-outlined"></span> Feedback Beta</li>
+            
+            <li id="menu-minha-academia" data-target="detalhes-academia" style="display: none;"><span class="material-symbols-outlined"></span> Minha Academia</li>
         </ul>
         <div class="sidebar-footer">
             <button id="logout-btn" class="btn-outline">
-                <span class="material-symbols-outlined">logout</span> Sair
+                <span class="material-symbols-outlined"></span> Sair
             </button>
         </div>
     </aside>
@@ -56,6 +58,28 @@
                         <thead><tr><th>Nome</th><th>E-mail Gestor</th><th>Licenças</th><th>Ações</th></tr></thead>
                         <tbody id="table-academias-body">
                             <tr><td colspan="4" style="text-align: center; color: #aaa;">A carregar academias...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="section-feedbacks" class="view-section" style="display: none;">
+                <div class="section-header">
+                    <h2>Feedbacks dos Testadores (Beta)</h2>
+                </div>
+                <div class="panel-box">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Nota</th>
+                                <th style="width: 25%;">O que achou confuso?</th>
+                                <th style="width: 25%;">Bugs encontrados</th>
+                                <th style="width: 25%;">O que mais gostou?</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-feedbacks-body">
+                            <tr><td colspan="5" style="text-align: center; color: #aaa;">A carregar feedbacks...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -216,8 +240,7 @@
                     <h3 style="color: #fff; font-size: 16px;">Lista de Exercícios</h3>
                     <button type="button" id="btn-abrir-catalogo" class="btn-outline" style="border-color: #ff5252; color: #ff5252; padding: 6px 12px; font-size: 12px;">+ Buscar Exercício</button>
                 </div>
-                <ul id="lista-exercicios-template" class="exercise-list">
-                    </ul>
+                <ul id="lista-exercicios-template" class="exercise-list"></ul>
             </div>
 
             <button type="button" id="btn-salvar-template" class="btn-primary" style="width: 100%; margin-top: 24px; background-color: #ff5252; color: white;">Salvar na Loja</button>
@@ -235,8 +258,7 @@
                 + Criar Novo Exercício Global
             </button>
             
-            <div id="lista-catalogo" style="max-height: 300px; overflow-y: auto;">
-                </div>
+            <div id="lista-catalogo" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
     </div>
 
