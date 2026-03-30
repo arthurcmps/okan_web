@@ -24,14 +24,23 @@ function confirmarExclusao(mensagemHtml, acaoConfirmada) {
     modalExclusao.style.display = 'flex';
 }
 
-document.getElementById('btn-cancelar-exclusao').addEventListener('click', () => { modalExclusao.style.display = 'none'; acaoExclusaoPendente = null; });
-document.getElementById('btn-confirmar-exclusao').addEventListener('click', async () => {
+document.getElementById('btn-cancelar-exclusao')?.addEventListener('click', () => { 
+    modalExclusao.style.display = 'none'; 
+    acaoExclusaoPendente = null; 
+});
+
+document.getElementById('btn-confirmar-exclusao')?.addEventListener('click', async () => {
     if (!acaoExclusaoPendente) return;
     const btnConf = document.getElementById('btn-confirmar-exclusao');
     btnConf.textContent = "Processando..."; btnConf.disabled = true;
-    try { await acaoExclusaoPendente(); modalExclusao.style.display = 'none'; } 
-    catch (e) { console.error(e); alert("Erro na exclusão."); } 
-    finally { btnConf.textContent = "Confirmar"; btnConf.disabled = false; acaoExclusaoPendente = null; }
+    try { 
+        await acaoExclusaoPendente(); 
+        modalExclusao.style.display = 'none'; 
+    } catch (e) { 
+        console.error(e); alert("Erro na exclusão."); 
+    } finally { 
+        btnConf.textContent = "Confirmar"; btnConf.disabled = false; acaoExclusaoPendente = null; 
+    }
 });
 
 // =========================================================
@@ -61,7 +70,7 @@ onAuthStateChanged(auth, async (user) => {
             
             if (docSnap.exists()) {
                 userRole = docSnap.data().role;
-                adminNameEl.textContent = docSnap.data().name || user.email;
+                if (adminNameEl) adminNameEl.textContent = docSnap.data().name || user.email;
 
                 // Informa o módulo de academias sobre quem está logado
                 initAcademiasContext(userRole, user.email, confirmarExclusao);
@@ -71,27 +80,27 @@ onAuthStateChanged(auth, async (user) => {
                     carregarTodosProfessores();
                     carregarTemplatesLoja();
                     carregarFeedbacksBeta();
-<<<<<<< HEAD
-                } else if (userRole === 'gym_admin') {
-                    document.getElementById('menu-feedbacks').style.display = 'none';
-                    configurarPainelAcademia(user.email);
-=======
                     
                     // Remove a cortina de carregamento com fade out
-                    document.getElementById('loader-overlay').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 300);
+                    const loader = document.getElementById('loader-overlay');
+                    if (loader) {
+                        loader.style.opacity = '0';
+                        setTimeout(() => loader.style.display = 'none', 300);
+                    }
 
                 } else if (userRole === 'gym_admin') {
-                    document.getElementById('menu-feedbacks').style.display = 'none';
+                    const menuFeedbacks = document.getElementById('menu-feedbacks');
+                    if (menuFeedbacks) menuFeedbacks.style.display = 'none';
                     
-                    // O await garante que ele esconda os menus do Super Admin ANTES da cortina subir
                     await configurarPainelAcademia(user.email);
                     
                     // Remove a cortina de carregamento com fade out
-                    document.getElementById('loader-overlay').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 300);
+                    const loader = document.getElementById('loader-overlay');
+                    if (loader) {
+                        loader.style.opacity = '0';
+                        setTimeout(() => loader.style.display = 'none', 300);
+                    }
 
->>>>>>> d0336d7e1d04e349a50f839a658ee005ada2b29f
                 } else {
                     alert("Acesso Negado."); await signOut(auth); window.location.href = "index.html";
                 }
@@ -100,7 +109,10 @@ onAuthStateChanged(auth, async (user) => {
     } else { window.location.href = "index.html"; }
 });
 
-document.getElementById('logout-btn').addEventListener('click', async () => { await signOut(auth); window.location.href = "index.html"; });
+document.getElementById('logout-btn')?.addEventListener('click', async () => { 
+    await signOut(auth); 
+    window.location.href = "index.html"; 
+});
 
 menuLinks.forEach(link => {
     link.addEventListener('click', () => {
@@ -111,12 +123,16 @@ menuLinks.forEach(link => {
         const target = link.getAttribute('data-target');
         if (sectionMap[target]) {
             sectionMap[target].style.display = 'block';
-            document.getElementById('page-title').textContent = link.textContent.trim();
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle) pageTitle.textContent = link.textContent.trim();
         }
     });
 });
 
-document.getElementById('btn-voltar-academias').addEventListener('click', () => { document.querySelector('[data-target="academias"]').click(); });
+document.getElementById('btn-voltar-academias')?.addEventListener('click', () => { 
+    const target = document.querySelector('[data-target="academias"]');
+    if (target) target.click(); 
+});
 
 // Esconde o modal de exclusão global ao clicar fora
 window.addEventListener('click', (e) => {
