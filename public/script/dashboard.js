@@ -6,7 +6,7 @@ import { auth, db } from "./firebase.js";
 import { carregarFeedbacksBeta } from "./modules/feedbacks.js";
 import { initLoja, carregarTemplatesLoja } from "./modules/loja.js";
 import { carregarTodosProfessores } from "./modules/professores.js";
-import { setupAcademiasUI, initAcademiasContext, carregarAcademias, configurarPainelAcademia } from "./modules/academias.js";
+import { setupAcademiasUI, initAcademiaContext, carregarAcademias, configurarPainelAcademia } from "./modules/academias.js";
 
 const adminNameEl = document.getElementById('admin-name');
 let userRole = null; 
