@@ -62,9 +62,9 @@ loginForm.addEventListener('submit', async (e) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // 2. O SUCESSO: Redirecionar para o painel (vamos criar o painel no próximo passo)
-        alert(`Bem-vindo! Login efetuado com o UID: ${user.uid}`);
-        window.location.href = "../dashboard.html";
+        // 2. O SUCESSO: Redirecionar para o painel (SEM ALERT!)
+        loginBtn.textContent = "Redirecionando...";
+        window.location.href = "dashboard.html"; // Removido o ../ para funcionar corretamente
 
     } catch (error) {
         console.error("Erro no login:", error);
@@ -74,8 +74,9 @@ loginForm.addEventListener('submit', async (e) => {
         } else {
             errorMessage.textContent = "Erro ao fazer login. Tente novamente.";
         }
-    } finally {
+        
+        // Só reabilita o botão se der erro! Se der sucesso, ele fica como "Redirecionando..."
         loginBtn.textContent = "Entrar no Painel";
         loginBtn.disabled = false;
-    }
+    } 
 });
