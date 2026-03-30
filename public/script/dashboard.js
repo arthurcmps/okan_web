@@ -71,9 +71,27 @@ onAuthStateChanged(auth, async (user) => {
                     carregarTodosProfessores();
                     carregarTemplatesLoja();
                     carregarFeedbacksBeta();
+<<<<<<< HEAD
                 } else if (userRole === 'gym_admin') {
                     document.getElementById('menu-feedbacks').style.display = 'none';
                     configurarPainelAcademia(user.email);
+=======
+                    
+                    // Remove a cortina de carregamento com fade out
+                    document.getElementById('loader-overlay').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 300);
+
+                } else if (userRole === 'gym_admin') {
+                    document.getElementById('menu-feedbacks').style.display = 'none';
+                    
+                    // O await garante que ele esconda os menus do Super Admin ANTES da cortina subir
+                    await configurarPainelAcademia(user.email);
+                    
+                    // Remove a cortina de carregamento com fade out
+                    document.getElementById('loader-overlay').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader-overlay').style.display = 'none', 300);
+
+>>>>>>> d0336d7e1d04e349a50f839a658ee005ada2b29f
                 } else {
                     alert("Acesso Negado."); await signOut(auth); window.location.href = "index.html";
                 }
