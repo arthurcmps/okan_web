@@ -1,4 +1,3 @@
-// script/modules/academia.js
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 
@@ -319,19 +318,43 @@ function calcularProRata() {
 }
 
 // Botão de Pagamento da Aba
-btnPagamento?.addEventListener('click', () => {
-    btnPagamento.textContent = "Gerando link de pagamento...";
+btnPagamento?.addEventListener('click', async () => {
+    btnPagamento.textContent = "Gerando link seguro...";
     btnPagamento.disabled = true;
 
     const qtd = parseInt(inputQtd.value) || 1;
     const vencimento = parseInt(selectVencimento.value);
     
-    // AQUI FARÁ O POST PARA A SUA CLOUD FUNCTION DO MERCADO PAGO
-    console.log(`Enviando para o Backend -> Quantidade: ${qtd} | Vencimento: Dia ${vencimento}`);
-    
-    setTimeout(() => {
-        alert(`O sistema criaria agora uma assinatura no Mercado Pago para cobrar R$ ${(qtd * VALOR_MENSAL_LICENCA).toFixed(2)} todo o dia ${vencimento}.`);
+    try {
+        // 1. A URL real do seu robô no Firebase (Cloud Function):
+        const cloudFunctionURL = "https://gerarcheckoutlicencas-pxytyhhu5q-uc.a.run.app";
+
+        // 2. Fazemos o POST (envio de dados) para o nosso Servidor
+        const resposta = await fetch(cloudFunctionURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                quantidade: qtd,
+                diaVencimento: vencimento,
+                emailGestor: currentUserEmail // Enviamos o e-mail logado para o recibo do MP
+            })
+        });
+
+        const dados = await resposta.json();
+
+        if (resposta.ok && dados.linkPagamento) {
+            // 3. Sucesso! Redirecionamos o gestor para a tela de checkout do Mercado Pago
+            window.location.href = dados.linkPagamento;
+        } else {
+            alert("Erro ao gerar pagamento: " + (dados.error || "Desconhecido"));
+            btnPagamento.textContent = "Pagar com Mercado Pago 🔒";
+            btnPagamento.disabled = false;
+        }
+
+    } catch (error) {
+        console.error("Erro de conexão:", error);
+        alert("Falha ao contactar o servidor de pagamentos.");
         btnPagamento.textContent = "Pagar com Mercado Pago 🔒";
         btnPagamento.disabled = false;
-    }, 1500);
+    }
 });

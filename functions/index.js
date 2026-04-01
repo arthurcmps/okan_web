@@ -2,8 +2,8 @@ const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onRequest} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const {MercadoPagoConfig, Payment, Preference} = require("mercadopago"); // Adicionado Preference
-const cors = require("cors")({origin: true}); // Necessário para o site conversar com a função
+const {MercadoPagoConfig, Payment, Preference} = require("mercadopago");
+const cors = require("cors")({origin: true}); 
 
 admin.initializeApp();
 
