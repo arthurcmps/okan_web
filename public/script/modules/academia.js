@@ -1,3 +1,4 @@
+// script/modules/academia.js
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 
@@ -123,7 +124,7 @@ export function setupAcademiasUI() {
     // PROFESSORES DA ACADEMIA
     const modalNovoProfessor = document.getElementById('modal-novo-professor');
     document.getElementById('btn-adicionar-professor')?.addEventListener('click', () => {
-        if (academiaAtualLicencasUsadas >= academiaAtualLicencasTotais) { alert("Limite de licenças atingido! Contacte o suporte Okan para fazer upgrade."); return; }
+        if (academiaAtualLicencasUsadas >= academiaAtualLicencasTotais) { alert("Limite de licenças atingido! Compre mais no separador de Planos para adicionar a sua equipa."); return; }
         document.getElementById('form-novo-professor').reset();
         modalNovoProfessor.style.display = 'flex';
     });
@@ -165,7 +166,7 @@ export async function carregarAcademias() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-weight: bold;">${acad.nome}</td><td>${acad.emailGestor}</td>
-                <td><span style="color: #00e676;">${acad.licencasUsadas}</span> / ${acad.licencasTotais}</td>
+                <td><span style="color: #00e676;">${acad.licencasUsadas || 0}</span> / ${acad.licencasTotais || 0}</td>
                 <td>
                     <button class="action-btn btn-view" title="Ver Detalhes"><span class="material-symbols-outlined" style="font-size: 18px;">visibility</span></button>
                     <button class="action-btn btn-delete" style="color: #ff5252;" title="Excluir"><span class="material-symbols-outlined" style="font-size: 18px;">delete</span></button>
@@ -256,3 +257,81 @@ async function carregarProfessoresDaAcademia() {
         });
     } catch (e) { console.error(e); }
 }
+
+// =========================================================================
+// SISTEMA DE CÁLCULO PRO-RATA (ABA DE PLANOS - MERCADO PAGO)
+// =========================================================================
+
+const VALOR_MENSAL_LICENCA = 45.00;
+const VALOR_DIARIO_LICENCA = VALOR_MENSAL_LICENCA / 30;
+
+// Elementos da Aba de Planos
+const inputQtd = document.getElementById('qtd-licencas-compra');
+const selectVencimento = document.getElementById('dia-vencimento-compra');
+const btnPagamento = document.getElementById('btn-ir-pagamento');
+
+// Aguarda uma micro fração de tempo para garantir que o HTML carregou os elementos e inicia os listeners
+setTimeout(() => {
+    if (inputQtd && selectVencimento) {
+        calcularProRata(); // Calcula o valor inicial
+        inputQtd.addEventListener('input', calcularProRata);
+        selectVencimento.addEventListener('change', calcularProRata);
+    }
+}, 500);
+
+function calcularProRata() {
+    if (!inputQtd || !selectVencimento) return;
+
+    const qtd = parseInt(inputQtd.value) || 1;
+    const diaVencimentoEscolhido = parseInt(selectVencimento.value);
+    
+    const hoje = new Date();
+    const diaHoje = hoje.getDate();
+    
+    let diasRestantes = 0;
+    let mesProximaCobranca = hoje.getMonth(); 
+
+    // Lógica do Calendário de Cobrança
+    if (diaHoje < diaVencimentoEscolhido) {
+        diasRestantes = diaVencimentoEscolhido - diaHoje;
+    } else if (diaHoje === diaVencimentoEscolhido) {
+        diasRestantes = 30; 
+        mesProximaCobranca++; 
+    } else {
+        const diasAteFimDoMes = 30 - diaHoje; // Assumindo mês comercial
+        diasRestantes = diasAteFimDoMes + diaVencimentoEscolhido;
+        mesProximaCobranca++; 
+    }
+
+    // Matemática Financeira
+    const valorProporcionalUnidade = diasRestantes * VALOR_DIARIO_LICENCA;
+    const valorHojeTotal = valorProporcionalUnidade * qtd;
+    const valorRecorrenteTotal = VALOR_MENSAL_LICENCA * qtd;
+
+    const dataProxima = new Date(hoje.getFullYear(), mesProximaCobranca, diaVencimentoEscolhido);
+    const dataFormatada = dataProxima.toLocaleDateString('pt-BR');
+
+    // Atualiza o Visual da Aba
+    document.getElementById('dias-pro-rata').textContent = diasRestantes;
+    document.getElementById('valor-hoje').textContent = valorHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('valor-recorrente').textContent = valorRecorrenteTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('data-proxima-cobranca').textContent = dataFormatada;
+}
+
+// Botão de Pagamento da Aba
+btnPagamento?.addEventListener('click', () => {
+    btnPagamento.textContent = "Gerando link de pagamento...";
+    btnPagamento.disabled = true;
+
+    const qtd = parseInt(inputQtd.value) || 1;
+    const vencimento = parseInt(selectVencimento.value);
+    
+    // AQUI FARÁ O POST PARA A SUA CLOUD FUNCTION DO MERCADO PAGO
+    console.log(`Enviando para o Backend -> Quantidade: ${qtd} | Vencimento: Dia ${vencimento}`);
+    
+    setTimeout(() => {
+        alert(`O sistema criaria agora uma assinatura no Mercado Pago para cobrar R$ ${(qtd * VALOR_MENSAL_LICENCA).toFixed(2)} todo o dia ${vencimento}.`);
+        btnPagamento.textContent = "Pagar com Mercado Pago 🔒";
+        btnPagamento.disabled = false;
+    }, 1500);
+});
