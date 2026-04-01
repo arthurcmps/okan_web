@@ -156,9 +156,9 @@ exports.gerarCheckoutLicencas = onRequest((req, res) => {
             email: emailGestor,
           },
           back_urls: {
-            success: "https://SEU_PROJETO.web.app/dashboard.html?pagamento=sucesso",
-            failure: "https://SEU_PROJETO.web.app/dashboard.html?pagamento=falha",
-            pending: "https://SEU_PROJETO.web.app/dashboard.html?pagamento=pendente"
+            success: "app-academia-2914d.web.app/dashboard.html?pagamento=sucesso",
+            failure: "app-academia-2914d.web.app/dashboard.html?pagamento=falha",
+            pending: "app-academia-2914d.web.app/dashboard.html?pagamento=pendente"
           },
           auto_return: "approved",
         }
