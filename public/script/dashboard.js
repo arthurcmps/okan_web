@@ -58,6 +58,7 @@ const sectionMap = {
     'inicio': document.getElementById('section-inicio'),
     'academias': document.getElementById('section-academias'),
     'detalhes-academia': document.getElementById('section-detalhes-academia'),
+    'planos': document.getElementById('section-planos'),
     'professores': document.getElementById('section-professores'),
     'templates': document.getElementById('section-templates'),
     'feedbacks': document.getElementById('section-feedbacks')
@@ -93,6 +94,10 @@ onAuthStateChanged(auth, async (user) => {
                     const menuFeedbacks = document.getElementById('menu-feedbacks');
                     if (menuFeedbacks) menuFeedbacks.style.display = 'none';
                     
+                    // A LINHA QUE FALTAVA: Mostra a aba de Planos no menu lateral
+                    const menuPlanos = document.getElementById('menu-planos');
+                    if (menuPlanos) menuPlanos.style.display = 'flex';
+                    
                     await configurarPainelAcademia(user.email);
                     
                     // Remove a cortina de carregamento com fade out
@@ -117,7 +122,9 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
 
 menuLinks.forEach(link => {
     link.addEventListener('click', () => {
-        if (userRole === 'gym_admin' && link.id !== 'menu-minha-academia') return;
+        // PERMISSÃO ATUALIZADA: Gestor pode ver a Academia DELE e os Planos DELE
+        if (userRole === 'gym_admin' && link.id !== 'menu-minha-academia' && link.id !== 'menu-planos') return;
+        
         menuLinks.forEach(item => item.classList.remove('active'));
         link.classList.add('active');
         Object.values(sectionMap).forEach(s => { if(s) s.style.display = 'none'; });

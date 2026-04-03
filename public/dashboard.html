@@ -26,7 +26,9 @@
             <li id="menu-professores" data-target="professores"><span class="material-symbols-outlined"></span> Professores</li>
             <li id="menu-templates" data-target="templates"><span class="material-symbols-outlined"></span> Loja (Templates)</li>
             <li id="menu-feedbacks" data-target="feedbacks"><span class="material-symbols-outlined"></span> Feedback Beta</li>
+            
             <li id="menu-minha-academia" data-target="detalhes-academia" style="display: none;"><span class="material-symbols-outlined"></span> Minha Academia</li>
+            <li id="menu-planos" data-target="planos" style="display: none;"><span class="material-symbols-outlined">credit_card</span> Assinatura</li>
         </ul>
         <div class="sidebar-footer">
             <button id="logout-btn" class="btn-outline">
@@ -124,52 +126,72 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
 
-                    <div id="tab-planos-academia" style="margin-top: 40px; border-top: 1px solid #333; padding-top: 24px;">
-                        <div style="background-color: #1e1e1e; padding: 24px; border-radius: 12px; border: 1px solid #333;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h3 style="color: #00e676; font-size: 20px;">Gestão de Assinatura</h3>
-                                <span style="background: rgba(0, 230, 118, 0.1); color: #00e676; padding: 6px 12px; border-radius: 20px; font-size: 12px; border: 1px solid #00e676;">
-                                    Status: Aguardando Pagamento
-                                </span>
-                            </div>
-                            
-                            <p style="font-size: 14px; color: #aaa; margin-bottom: 24px;">
-                                Adicione licenças para permitir que os seus professores acessem o painel. <br>
-                                Preço por professor: <strong style="color: white;">R$ 45,00/mês</strong>
-                            </p>
+            <div id="section-planos" class="view-section" style="display: none;">
+                <div class="section-header">
+                    <h2>Gestão de Assinatura</h2>
+                </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                                <div style="background-color: #121212; padding: 16px; border-radius: 8px; border: 1px solid #444;">
-                                    <label style="display: block; color: #aaa; font-size: 12px; margin-bottom: 8px;">Quantas licenças deseja?</label>
-                                    <input type="number" id="qtd-licencas-compra" min="1" value="1" style="width: 100%; padding: 10px; background: transparent; border: none; color: white; font-size: 20px; text-align: center; border-bottom: 2px solid #00e676; outline: none;">
-                                </div>
-                                <div style="background-color: #121212; padding: 16px; border-radius: 8px; border: 1px solid #444;">
-                                    <label style="display: block; color: #aaa; font-size: 12px; margin-bottom: 8px;">Melhor dia de vencimento</label>
-                                    <select id="dia-vencimento-compra" style="width: 100%; padding: 10px; background: transparent; color: white; border: none; font-size: 16px; border-bottom: 2px solid #00e676; outline: none; cursor: pointer;">
-                                        <option value="5" style="background: #121212;">Todo dia 05</option>
-                                        <option value="10" style="background: #121212;">Todo dia 10</option>
-                                        <option value="15" style="background: #121212;">Todo dia 15</option>
-                                        <option value="20" style="background: #121212;">Todo dia 20</option>
-                                    </select>
-                                </div>
-                            </div>
+                <div id="painel-assinatura-ativa" class="panel-box" style="display: none; margin-bottom: 24px; border: 1px solid #00e676;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: #00e676; font-size: 20px;">O seu Plano Atual</h3>
+                        <span id="ass-status" style="background: rgba(0, 230, 118, 0.1); color: #00e676; padding: 6px 12px; border-radius: 20px; font-size: 12px; border: 1px solid #00e676; font-weight: bold;">Ativa</span>
+                    </div>
+                    
+                    <div class="details-grid" style="margin-bottom: 24px;">
+                        <div class="detail-item"><label>Licenças Contratadas</label><p id="ass-licencas" style="font-size: 24px;">--</p></div>
+                        <div class="detail-item"><label>Dia de Vencimento</label><p id="ass-vencimento" style="font-size: 24px;">--</p></div>
+                        <div class="detail-item"><label>Valor Mensal</label><p id="ass-valor" style="font-size: 24px; color: #00e676;">--</p></div>
+                    </div>
 
-                            <div style="background: rgba(255, 255, 255, 0.02); border-left: 4px solid #00e676; padding: 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0;">
-                                <p style="font-size: 13px; color: #aaa; margin-bottom: 4px;">Valor Proporcional para liberar acesso hoje (<span id="dias-pro-rata">0</span> dias de uso até a renovação):</p>
-                                <h3 style="color: white; font-size: 28px; margin-bottom: 8px;">R$ <span id="valor-hoje">0,00</span></h3>
-                                <p style="font-size: 13px; color: #777;">
-                                    A partir do dia <span id="data-proxima-cobranca" style="color: #ccc; font-weight: bold;">--</span>, a mensalidade passará a ser de <strong>R$ <span id="valor-recorrente" style="color: white;">45,00</span></strong>.
-                                </p>
-                            </div>
+                    <div id="msg-cancelamento" style="display: none; background-color: rgba(255, 82, 82, 0.1); border-left: 4px solid #ff5252; padding: 16px; margin-bottom: 16px;">
+                        <p style="color: #ff5252; font-size: 14px; margin: 0;">
+                            ⚠️ <strong>Cancelamento Agendado:</strong> A sua assinatura será bloqueada na próxima data de vencimento. Até lá, os seus professores continuam com acesso normal.
+                        </p>
+                    </div>
 
-                            <div id="paymentBrick_container" style="margin-bottom: 16px;"></div>
+                    <button id="btn-cancelar-assinatura" class="btn-outline" style="width: 100%;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">cancel</span> Cancelar Assinatura
+                    </button>
+                </div>
 
-                            <button id="btn-ir-pagamento" class="btn-primary" style="width: 100%; font-size: 16px; padding: 16px; background-color: #00e676; color: #121212; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">
-                                Pagar com Mercado Pago 🔒
-                            </button>
+                <div id="painel-comprar-licencas" class="panel-box">
+                    <p style="font-size: 14px; color: #aaa; margin-bottom: 24px;">
+                        A sua academia ainda não possui um plano ativo. Adicione licenças para permitir que os seus professores acessem o painel.<br>
+                        Preço por professor: <strong style="color: white;">R$ 45,00/mês</strong>
+                    </p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                        <div style="background-color: #121212; padding: 16px; border-radius: 8px; border: 1px solid #444;">
+                            <label style="display: block; color: #aaa; font-size: 12px; margin-bottom: 8px;">Quantas licenças deseja?</label>
+                            <input type="number" id="qtd-licencas-compra" min="1" value="1" style="width: 100%; padding: 10px; background: transparent; border: none; color: white; font-size: 20px; text-align: center; border-bottom: 2px solid #00e676; outline: none;">
+                        </div>
+                        <div style="background-color: #121212; padding: 16px; border-radius: 8px; border: 1px solid #444;">
+                            <label style="display: block; color: #aaa; font-size: 12px; margin-bottom: 8px;">Melhor dia de vencimento</label>
+                            <select id="dia-vencimento-compra" style="width: 100%; padding: 10px; background: transparent; color: white; border: none; font-size: 16px; border-bottom: 2px solid #00e676; outline: none; cursor: pointer;">
+                                <option value="5" style="background: #121212;">Todo dia 05</option>
+                                <option value="10" style="background: #121212;">Todo dia 10</option>
+                                <option value="15" style="background: #121212;">Todo dia 15</option>
+                                <option value="20" style="background: #121212;">Todo dia 20</option>
+                            </select>
                         </div>
                     </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.02); border-left: 4px solid #00e676; padding: 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0;">
+                        <p style="font-size: 13px; color: #aaa; margin-bottom: 4px;">Valor Proporcional para liberar acesso hoje (<span id="dias-pro-rata">0</span> dias de uso até a renovação):</p>
+                        <h3 style="color: white; font-size: 28px; margin-bottom: 8px;">R$ <span id="valor-hoje">0,00</span></h3>
+                        <p style="font-size: 13px; color: #777;">
+                            A partir do dia <span id="data-proxima-cobranca" style="color: #ccc; font-weight: bold;">--</span>, a mensalidade passará a ser de <strong>R$ <span id="valor-recorrente" style="color: white;">45,00</span></strong>.
+                        </p>
+                    </div>
+
+                    <div id="paymentBrick_container" style="margin-bottom: 16px;"></div>
+
+                    <button id="btn-ir-pagamento" class="btn-primary" style="width: 100%; font-size: 16px; padding: 16px; background-color: #00e676; color: #121212; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">
+                        Pagar
+                    </button>
                 </div>
             </div>
 
@@ -262,59 +284,6 @@
         </div>
     </div>
 
-    <div id="modal-template-builder" class="modal-overlay" style="display: none;">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2 id="titulo-modal-template" style="color: #ff5252;">Novo Produto</h2>
-                <span class="close-btn" id="fechar-modal-template">&times;</span>
-            </div>
-            <div class="form-row">
-                <div class="input-group" style="flex: 2;"><label>Nome do Treino</label><input type="text" id="tpl-nome" required placeholder="Ex: Projeto Verão"></div>
-                <div class="input-group" style="flex: 1;"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="tpl-preco" required value="0.00" style="color: #ff5252; font-weight: bold;"></div>
-            </div>
-            <div class="input-group"><label>Tags para Match (Filtros na App):</label><div id="tpl-tags-container" class="tags-container"></div></div>
-            <div style="border-top: 1px solid #333; margin-top: 24px; padding-top: 24px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="color: #fff; font-size: 16px;">Lista de Exercícios</h3>
-                    <button type="button" id="btn-abrir-catalogo" class="btn-outline" style="border-color: #ff5252; color: #ff5252; padding: 6px 12px; font-size: 12px;">+ Buscar Exercício</button>
-                </div>
-                <ul id="lista-exercicios-template" class="exercise-list"></ul>
-            </div>
-            <button type="button" id="btn-salvar-template" class="btn-primary" style="width: 100%; margin-top: 24px; background-color: #ff5252; color: white;">Salvar na Loja</button>
-        </div>
-    </div>
-
-    <div id="modal-catalogo" class="modal-overlay" style="display: none; z-index: 1001;">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header"><h2 style="color: #ff5252; font-size: 20px;">Catálogo de Exercícios</h2><span class="close-btn" id="fechar-modal-catalogo">&times;</span></div>
-            <button type="button" id="btn-novo-exercicio-global" class="btn-primary" style="width: 100%; margin-bottom: 16px; background-color: #2c2c2c; color: #ff5252;">+ Criar Novo Exercício Global</button>
-            <div id="lista-catalogo" style="max-height: 300px; overflow-y: auto;"></div>
-        </div>
-    </div>
-
-    <div id="modal-config-series" class="modal-overlay" style="display: none; z-index: 1002;">
-        <div class="modal-content" style="max-width: 350px;">
-            <h3 id="nome-exercicio-config" style="color: white; margin-bottom: 16px;">Configurar</h3>
-            <div class="form-row">
-                <div class="input-group"><label>Séries</label><input type="number" id="config-series" value="3"></div>
-                <div class="input-group"><label>Repetições</label><input type="text" id="config-reps" value="12"></div>
-            </div>
-            <button type="button" id="btn-confirmar-exercicio" class="btn-primary" style="width: 100%; background-color: #ff5252; color: white;">Adicionar ao Treino</button>
-        </div>
-    </div>
-
-    <div id="modal-novo-exercicio-global" class="modal-overlay" style="display: none; z-index: 1003;">
-        <div class="modal-content" style="max-width: 400px;">
-            <div class="modal-header"><h2 style="color: #ff5252; font-size: 20px;">Novo Exercício</h2><span class="close-btn" id="fechar-modal-novo-exercicio">&times;</span></div>
-            <form id="form-novo-exercicio-global">
-                <div class="input-group"><label>Nome do Exercício</label><input type="text" id="novo-ex-nome" required placeholder="Ex: Supino Reto"></div>
-                <div class="input-group"><label>Grupo Muscular</label><input type="text" id="novo-ex-grupo" required placeholder="Ex: Peito"></div>
-                <div class="input-group"><label>Link do Vídeo (YouTube)</label><input type="url" id="novo-ex-video" placeholder="https://youtube.com/..."></div>
-                <button type="submit" id="btn-salvar-novo-exercicio" class="btn-primary" style="width: 100%; margin-top: 16px; background-color: #ff5252; color: white;">Salvar no Catálogo</button>
-            </form>
-        </div>
-    </div>
-    
     <script type="module" src="script/dashboard.js?v=1.0"></script>
 </body>
 </html>

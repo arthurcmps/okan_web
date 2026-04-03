@@ -175,22 +175,78 @@ function abrirDetalhesAcademia(acad, id) {
     academiaAtualLicencasTotais = acad.licencasTotais || 0; 
     academiaAtualLicencasUsadas = acad.licencasUsadas || 0;
     
+    // Preenchimento de dados básicos...
     document.getElementById('detalhe-nome-titulo').textContent = acad.nome;
-    document.getElementById('detalhe-cnpj').textContent = acad.cnpj || '--';
-    document.getElementById('detalhe-email').textContent = acad.emailGestor || '--';
-    document.getElementById('detalhe-telefone').textContent = acad.telefoneResponsavel || '--';
-    document.getElementById('detalhe-cep').textContent = acad.cep || '--';
-    document.getElementById('detalhe-endereco').textContent = `${acad.endereco || ''} - ${acad.bairro || ''}, ${acad.uf || ''}`;
     document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
-    if (acad.dataCadastro) document.getElementById('detalhe-data').textContent = acad.dataCadastro.toDate().toLocaleDateString('pt-BR');
+    
+    // --- LÓGICA DA ABA DE PLANOS E ASSINATURA ---
+    const statusAssinatura = acad.statusAssinatura || 'Aguardando Pagamento';
+    const cancelamentoAgendado = acad.cancelamentoAgendado || false;
+    
+    const painelAtiva = document.getElementById('painel-assinatura-ativa');
+    const painelCompra = document.getElementById('painel-comprar-licencas');
 
+    if (statusAssinatura === 'Ativa' || statusAssinatura === 'Pendente') {
+        painelAtiva.style.display = 'block';
+        painelCompra.style.display = 'none';
+
+        document.getElementById('ass-licencas').textContent = academiaAtualLicencasTotais;
+        document.getElementById('ass-vencimento').textContent = `Todo dia ${acad.diaVencimento || '--'}`;
+        document.getElementById('ass-valor').textContent = `R$ ${(academiaAtualLicencasTotais * 45).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+        const badgeStatus = document.getElementById('ass-status');
+        const msgCancelamento = document.getElementById('msg-cancelamento');
+        const btnCancelar = document.getElementById('btn-cancelar-assinatura');
+
+        if (cancelamentoAgendado) {
+            badgeStatus.textContent = "Cancelamento Agendado";
+            badgeStatus.style.color = "#ff5252";
+            badgeStatus.style.borderColor = "#ff5252";
+            badgeStatus.style.background = "rgba(255, 82, 82, 0.1)";
+            
+            if (msgCancelamento) msgCancelamento.style.display = 'block';
+            if (btnCancelar) btnCancelar.style.display = 'none';
+        } else {
+            badgeStatus.textContent = "Assinatura Ativa";
+            badgeStatus.style.color = "#00e676";
+            badgeStatus.style.borderColor = "#00e676";
+            badgeStatus.style.background = "rgba(0, 230, 118, 0.1)";
+            
+            if (msgCancelamento) msgCancelamento.style.display = 'none';
+            if (btnCancelar) btnCancelar.style.display = 'block';
+        }
+    } else {
+        painelAtiva.style.display = 'none';
+        painelCompra.style.display = 'block';
+    }
+
+    // Restante da função (navegação e carregar professores)...
     document.querySelectorAll('.view-section').forEach(section => { if(section) section.style.display = 'none'; });
     document.getElementById('section-detalhes-academia').style.display = 'block';
-    document.getElementById('page-title').textContent = "Minha Academia";
-    
-    document.querySelectorAll('.nav-links li').forEach(item => item.classList.remove('active')); 
     carregarProfessoresDaAcademia(); 
 }
+
+// EVENTO PARA CANCELAR ASSINATURA
+document.getElementById('btn-cancelar-assinatura')?.addEventListener('click', () => {
+    if (confirmarExclusaoGlob) {
+        confirmarExclusaoGlob(
+            `Tem a certeza que deseja cancelar a sua assinatura? <br><br> 
+            <small style="color: #aaa;">Os seus professores continuarão com acesso Premium até ao próximo dia de vencimento, mas não haverá novas cobranças.</small>`, 
+            async () => {
+                try {
+                    await updateDoc(doc(db, "academias", academiaAtualId), { 
+                        cancelamentoAgendado: true 
+                    });
+                    alert("Cancelamento agendado com sucesso!");
+                    window.location.reload(); // Recarrega para atualizar o visual
+                } catch (e) {
+                    console.error("Erro ao cancelar:", e);
+                    alert("Erro ao processar o pedido de cancelamento.");
+                }
+            }
+        );
+    }
+});
 
 async function carregarProfessoresDaAcademia() {
     const tbody = document.getElementById('table-professores-body');
