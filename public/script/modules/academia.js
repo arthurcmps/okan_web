@@ -12,21 +12,17 @@ let academiaAtualLicencasTotais = 0;
 let academiaAtualLicencasUsadas = 0;
 let academiaAtualDados = null; 
 
-// Função chamada pelo dashboard.js após o login
 export function initAcademiasContext(role, email, fnExclusao) {
     userRole = role;
     currentUserEmail = email;
     confirmarExclusaoGlob = fnExclusao;
 }
 
-// Configuração inicial dos botões e máscaras
 export function setupAcademiasUI() {
-    // MÁSCARAS
     document.getElementById('acad-cnpj')?.addEventListener('input', (e) => { let v = e.target.value.replace(/\D/g,""); if (v.length > 14) v = v.substring(0, 14); v = v.replace(/^(\d{2})(\d)/,"$1.$2"); v = v.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3"); v = v.replace(/\.(\d{3})(\d)/,".$1/$2"); v = v.replace(/(\d{4})(\d)/,"$1-$2"); e.target.value = v; });
     document.getElementById('acad-telefone')?.addEventListener('input', (e) => { let v = e.target.value.replace(/\D/g,""); if (v.length > 11) v = v.substring(0, 11); v = v.replace(/^(\d{2})(\d)/g,"($1) $2"); v = v.replace(/(\d)(\d{4})$/,"$1-$2"); e.target.value = v; });
     document.getElementById('acad-cep')?.addEventListener('input', async (e) => { let v = e.target.value.replace(/\D/g,""); if (v.length > 8) v = v.substring(0, 8); v = v.replace(/^(\d{5})(\d)/,"$1-$2"); e.target.value = v; if (v.length === 9) { try { const res = await fetch(`https://viacep.com.br/ws/${v.replace('-', '')}/json/`); const data = await res.json(); if (!data.erro) { document.getElementById('acad-endereco').value = data.logradouro + ', '; document.getElementById('acad-bairro').value = data.bairro; document.getElementById('acad-uf').value = data.uf; document.getElementById('acad-endereco').focus(); } } catch (e) { console.error(e); } } });
 
-    // MODAIS DE ACADEMIA
     const modalNovaAcademia = document.getElementById('modal-nova-academia');
     const formNovaAcademia = document.getElementById('form-nova-academia');
 
@@ -38,7 +34,6 @@ export function setupAcademiasUI() {
         const licInput = document.getElementById('acad-licencas');
         if(licInput) {
             licInput.disabled = false;
-            document.getElementById('aviso-licencas').style.display = 'none';
         }
         formNovaAcademia.reset();
         modalNovaAcademia.style.display = 'flex';
@@ -89,41 +84,9 @@ export function setupAcademiasUI() {
         } finally { btnSubmit.textContent = "Salvar Dados"; btnSubmit.disabled = false; }
     });
 
-    document.getElementById('btn-editar-minha-academia')?.addEventListener('click', () => {
-        if(!academiaAtualDados) return;
-        modoEdicaoAcademia = true; idAcademiaEditando = academiaAtualId;
-        document.getElementById('titulo-modal-academia').textContent = 'Editar Meus Dados';
-        document.getElementById('btn-salvar-academia').textContent = 'Atualizar Dados';
-        
-        document.getElementById('acad-nome').value = academiaAtualDados.nome || '';
-        document.getElementById('acad-cnpj').value = academiaAtualDados.cnpj || '';
-        document.getElementById('acad-cep').value = academiaAtualDados.cep || '';
-        document.getElementById('acad-endereco').value = academiaAtualDados.endereco || '';
-        document.getElementById('acad-bairro').value = academiaAtualDados.bairro || '';
-        document.getElementById('acad-uf').value = academiaAtualDados.uf || '';
-        document.getElementById('acad-email').value = academiaAtualDados.emailGestor || '';
-        document.getElementById('acad-telefone').value = academiaAtualDados.telefoneResponsavel || '';
-        
-        const licInput = document.getElementById('acad-licencas');
-        if(licInput) {
-            licInput.value = academiaAtualDados.licencasTotais || '';
-            if (userRole === 'gym_admin') {
-                licInput.disabled = true;
-                document.getElementById('container-licencas').style.opacity = '0.6';
-                document.getElementById('aviso-licencas').style.display = 'block';
-            } else {
-                licInput.disabled = false;
-                document.getElementById('container-licencas').style.opacity = '1';
-                document.getElementById('aviso-licencas').style.display = 'none';
-            }
-        }
-        modalNovaAcademia.style.display = 'flex';
-    });
-
-    // PROFESSORES DA ACADEMIA
     const modalNovoProfessor = document.getElementById('modal-novo-professor');
     document.getElementById('btn-adicionar-professor')?.addEventListener('click', () => {
-        if (academiaAtualLicencasUsadas >= academiaAtualLicencasTotais) { alert("Limite de licenças atingido! Compre mais no separador de Planos para adicionar a sua equipa."); return; }
+        if (academiaAtualLicencasUsadas >= academiaAtualLicencasTotais) { alert("Limite de licenças atingido! Compre mais no separador de Planos."); return; }
         document.getElementById('form-novo-professor').reset();
         modalNovoProfessor.style.display = 'flex';
     });
@@ -145,7 +108,6 @@ export function setupAcademiasUI() {
         } catch (e) { console.error(e); alert("Erro ao adicionar."); } finally { btnSubmit.textContent = "Conceder Licença"; btnSubmit.disabled = false; }
     });
 
-    // Fecha o modal se clicar fora
     window.addEventListener('click', (e) => {
         if (e.target === modalNovaAcademia) modalNovaAcademia.style.display = 'none';
         if (e.target === modalNovoProfessor) modalNovoProfessor.style.display = 'none';
@@ -171,7 +133,6 @@ export async function carregarAcademias() {
                     <button class="action-btn btn-delete" style="color: #ff5252;" title="Excluir"><span class="material-symbols-outlined" style="font-size: 18px;">delete</span></button>
                 </td>
             `;
-            
             tr.querySelector('.btn-view').addEventListener('click', () => abrirDetalhesAcademia(acad, id));
             tr.querySelector('.btn-delete').addEventListener('click', () => {
                 if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Tem a certeza que deseja excluir a academia <strong>"${acad.nome}"</strong>?`, async () => { await deleteDoc(doc(db, "academias", id)); carregarAcademias(); });
@@ -258,21 +219,18 @@ async function carregarProfessoresDaAcademia() {
 }
 
 // =========================================================================
-// SISTEMA DE CÁLCULO PRO-RATA (ABA DE PLANOS - MERCADO PAGO)
+// SISTEMA DE CÁLCULO PRO-RATA E CHECKOUT BRICKS
 // =========================================================================
-
 const VALOR_MENSAL_LICENCA = 45.00;
 const VALOR_DIARIO_LICENCA = VALOR_MENSAL_LICENCA / 30;
 
-// Elementos da Aba de Planos
 const inputQtd = document.getElementById('qtd-licencas-compra');
 const selectVencimento = document.getElementById('dia-vencimento-compra');
 const btnPagamento = document.getElementById('btn-ir-pagamento');
 
-// Aguarda uma micro fração de tempo para garantir que o HTML carregou os elementos e inicia os listeners
 setTimeout(() => {
     if (inputQtd && selectVencimento) {
-        calcularProRata(); // Calcula o valor inicial
+        calcularProRata(); 
         inputQtd.addEventListener('input', calcularProRata);
         selectVencimento.addEventListener('change', calcularProRata);
     }
@@ -290,19 +248,17 @@ function calcularProRata() {
     let diasRestantes = 0;
     let mesProximaCobranca = hoje.getMonth(); 
 
-    // Lógica do Calendário de Cobrança
     if (diaHoje < diaVencimentoEscolhido) {
         diasRestantes = diaVencimentoEscolhido - diaHoje;
     } else if (diaHoje === diaVencimentoEscolhido) {
         diasRestantes = 30; 
         mesProximaCobranca++; 
     } else {
-        const diasAteFimDoMes = 30 - diaHoje; // Assumindo mês comercial
+        const diasAteFimDoMes = 30 - diaHoje; 
         diasRestantes = diasAteFimDoMes + diaVencimentoEscolhido;
         mesProximaCobranca++; 
     }
 
-    // Matemática Financeira
     const valorProporcionalUnidade = diasRestantes * VALOR_DIARIO_LICENCA;
     const valorHojeTotal = valorProporcionalUnidade * qtd;
     const valorRecorrenteTotal = VALOR_MENSAL_LICENCA * qtd;
@@ -310,50 +266,35 @@ function calcularProRata() {
     const dataProxima = new Date(hoje.getFullYear(), mesProximaCobranca, diaVencimentoEscolhido);
     const dataFormatada = dataProxima.toLocaleDateString('pt-BR');
 
-    // Atualiza o Visual da Aba
     document.getElementById('dias-pro-rata').textContent = diasRestantes;
     document.getElementById('valor-hoje').textContent = valorHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     document.getElementById('valor-recorrente').textContent = valorRecorrenteTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     document.getElementById('data-proxima-cobranca').textContent = dataFormatada;
 }
 
-// ATENÇÃO: Substitua pela sua PUBLIC KEY (Chave Pública)
 const mp = new MercadoPago('TEST-13b66d79-52ea-410d-9efb-57db088806b4', { locale: 'pt-BR' });
 const bricksBuilder = mp.bricks();
-let paymentBrickController = null;
+window.paymentBrickController = null;
 
-// Botão de Pagamento da Aba
 btnPagamento?.addEventListener('click', async () => {
-    // Esconde o botão e desativa a edição de dias/quantidade para focar no pagamento
     btnPagamento.style.display = 'none';
     inputQtd.disabled = true;
     selectVencimento.disabled = true;
 
-    // Pega o valor exato calculado na tela
     const valorS = document.getElementById('valor-hoje').textContent.replace('.','').replace(',','.');
     const valorParaCobrar = parseFloat(valorS);
 
-    // Função que constrói o formulário de cartão na tela
     const renderPaymentBrick = async (bricksBuilder) => {
         const settings = {
-            initialization: {
-                amount: valorParaCobrar, // Valor que aparece visualmente no Checkout
-            },
+            initialization: { amount: valorParaCobrar },
             customization: {
-                paymentMethods: {
-                    creditCard: "all", // Mantemos só cartão de crédito por ser assinatura
-                },
-                visual: {
-                    style: { theme: 'dark' } // Combina com o design do Okan!
-                }
+                paymentMethods: { creditCard: "all" },
+                visual: { style: { theme: 'dark' } } 
             },
             callbacks: {
-                onReady: () => {
-                    console.log("Formulário de cartão carregado.");
-                },
+                onReady: () => { console.log("Formulário MP injetado com sucesso."); },
                 onSubmit: ({ selectedPaymentMethod, formData }) => {
                     return new Promise((resolve, reject) => {
-                        // Junta os dados do cartão gerados pelo Mercado Pago com os dados da Academia
                         const payload = {
                             ...formData,
                             quantidade: parseInt(inputQtd.value) || 1,
@@ -361,26 +302,26 @@ btnPagamento?.addEventListener('click', async () => {
                             emailGestor: currentUserEmail
                         };
 
-                        // Substitua a URL abaixo pela URL que o Firebase gerar para "processarPagamentoWeb"
-                        fetch("https://SUA_REGIAO-SEU_PROJETO.cloudfunctions.net/processarPagamentoWeb", {
+                        // NOVA URL DA FUNÇÃO (Padrão V2 Cloud Run)
+                        fetch("https://processarpagamentoweb-pxytyhhu5q-uc.a.run.app", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(payload)
                         })
                         .then((res) => res.json())
                         .then((response) => {
-                            resolve(); // Remove o loading do botão do Brick
+                            resolve(); 
                             if (response.status === "approved") {
-                                alert("Pagamento Aprovado! As licenças foram adicionadas.");
-                                window.location.reload(); // Recarrega a página para atualizar as licenças
+                                alert("Pagamento Aprovado! As licenças foram adicionadas com sucesso.");
+                                window.location.reload(); 
                             } else {
-                                alert("Pagamento não aprovado. Verifique o limite ou os dados do cartão. Detalhe: " + response.status_detail);
+                                alert("Pagamento recusado. Motivo: " + response.status_detail);
                             }
                         })
                         .catch((error) => {
                             reject();
                             console.error(error);
-                            alert("Falha de conexão com o banco.");
+                            alert("Falha de conexão com o servidor de pagamento.");
                         });
                     });
                 },
@@ -388,11 +329,7 @@ btnPagamento?.addEventListener('click', async () => {
             },
         };
         
-        window.paymentBrickController = await bricksBuilder.create(
-            'payment',
-            'paymentBrick_container',
-            settings
-        );
+        window.paymentBrickController = await bricksBuilder.create('payment', 'paymentBrick_container', settings);
     };
 
     renderPaymentBrick(bricksBuilder);
