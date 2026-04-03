@@ -6,6 +6,7 @@
     <title>Okan Admin | Dashboard</title>
     <link rel="stylesheet" href="css/style.css?v=1.0">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
 <body class="dashboard-body">
 
@@ -125,6 +126,11 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    <div id="paymentBrick_container" style="margin-bottom: 16px;"></div>
+                    <button id="btn-ir-pagamento" class="btn-primary" style="width: 100%; font-size: 16px; padding: 16px; background-color: #00e676; color: #121212; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">
+                        Pagar com Mercado Pago 🔒
+                    </button>
 
                     <div id="tab-planos-academia" style="margin-top: 40px; border-top: 1px solid #333; padding-top: 24px;">
                         <div style="background-color: #1e1e1e; padding: 24px; border-radius: 12px; border: 1px solid #333;">
@@ -349,6 +355,6 @@
         </div>
     </div>
 
-    <script type="module" src="script/dashboard.js?v=1.0"></script>
+    <script type="module" src="script/dashboard.js?v=2.0"></script>
 </body>
 </html>

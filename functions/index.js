@@ -176,3 +176,58 @@ exports.gerarCheckoutLicencas = onRequest((req, res) => {
     }
   });
 });
+
+// =========================================================================
+// 6. CHECKOUT TRANSPARENTE (PAGAMENTO DIRETO NO SITE)
+// =========================================================================
+exports.processarPagamentoWeb = onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method !== "POST") return res.status(405).send({error: "Método não permitido."});
+
+    try {
+      // O Brick do Mercado Pago envia o token do cartão e os dados do pagador
+      const { quantidade, diaVencimento, emailGestor, token, payment_method_id, payer, installments, issuer_id } = req.body;
+
+      // 1. Recalculamos o Pro-Rata no servidor por segurança (nunca confie no front-end)
+      const VALOR_MENSAL_LICENCA = 45.00;
+      const VALOR_DIARIO_LICENCA = VALOR_MENSAL_LICENCA / 30;
+      const hoje = new Date();
+      const diaHoje = hoje.getDate();
+      let diasRestantes = 0;
+
+      if (diaHoje < diaVencimento) diasRestantes = diaVencimento - diaHoje;
+      else if (diaHoje === diaVencimento) diasRestantes = 30;
+      else diasRestantes = (30 - diaHoje) + diaVencimento;
+
+      const valorProRataHoje = Number((diasRestantes * VALOR_DIARIO_LICENCA * quantidade).toFixed(2));
+
+      // 2. Chamamos a API de Pagamentos para debitar o cartão na hora
+      const payment = new Payment(client);
+      const result = await payment.create({
+        body: {
+          transaction_amount: valorProRataHoje,
+          token: token,
+          description: `Licenças Premium Okan (${quantidade}x) - Pro-Rata`,
+          installments: installments,
+          payment_method_id: payment_method_id,
+          issuer_id: issuer_id,
+          payer: {
+            email: emailGestor, // Forçamos o e-mail logado no Okan
+            identification: payer?.identification // CPF/CNPJ do titular do cartão
+          }
+        }
+      });
+
+      // Retornamos o status do cartão (Aprovado, Recusado, etc)
+      return res.status(200).json({ 
+        status: result.status, 
+        status_detail: result.status_detail,
+        id: result.id
+      });
+
+    } catch (error) {
+      console.error("Erro no Checkout Transparente:", error);
+      return res.status(500).json({error: "Falha ao debitar o cartão."});
+    }
+  });
+});

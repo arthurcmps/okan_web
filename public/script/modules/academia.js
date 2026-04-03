@@ -317,44 +317,83 @@ function calcularProRata() {
     document.getElementById('data-proxima-cobranca').textContent = dataFormatada;
 }
 
+// ATENÇÃO: Substitua pela sua PUBLIC KEY (Chave Pública)
+const mp = new MercadoPago('TEST-13b66d79-52ea-410d-9efb-57db088806b4', { locale: 'pt-BR' });
+const bricksBuilder = mp.bricks();
+let paymentBrickController = null;
+
 // Botão de Pagamento da Aba
 btnPagamento?.addEventListener('click', async () => {
-    btnPagamento.textContent = "Gerando link seguro...";
-    btnPagamento.disabled = true;
+    // Esconde o botão e desativa a edição de dias/quantidade para focar no pagamento
+    btnPagamento.style.display = 'none';
+    inputQtd.disabled = true;
+    selectVencimento.disabled = true;
 
-    const qtd = parseInt(inputQtd.value) || 1;
-    const vencimento = parseInt(selectVencimento.value);
-    
-    try {
-        // 1. A URL real do seu robô no Firebase (Cloud Function):
-        const cloudFunctionURL = "https://gerarcheckoutlicencas-pxytyhhu5q-uc.a.run.app";
+    // Pega o valor exato calculado na tela
+    const valorS = document.getElementById('valor-hoje').textContent.replace('.','').replace(',','.');
+    const valorParaCobrar = parseFloat(valorS);
 
-        // 2. Fazemos o POST (envio de dados) para o nosso Servidor
-        const resposta = await fetch(cloudFunctionURL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                quantidade: qtd,
-                diaVencimento: vencimento,
-                emailGestor: currentUserEmail // Enviamos o e-mail logado para o recibo do MP
-            })
-        });
+    // Função que constrói o formulário de cartão na tela
+    const renderPaymentBrick = async (bricksBuilder) => {
+        const settings = {
+            initialization: {
+                amount: valorParaCobrar, // Valor que aparece visualmente no Checkout
+            },
+            customization: {
+                paymentMethods: {
+                    creditCard: "all", // Mantemos só cartão de crédito por ser assinatura
+                },
+                visual: {
+                    style: { theme: 'dark' } // Combina com o design do Okan!
+                }
+            },
+            callbacks: {
+                onReady: () => {
+                    console.log("Formulário de cartão carregado.");
+                },
+                onSubmit: ({ selectedPaymentMethod, formData }) => {
+                    return new Promise((resolve, reject) => {
+                        // Junta os dados do cartão gerados pelo Mercado Pago com os dados da Academia
+                        const payload = {
+                            ...formData,
+                            quantidade: parseInt(inputQtd.value) || 1,
+                            diaVencimento: parseInt(selectVencimento.value),
+                            emailGestor: currentUserEmail
+                        };
 
-        const dados = await resposta.json();
+                        // Substitua a URL abaixo pela URL que o Firebase gerar para "processarPagamentoWeb"
+                        fetch("https://SUA_REGIAO-SEU_PROJETO.cloudfunctions.net/processarPagamentoWeb", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        })
+                        .then((res) => res.json())
+                        .then((response) => {
+                            resolve(); // Remove o loading do botão do Brick
+                            if (response.status === "approved") {
+                                alert("Pagamento Aprovado! As licenças foram adicionadas.");
+                                window.location.reload(); // Recarrega a página para atualizar as licenças
+                            } else {
+                                alert("Pagamento não aprovado. Verifique o limite ou os dados do cartão. Detalhe: " + response.status_detail);
+                            }
+                        })
+                        .catch((error) => {
+                            reject();
+                            console.error(error);
+                            alert("Falha de conexão com o banco.");
+                        });
+                    });
+                },
+                onError: (error) => { console.error(error); },
+            },
+        };
+        
+        window.paymentBrickController = await bricksBuilder.create(
+            'payment',
+            'paymentBrick_container',
+            settings
+        );
+    };
 
-        if (resposta.ok && dados.linkPagamento) {
-            // 3. Sucesso! Redirecionamos o gestor para a tela de checkout do Mercado Pago
-            window.location.href = dados.linkPagamento;
-        } else {
-            alert("Erro ao gerar pagamento: " + (dados.error || "Desconhecido"));
-            btnPagamento.textContent = "Pagar com Mercado Pago 🔒";
-            btnPagamento.disabled = false;
-        }
-
-    } catch (error) {
-        console.error("Erro de conexão:", error);
-        alert("Falha ao contactar o servidor de pagamentos.");
-        btnPagamento.textContent = "Pagar com Mercado Pago 🔒";
-        btnPagamento.disabled = false;
-    }
+    renderPaymentBrick(bricksBuilder);
 });
