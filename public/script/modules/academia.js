@@ -370,6 +370,9 @@ btnPagamento?.addEventListener('click', async () => {
                             if (response.status === "approved") {
                                 alert("Pagamento Aprovado! As licenças foram adicionadas com sucesso.");
                                 window.location.reload(); 
+                            } else if (response.error) {
+                                // MOSTRA O ERRO EXATO DO BANCO NA TELA!
+                                alert("ERRO DO BANCO: " + response.detalheMP);
                             } else {
                                 alert("Pagamento recusado. Motivo: " + response.status_detail);
                             }

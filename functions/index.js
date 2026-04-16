@@ -147,6 +147,9 @@ exports.webhookMercadoPago = onRequest(async (req, res) => {
 // =========================================================================
 // 5. CHECKOUT TRANSPARENTE B2B (NOVO: PAGAMENTO DIRETO NO SITE)
 // =========================================================================
+// =========================================================================
+// 5. CHECKOUT TRANSPARENTE B2B (PAGAMENTO DIRETO NO SITE)
+// =========================================================================
 exports.processarPagamentoWeb = onRequest((req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") return res.status(405).send({error: "Método não permitido."});
@@ -154,10 +157,8 @@ exports.processarPagamentoWeb = onRequest((req, res) => {
     try {
       const { quantidade, diaVencimento, emailGestor, token, payment_method_id, payer, installments, issuer_id } = req.body;
 
-      // Cálculo Seguro do Pro-Rata no Backend
       const VALOR_MENSAL_LICENCA = 45.00;
       const VALOR_DIARIO_LICENCA = VALOR_MENSAL_LICENCA / 30;
-      
       const hoje = new Date();
       const diaHoje = hoje.getDate();
       let diasRestantes = 0;
@@ -168,56 +169,60 @@ exports.processarPagamentoWeb = onRequest((req, res) => {
 
       const valorProRataHoje = Number((diasRestantes * VALOR_DIARIO_LICENCA * quantidade).toFixed(2));
 
-      // Debita o cartão
+      // 1. MONTA O PAGAMENTO COM OS DADOS EXATOS DO FORMULÁRIO (BRICK)
+      const paymentBody = {
+        transaction_amount: valorProRataHoje,
+        token: token,
+        description: `Licenças Premium Okan (${quantidade}x) - Pro-Rata`,
+        installments: Number(installments) || 1,
+        payment_method_id: payment_method_id,
+        payer: payer // <-- AQUI ESTÁ A MAGIA! Manda o e-mail e CPF exatos que o cliente digitou no form
+      };
+      
+      if (issuer_id) {
+          paymentBody.issuer_id = issuer_id;
+      }
+
+      // 2. DEBITA O CARTÃO
       const payment = new Payment(client);
-      const result = await payment.create({
-        body: {
-          transaction_amount: valorProRataHoje,
-          token: token,
-          description: `Licenças Premium Okan (${quantidade}x) - Pro-Rata`,
-          installments: installments,
-          payment_method_id: payment_method_id,
-          issuer_id: issuer_id,
-          payer: {
-            email: emailGestor,
-            identification: payer?.identification 
-          }
-        }
-      });
+      const result = await payment.create({ body: paymentBody });
 
-      // =========================================================
-      // SALVAR DADOS PARA A COBRANÇA RECORRENTE MENSAL
-      // =========================================================
-      if (result.status === "approved") {
-        const { Customer } = require("mercadopago");
-        const customerClient = new Customer(client);
-        let customerId = "";
+      // 3. SE APROVOU, SALVA PARA COBRANÇA MENSAL
+      if (result.status === "approved" || result.status === "in_process") {
+         const { Customer } = require("mercadopago");
+         const customerClient = new Customer(client);
+         let customerId = "";
 
-        try {
-          // 1. Tenta criar um Cliente no "Cofre" do Mercado Pago
-          const customerResult = await customerClient.create({ body: { email: emailGestor } });
-          customerId = customerResult.id;
-        } catch (e) {
-          // 2. Se o cliente já existir no MP, nós apenas buscamos o ID dele
-          const search = await customerClient.search({ qs: { email: emailGestor } });
-          if (search.results && search.results.length > 0) {
-            customerId = search.results[0].id;
-          }
-        }
+         try {
+            // Cria o cofre usando o e-mail que o cliente digitou no cartão
+            const customerResult = await customerClient.create({ body: { email: payer.email } });
+            customerId = customerResult.id;
+         } catch (e) {
+            try {
+              const search = await customerClient.search({ options: { email: payer.email } });
+              if (search.results && search.results.length > 0) {
+                customerId = search.results[0].id;
+              }
+            } catch (errSearch) {
+              console.error("Aviso: Falha ao buscar Customer", errSearch);
+            }
+         }
 
-        // 3. Salva tudo no Firestore da Academia
-        const academiaQuery = await admin.firestore().collection("academias").where("emailGestor", "==", emailGestor).get();
-        if (!academiaQuery.empty) {
-          const academiaId = academiaQuery.docs[0].id;
-          await admin.firestore().collection("academias").doc(academiaId).update({
-            customerId: customerId, // Salva o ID do Cofre
-            metodoPagamentoId: payment_method_id, // Salva se foi Visa, Master, etc
-            licencasTotais: quantidade,
-            diaVencimento: diaVencimento,
-            statusAssinatura: "Ativa",
-            cancelamentoAgendado: false
-          });
-        }
+         if (customerId) {
+            // Salva no banco de dados da academia usando o e-mail de login do gestor
+            const academiaQuery = await admin.firestore().collection("academias").where("emailGestor", "==", emailGestor).get();
+            if (!academiaQuery.empty) {
+              const academiaId = academiaQuery.docs[0].id;
+              await admin.firestore().collection("academias").doc(academiaId).update({
+                customerId: customerId,
+                metodoPagamentoId: payment_method_id,
+                licencasTotais: quantidade,
+                diaVencimento: diaVencimento,
+                statusAssinatura: "Ativa",
+                cancelamentoAgendado: false
+              });
+            }
+         }
       }
 
       return res.status(200).json({ 
@@ -227,8 +232,11 @@ exports.processarPagamentoWeb = onRequest((req, res) => {
       });
 
     } catch (error) {
-      console.error("Erro no Checkout Transparente:", error);
-      return res.status(500).json({error: "Falha ao debitar o cartão."});
+      console.error("ERRO NO MERCADO PAGO:", error);
+      return res.status(500).json({
+          error: "Falha interna",
+          detalheMP: error.message || "Erro desconhecido"
+      });
     }
   });
 });
