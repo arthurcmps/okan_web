@@ -1,9 +1,67 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // Só permite ler/escrever se o usuário estiver logado
-      allow read, write: if request.auth != null;
+    
+    // ==========================================================
+    // FUNÇÕES AUXILIARES DE VALIDAÇÃO
+    // ==========================================================
+    
+    // Verifica se há um usuário logado
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Busca os dados do usuário atual na coleção 'users'
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Verifica se o usuário logado tem o cargo máximo de SYSTEM_ADMIN
+    function isSystemAdmin() {
+      return isAuth() && getUserData().role == 'SYSTEM_ADMIN';
+    }
+
+    // Verifica se o usuário logado é um gestor de academia
+    function isGymAdmin() {
+      return isAuth() && getUserData().role == 'gym_admin';
+    }
+
+    // ==========================================================
+    // REGRAS POR COLEÇÃO
+    // ==========================================================
+
+    // 1. COLEÇÃO DE USUÁRIOS
+    match /users/{userId} {
+      // Qualquer um logado pode ler perfis (necessário para a tabela de professores)
+      allow read: if isAuth();
+      // O usuário pode criar/editar o próprio perfil, ou o Admin do Sistema pode fazer tudo
+      allow write: if isSystemAdmin() || (isAuth() && request.auth.uid == userId);
+    }
+
+    // 2. LOJA OFICIAL (TEMPLATES DE TREINO)
+    match /workout_templates/{templateId} {
+      // Qualquer usuário da plataforma pode VER os treinos
+      allow read: if isAuth();
+      // BARRADO NO SERVIDOR: Apenas o SYSTEM_ADMIN pode criar, alterar ou apagar treinos globais
+      allow write: if isSystemAdmin();
+    }
+
+    // 3. COLEÇÃO DE ACADEMIAS
+    match /academias/{academiaId} {
+      // Qualquer usuário pode ler (necessário para vincular professores)
+      allow read: if isAuth();
+      // Permitir que usuários se cadastrem criando a academia
+      allow create: if isAuth();
+      // Apenas Admin do Sistema ou Gestores podem editar dados de academias
+      allow update, delete: if isSystemAdmin() || isGymAdmin();
+    }
+
+    // 4. FEEDBACKS BETA
+    match /beta_feedback/{feedbackId} {
+      // Qualquer pessoa usando o app pode enviar um feedback
+      allow create: if isAuth();
+      // Apenas o Admin do Sistema pode acessar o painel para ler e gerenciar esses feedbacks
+      allow read, update, delete: if isSystemAdmin();
     }
   }
 }
