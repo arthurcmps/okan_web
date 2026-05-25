@@ -24,6 +24,24 @@ body {
 #login-btn { width: 100%; padding: 14px; background-color: #00e676; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
 #login-btn:hover { background-color: #00c853; }
 
+/* --- ESTILO PARA O LINK DE ESQUECI A SENHA --- */
+.forgot-password-container {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.forgot-password-container a {
+    color: #aaaaaa;
+    font-size: 14px;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.forgot-password-container a:hover {
+    color: #00e676;
+    text-decoration: underline;
+}
 
 /* --- DASHBOARD LAYOUT --- */
 .dashboard-body { justify-content: flex-start; align-items: stretch; background-color: #0d0d0d; display: flex; flex-direction: row; }
