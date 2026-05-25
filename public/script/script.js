@@ -1,20 +1,6 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBRbLUy03Y7628Lv3ruMy5PDq0Y3_zwykw",
-  authDomain: "app-academia-2914d.firebaseapp.com",
-  projectId: "app-academia-2914d",
-  storageBucket: "app-academia-2914d.firebasestorage.app",
-  messagingSenderId: "1080333508962",
-  appId: "1:1080333508962:web:e93dccc19e32aaaf4ccc3b",
-  measurementId: "G-BZBJTDFVR3"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// IMPORTAÇÃO CENTRALIZADA
+import { auth } from "./firebase.js"; 
 
 const loginForm = document.getElementById('login-form');
 const emailInput = document.getElementById('email');
@@ -26,7 +12,8 @@ const linkEsqueciSenha = document.getElementById('esqueci-senha-link');
 const provider = new GoogleAuthProvider();
 
 linkEsqueciSenha.addEventListener('click', (e) => {
-    e.preventDefault();
+    e.preventDefault(); 
+    
     const emailValue = emailInput.value.trim();
     errorMessage.style.color = "#ff5252";
 
@@ -40,12 +27,13 @@ linkEsqueciSenha.addEventListener('click', (e) => {
 
     sendPasswordResetEmail(auth, emailValue)
         .then(() => {
-            errorMessage.style.color = "#00e676";
+            errorMessage.style.color = "#00e676"; 
             errorMessage.textContent = "E-mail de redefinição enviado! Verifique sua caixa de entrada (e spam).";
         })
         .catch((error) => {
             console.error("Erro ao tentar redefinir senha:", error);
-            errorMessage.style.color = "#ff5252";
+            errorMessage.style.color = "#ff5252"; 
+            
             if (error.code === 'auth/user-not-found') {
                 errorMessage.textContent = "Não encontramos nenhuma conta com este e-mail.";
             } else if (error.code === 'auth/invalid-email') {
@@ -59,6 +47,7 @@ linkEsqueciSenha.addEventListener('click', (e) => {
 googleLoginBtn.addEventListener('click', async () => {
     googleLoginBtn.textContent = "A carregar...";
     errorMessage.textContent = "";
+
     try {
         await signInWithPopup(auth, provider);
         window.location.href = "dashboard.html";
@@ -71,18 +60,20 @@ googleLoginBtn.addEventListener('click', async () => {
 
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault(); 
+    
     const email = emailInput.value;
     const password = passwordInput.value;
     
     loginBtn.textContent = "A entrar...";
     loginBtn.disabled = true;
     errorMessage.textContent = "";
-    errorMessage.style.color = "#ff5252";
+    errorMessage.style.color = "#ff5252"; 
 
     try {
         await signInWithEmailAndPassword(auth, email, password);
         loginBtn.textContent = "Redirecionando...";
         window.location.href = "dashboard.html"; 
+
     } catch (error) {
         console.error("Erro no login:", error);
         if (error.code === 'auth/invalid-credential') {
@@ -90,6 +81,7 @@ loginForm.addEventListener('submit', async (e) => {
         } else {
             errorMessage.textContent = "Erro ao fazer login. Tente novamente.";
         }
+        
         loginBtn.textContent = "Entrar no Painel";
         loginBtn.disabled = false;
     } 
