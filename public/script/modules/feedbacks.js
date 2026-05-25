@@ -1,11 +1,18 @@
 // script/modules/feedbacks.js
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db } from "../firebase.js"; // Importa a conexão do nosso ficheiro central!
+import { db } from "../firebase.js";
+import { renderSkeleton } from "./skeleton.js";
 
 export async function carregarFeedbacksBeta() {
+    // Aciona o Skeleton Loader (5 colunas, 4 linhas) ANTES da requisição
+    renderSkeleton('table-feedbacks-body', 5, 4);
+    
     const tbody = document.getElementById('table-feedbacks-body');
+    
     try {
         const snapshot = await getDocs(collection(db, "beta_feedback"));
+        
+        // Limpa o Skeleton apenas quando os dados chegam do Firebase
         tbody.innerHTML = '';
         
         if (snapshot.empty) { 
@@ -31,6 +38,7 @@ export async function carregarFeedbacksBeta() {
             tbody.appendChild(tr);
         });
     } catch (error) { 
-        console.error("Erro ao carregar feedbacks:", error); 
+        console.error(error); 
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #ff5252;">Erro ao carregar feedbacks.</td></tr>';
     }
 }
