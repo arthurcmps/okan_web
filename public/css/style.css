@@ -246,3 +246,65 @@ button { font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer
         padding: 24px 20px;
     }
 }
+
+/* ========================================================= */
+/* SISTEMA DE NOTIFICAÇÕES (TOASTS)                          */
+/* ========================================================= */
+#toast-container {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 10000;
+    pointer-events: none; /* Permite clicar nos elementos atrás do container */
+}
+
+.toast {
+    min-width: 300px;
+    max-width: 400px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+    line-height: 1.4;
+    border: 1px solid #333;
+    
+    /* Estado inicial: fora da tela à direita */
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Classe ativada via JavaScript para mostrar o Toast */
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Barras laterais coloridas para reforçar a intenção */
+.toast-success { border-left: 4px solid #00e676; }
+.toast-error { border-left: 4px solid #ff5252; }
+.toast-info { border-left: 4px solid #2196f3; }
+
+.toast-icon {
+    font-size: 24px;
+}
+
+@media (max-width: 768px) {
+    #toast-container {
+        bottom: 80px; /* Sobe um pouco no mobile para não sobrepor o menu inferior */
+        right: 16px;
+        left: 16px; /* Faz o toast ocupar quase a tela toda no mobile */
+    }
+    .toast {
+        min-width: unset;
+        width: 100%;
+    }
+}
