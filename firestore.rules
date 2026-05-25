@@ -14,36 +14,53 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // Atualizado para reconhecer o seu perfil
+    // Identifica o Administrador Geral do Sistema
     function isSuperAdmin() {
       return isAuth() && getUserData().role == 'super_admin';
     }
 
-    // Reconhece os gestores das academias cadastradas
+    // Identifica se o usuário é um gestor de academia
     function isGymAdmin() {
       return isAuth() && getUserData().role == 'gym_admin';
+    }
+
+    // REGRA DE ENGENHARIA: Verifica se o gym_admin logado é o dono real desta academia
+    function isGymOwner(academiaId) {
+      return isGymAdmin() && get(/databases/$(database)/documents/academias/$(academiaId)).data.emailGestor == getUserData().email;
     }
 
     // ==========================================================
     // REGRAS POR COLEÇÃO
     // ==========================================================
 
+    // 1. COLEÇÃO DE USUÁRIOS
     match /users/{userId} {
       allow read: if isAuth();
       allow write: if isSuperAdmin() || (isAuth() && request.auth.uid == userId);
     }
 
+    // 2. LOJA OFICIAL (TEMPLATES DE TREINO)
     match /workout_templates/{templateId} {
       allow read: if isAuth();
       allow write: if isSuperAdmin();
     }
 
+    // 3. COLEÇÃO DE ACADEMIAS E SUAS SUBCOLEÇÕES
     match /academias/{academiaId} {
+      // Qualquer usuário autenticado pode ler os dados da academia (ex: professores buscando o vínculo)
       allow read: if isAuth();
       allow create: if isAuth();
-      allow update, delete: if isSuperAdmin() || isGymAdmin();
+      // Apenas o super_admin ou o próprio gestor dono da unidade pode alterar dados cadastrais
+      allow update, delete: if isSuperAdmin() || isGymOwner(academiaId);
+
+      // CORREÇÃO AQUI: Regra explícita para a subcoleção de professores
+      match /professores/{professorId} {
+        // O super_admin acessa tudo, e o gym_admin só gerencia os professores da SUA própria academia
+        allow read, write: if isSuperAdmin() || isGymOwner(academiaId);
+      }
     }
 
+    // 4. FEEDBACKS BETA
     match /beta_feedback/{feedbackId} {
       allow create: if isAuth();
       allow read, update, delete: if isSuperAdmin();

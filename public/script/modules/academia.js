@@ -90,7 +90,7 @@ export function setupAcademiasUI() {
     const modalNovoProfessor = document.getElementById('modal-novo-professor');
     document.getElementById('btn-adicionar-professor')?.addEventListener('click', () => {
         if (academiaAtualLicencasUsadas >= academiaAtualLicencasTotais) { 
-            showToast("Limite de licenças atingido! Compre mais no separador de Planos.", "error"); 
+            showToast("Limite de licenças atingido! Compre mais no separador de Assinatura.", "error"); 
             return; 
         }
         document.getElementById('form-novo-professor').reset();
@@ -152,13 +152,21 @@ export async function carregarAcademias() {
 }
 
 export async function configurarPainelAcademia(emailGestor) {
-    document.getElementById('menu-inicio').style.display = 'none';
-    document.getElementById('menu-academias').style.display = 'none';
-    document.getElementById('menu-professores').style.display = 'none';
-    document.getElementById('menu-templates').style.display = 'none';
+    // 1. ESCONDE TODOS OS MENUS GLOBAIS DO SUPER ADMIN
+    const menusGlobais = ['menu-inicio', 'menu-academias', 'menu-professores', 'menu-templates', 'menu-feedbacks'];
+    menusGlobais.forEach(id => {
+        const menu = document.getElementById(id);
+        if (menu) menu.style.display = 'none';
+    });
 
+    // 2. EXIBE APENAS OS MENUS DA ACADEMIA
     const menuMinha = document.getElementById('menu-minha-academia');
-    menuMinha.style.display = 'flex'; menuMinha.click(); 
+    const menuPlanos = document.getElementById('menu-planos'); // Este estava oculto antes!
+    
+    if (menuMinha) menuMinha.style.display = 'flex';
+    if (menuPlanos) menuPlanos.style.display = 'flex'; 
+
+    if (menuMinha) menuMinha.click(); 
 
     try {
         const q = query(collection(db, "academias"), where("emailGestor", "==", emailGestor));
