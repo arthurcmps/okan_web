@@ -2,6 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.x.x/firebase-app-check.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBRbLUy03Y7628Lv3ruMy5PDq0Y3_zwykw",
@@ -14,8 +15,14 @@ const firebaseConfig = {
 
 // Inicializa os serviços
 const app = initializeApp(firebaseConfig);
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LcGNk4tAAAAALb-DBADJhVIBm1-j9gjMnGRCAwT'),
+  
+  // Isso faz com que o token se renove sozinho antes de expirar
+  isTokenAutoRefreshEnabled: true
+});
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Exporta para ser usado nos outros ficheiros
-export { auth, db };
+export { auth, db, appCheck };
