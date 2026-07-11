@@ -1,5 +1,6 @@
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
+import { showToast } from "./toast.js";
 
 let userRole = null;
 let currentUserEmail = null;
@@ -80,13 +81,18 @@ export function setupAcademiasUI() {
                 carregarAcademias();
             }
             modalNovaAcademia.style.display = 'none'; 
-        } catch (error) { console.error(error); alert("Erro ao salvar.");
+        } catch (error) { 
+            console.error(error); 
+            showToast("Erro ao salvar.", "error");
         } finally { btnSubmit.textContent = "Salvar Dados"; btnSubmit.disabled = false; }
     });
 
     const modalNovoProfessor = document.getElementById('modal-novo-professor');
     document.getElementById('btn-adicionar-professor')?.addEventListener('click', () => {
-        if (academiaAtualLicencasUsadas >= academiaAtualLicencasTotais) { alert("Limite de licenças atingido! Compre mais no separador de Planos."); return; }
+        if (academiaAtualLicencasUsadas >= academiaAtualLicencasTotais) { 
+            showToast("Limite de licenças atingido! Compre mais no separador de Assinatura.", "error"); 
+            return; 
+        }
         document.getElementById('form-novo-professor').reset();
         modalNovoProfessor.style.display = 'flex';
     });
@@ -105,7 +111,10 @@ export function setupAcademiasUI() {
             modalNovoProfessor.style.display = 'none';
             carregarProfessoresDaAcademia(); 
             if (userRole === 'super_admin') carregarAcademias(); 
-        } catch (e) { console.error(e); alert("Erro ao adicionar."); } finally { btnSubmit.textContent = "Conceder Licença"; btnSubmit.disabled = false; }
+        } catch (e) { 
+            console.error(e); 
+            showToast("Erro ao adicionar.", "error"); 
+        } finally { btnSubmit.textContent = "Conceder Licença"; btnSubmit.disabled = false; }
     });
 
     window.addEventListener('click', (e) => {
@@ -143,13 +152,21 @@ export async function carregarAcademias() {
 }
 
 export async function configurarPainelAcademia(emailGestor) {
-    document.getElementById('menu-inicio').style.display = 'none';
-    document.getElementById('menu-academias').style.display = 'none';
-    document.getElementById('menu-professores').style.display = 'none';
-    document.getElementById('menu-templates').style.display = 'none';
+    // 1. ESCONDE TODOS OS MENUS GLOBAIS DO SUPER ADMIN
+    const menusGlobais = ['menu-inicio', 'menu-academias', 'menu-professores', 'menu-templates', 'menu-feedbacks'];
+    menusGlobais.forEach(id => {
+        const menu = document.getElementById(id);
+        if (menu) menu.style.display = 'none';
+    });
 
+    // 2. EXIBE APENAS OS MENUS DA ACADEMIA
     const menuMinha = document.getElementById('menu-minha-academia');
-    menuMinha.style.display = 'flex'; menuMinha.click(); 
+    const menuPlanos = document.getElementById('menu-planos'); // Este estava oculto antes!
+    
+    if (menuMinha) menuMinha.style.display = 'flex';
+    if (menuPlanos) menuPlanos.style.display = 'flex'; 
+
+    if (menuMinha) menuMinha.click(); 
 
     try {
         const q = query(collection(db, "academias"), where("emailGestor", "==", emailGestor));
@@ -175,11 +192,9 @@ function abrirDetalhesAcademia(acad, id) {
     academiaAtualLicencasTotais = acad.licencasTotais || 0; 
     academiaAtualLicencasUsadas = acad.licencasUsadas || 0;
     
-    // Preenchimento de dados básicos...
     document.getElementById('detalhe-nome-titulo').textContent = acad.nome;
     document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
     
-    // --- LÓGICA DA ABA DE PLANOS E ASSINATURA ---
     const statusAssinatura = acad.statusAssinatura || 'Aguardando Pagamento';
     const cancelamentoAgendado = acad.cancelamentoAgendado || false;
     
@@ -220,13 +235,11 @@ function abrirDetalhesAcademia(acad, id) {
         painelCompra.style.display = 'block';
     }
 
-    // Restante da função (navegação e carregar professores)...
     document.querySelectorAll('.view-section').forEach(section => { if(section) section.style.display = 'none'; });
     document.getElementById('section-detalhes-academia').style.display = 'block';
     carregarProfessoresDaAcademia(); 
 }
 
-// EVENTO PARA CANCELAR ASSINATURA
 document.getElementById('btn-cancelar-assinatura')?.addEventListener('click', () => {
     if (confirmarExclusaoGlob) {
         confirmarExclusaoGlob(
@@ -237,11 +250,13 @@ document.getElementById('btn-cancelar-assinatura')?.addEventListener('click', ()
                     await updateDoc(doc(db, "academias", academiaAtualId), { 
                         cancelamentoAgendado: true 
                     });
-                    alert("Cancelamento agendado com sucesso!");
-                    window.location.reload(); // Recarrega para atualizar o visual
+                    showToast("Cancelamento agendado com sucesso!", "success");
+                    setTimeout(() => {
+                        window.location.reload(); 
+                    }, 2000);
                 } catch (e) {
                     console.error("Erro ao cancelar:", e);
-                    alert("Erro ao processar o pedido de cancelamento.");
+                    showToast("Erro ao processar o pedido de cancelamento.", "error");
                 }
             }
         );
@@ -274,9 +289,6 @@ async function carregarProfessoresDaAcademia() {
     } catch (e) { console.error(e); }
 }
 
-// =========================================================================
-// SISTEMA DE CÁLCULO PRO-RATA E CHECKOUT BRICKS
-// =========================================================================
 const VALOR_MENSAL_LICENCA = 45.00;
 const VALOR_DIARIO_LICENCA = VALOR_MENSAL_LICENCA / 30;
 
@@ -358,7 +370,6 @@ btnPagamento?.addEventListener('click', async () => {
                             emailGestor: currentUserEmail
                         };
 
-                        // NOVA URL DA FUNÇÃO (Padrão V2 Cloud Run)
                         fetch("https://processarpagamentoweb-pxytyhhu5q-uc.a.run.app", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
@@ -368,19 +379,20 @@ btnPagamento?.addEventListener('click', async () => {
                         .then((response) => {
                             resolve(); 
                             if (response.status === "approved") {
-                                alert("Pagamento Aprovado! As licenças foram adicionadas com sucesso.");
-                                window.location.reload(); 
+                                showToast("Pagamento Aprovado! As licenças foram adicionadas com sucesso.", "success");
+                                setTimeout(() => {
+                                    window.location.reload(); 
+                                }, 2000);
                             } else if (response.error) {
-                                // MOSTRA O ERRO EXATO DO BANCO NA TELA!
-                                alert("ERRO DO BANCO: " + response.detalheMP);
+                                showToast("ERRO DO BANCO: " + response.detalheMP, "error");
                             } else {
-                                alert("Pagamento recusado. Motivo: " + response.status_detail);
+                                showToast("Pagamento recusado. Motivo: " + response.status_detail, "error");
                             }
                         })
                         .catch((error) => {
                             reject();
                             console.error(error);
-                            alert("Falha de conexão com o servidor de pagamento.");
+                            showToast("Falha de conexão com o servidor de pagamento.", "error");
                         });
                     });
                 },

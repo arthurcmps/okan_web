@@ -227,16 +227,52 @@ export async function carregarTemplatesLoja() {
     } catch (error) { console.error(error); }
 }
 
+// Substitua a função atualizarListaExerciciosUI() no seu loja.js por esta versão:
+
+function criarItemExercicio(ex, index) {
+    const li = document.createElement('li');
+    li.className = 'exercise-item';
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'exercise-item-info';
+
+    const nomeStrong = document.createElement('strong');
+    nomeStrong.textContent = ex.nome;
+
+    const seriesSpan = document.createElement('span');
+    seriesSpan.textContent = `${ex.series}x ${ex.repeticoes}`;
+
+    infoDiv.append(nomeStrong, seriesSpan);
+
+    const btnRemover = document.createElement('button');
+    btnRemover.className = 'action-btn';
+    btnRemover.style.color = '#ff5252';
+    
+    const iconClose = document.createElement('span');
+    iconClose.className = 'material-symbols-outlined';
+    iconClose.textContent = 'close';
+    btnRemover.appendChild(iconClose);
+
+    // Adiciona o evento de forma direta, sem precisar colocar strings HTML como "onclick='...'"
+    btnRemover.addEventListener('click', () => {
+        removerExercicioDoTemplate(index);
+    });
+
+    li.append(infoDiv, btnRemover);
+    return li;
+}
+
 function atualizarListaExerciciosUI() {
     const ul = document.getElementById('lista-exercicios-template');
     if(!ul) return;
-    ul.innerHTML = '';
+    
+    // Limpeza segura
+    while (ul.firstChild) {
+        ul.removeChild(ul.firstChild);
+    }
+
     exerciciosDoTemplateAtual.forEach((ex, index) => {
-        const li = document.createElement('li'); li.className = 'exercise-item';
-        li.innerHTML = `
-            <div class="exercise-item-info"><strong>${ex.nome}</strong><span>${ex.series}x ${ex.repeticoes}</span></div>
-            <button class="action-btn" style="color: #ff5252;" onclick="removerExercicioDoTemplate(${index})"><span class="material-symbols-outlined">close</span></button>
-        `;
-        ul.appendChild(li);
+        const liComponent = criarItemExercicio(ex, index);
+        ul.appendChild(liComponent);
     });
 }

@@ -1,9 +1,70 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // Só permite ler/escrever se o usuário estiver logado
-      allow read, write: if request.auth != null;
+    
+    // ==========================================================
+    // FUNÇÕES AUXILIARES DE VALIDAÇÃO
+    // ==========================================================
+    
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isAuth() && getUserData().role == 'super_admin';
+    }
+
+    function isGymAdmin() {
+      return isAuth() && getUserData().role == 'gym_admin';
+    }
+
+    function isGymOwner(academiaId) {
+      return isGymAdmin() && get(/databases/$(database)/documents/academias/$(academiaId)).data.emailGestor == getUserData().email;
+    }
+
+    // ==========================================================
+    // REGRAS POR COLEÇÃO
+    // ==========================================================
+
+    // 1. COLEÇÃO DE USUÁRIOS
+    match /users/{userId} {
+      allow read: if isAuth();
+      allow write: if isSuperAdmin() || (isAuth() && request.auth.uid == userId);
+    }
+
+    // 2. LOJA OFICIAL (TEMPLATES DE TREINO)
+    match /workout_templates/{templateId} {
+      allow read: if isAuth();
+      allow write: if isSuperAdmin();
+    }
+
+    // 3. CATÁLOGO GLOBAL DE EXERCÍCIOS (A CORREÇÃO ESTÁ AQUI)
+    match /exercises/{exerciseId} {
+      // Qualquer um logado (como professores no app) pode ler a lista de exercícios
+      allow read: if isAuth();
+      // APENAS você (super_admin) pode criar, editar ou apagar exercícios do banco
+      allow write: if isSuperAdmin();
+    }
+
+    // 4. COLEÇÃO DE ACADEMIAS E SUAS SUBCOLEÇÕES
+    match /academias/{academiaId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if isSuperAdmin() || isGymOwner(academiaId);
+
+      match /professores/{professorId} {
+        allow read, write: if isSuperAdmin() || isGymOwner(academiaId);
+      }
+    }
+
+    // 5. FEEDBACKS BETA
+    match /beta_feedback/{feedbackId} {
+      allow create: if isAuth();
+      allow read, update, delete: if isSuperAdmin();
     }
   }
 }

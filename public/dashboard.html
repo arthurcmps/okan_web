@@ -21,18 +21,18 @@
             <h2>Okan<span style="color: #00e676;">.Admin</span></h2>
         </div>
         <ul class="nav-links">
-            <li id="menu-inicio" class="active" data-target="inicio"><span class="material-symbols-outlined"></span> Início</li>
-            <li id="menu-academias" data-target="academias"><span class="material-symbols-outlined"></span> Academias</li>
-            <li id="menu-professores" data-target="professores"><span class="material-symbols-outlined"></span> Professores</li>
-            <li id="menu-templates" data-target="templates"><span class="material-symbols-outlined"></span> Loja (Templates)</li>
-            <li id="menu-feedbacks" data-target="feedbacks"><span class="material-symbols-outlined"></span> Feedback Beta</li>
+            <li id="menu-inicio" class="active" data-target="inicio"><span class="material-symbols-outlined">home</span> Início</li>
+            <li id="menu-academias" data-target="academias"><span class="material-symbols-outlined">domain</span> Academias</li>
+            <li id="menu-professores" data-target="professores"><span class="material-symbols-outlined">groups</span> Professores</li>
+            <li id="menu-templates" data-target="templates"><span class="material-symbols-outlined">store</span> Loja (Templates)</li>
+            <li id="menu-feedbacks" data-target="feedbacks"><span class="material-symbols-outlined">feedback</span> Feedback Beta</li>
             
-            <li id="menu-minha-academia" data-target="detalhes-academia" style="display: none;"><span class="material-symbols-outlined"></span> Minha Academia</li>
+            <li id="menu-minha-academia" data-target="detalhes-academia" style="display: none;"><span class="material-symbols-outlined">domain</span> Minha Academia</li>
             <li id="menu-planos" data-target="planos" style="display: none;"><span class="material-symbols-outlined">credit_card</span> Assinatura</li>
         </ul>
         <div class="sidebar-footer">
             <button id="logout-btn" class="btn-outline">
-                <span class="material-symbols-outlined"></span> Sair
+                <span class="material-symbols-outlined">logout</span> Sair
             </button>
         </div>
     </aside>
@@ -280,6 +280,96 @@
                     <input type="email" id="prof-email" required placeholder="professor@email.com">
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%;">Conceder Licença</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-template-builder" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="titulo-modal-template">Novo Produto</h2>
+                <span class="close-btn" id="fechar-modal-template">&times;</span>
+            </div>
+            
+            <div class="form-row">
+                <div class="input-group" style="flex: 2;">
+                    <label>Nome do Treino</label>
+                    <input type="text" id="tpl-nome" placeholder="Ex: Hipertrofia Máxima" required>
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>Preço (R$)</label>
+                    <input type="number" id="tpl-preco" step="0.01" min="0" value="0.00">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Tags / Categorias</label>
+                <div id="tpl-tags-container" class="tags-container">
+                    </div>
+            </div>
+
+            <div style="margin-top: 24px; border-top: 1px solid #333; padding-top: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="color: white; font-size: 16px;">Exercícios do Treino</h3>
+                    <button type="button" id="btn-abrir-catalogo" class="btn-outline" style="padding: 6px 12px; font-size: 12px;">+ Adicionar</button>
+                </div>
+                <ul id="lista-exercicios-template" class="exercise-list">
+                    </ul>
+            </div>
+
+            <button type="button" id="btn-salvar-template" class="btn-primary" style="width: 100%; margin-top: 24px; background-color: #ff5252; color: white;">Salvar na Loja</button>
+        </div>
+    </div>
+
+    <div id="modal-catalogo" class="modal-overlay" style="display: none; z-index: 1010;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Catálogo de Exercícios</h2>
+                <span class="close-btn" id="fechar-modal-catalogo">&times;</span>
+            </div>
+            <button id="btn-novo-exercicio-global" class="btn-outline" style="width: 100%; margin-bottom: 16px;">+ Criar Novo no Banco</button>
+            <div id="lista-catalogo" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 8px;">
+                </div>
+        </div>
+    </div>
+
+    <div id="modal-config-series" class="modal-overlay" style="display: none; z-index: 1020;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h3 id="nome-exercicio-config" style="color: #00e676; margin-bottom: 16px;">Nome do Exercício</h3>
+            <div class="form-row">
+                <div class="input-group">
+                    <label>Séries</label>
+                    <input type="number" id="config-series" value="3" min="1">
+                </div>
+                <div class="input-group">
+                    <label>Repetições</label>
+                    <input type="text" id="config-reps" value="10 a 12">
+                </div>
+            </div>
+            <button id="btn-confirmar-exercicio" class="btn-primary" style="width: 100%;">Confirmar</button>
+        </div>
+    </div>
+
+    <div id="modal-novo-exercicio-global" class="modal-overlay" style="display: none; z-index: 1030;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Novo Exercício</h2>
+                <span class="close-btn" id="fechar-modal-novo-exercicio">&times;</span>
+            </div>
+            <form id="form-novo-exercicio-global">
+                <div class="input-group">
+                    <label>Nome</label>
+                    <input type="text" id="novo-ex-nome" required>
+                </div>
+                <div class="input-group">
+                    <label>Grupo Muscular</label>
+                    <input type="text" id="novo-ex-grupo" placeholder="Ex: Peito, Costas, Perna...">
+                </div>
+                <div class="input-group">
+                    <label>Link do Vídeo (Opcional)</label>
+                    <input type="url" id="novo-ex-video" placeholder="https://youtube.com/...">
+                </div>
+                <button type="submit" id="btn-salvar-novo-exercicio" class="btn-primary" style="width: 100%;">Salvar no Catálogo</button>
             </form>
         </div>
     </div>

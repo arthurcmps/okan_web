@@ -1,6 +1,6 @@
 // script/dashboard.js
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { auth, db } from "./firebase.js"; 
 
 // Importação dos Nossos Módulos
@@ -20,101 +20,118 @@ const textoConfirmacao = document.getElementById('texto-confirmacao-exclusao');
 let acaoExclusaoPendente = null;
 
 function confirmarExclusao(mensagemHtml, acaoConfirmada) {
-    textoConfirmacao.innerHTML = mensagemHtml;
+    textoConfirmacao.innerHTML = mensajeHtml;
     acaoExclusaoPendente = acaoConfirmada;
     modalExclusao.style.display = 'flex';
 }
 
-document.getElementById('btn-cancelar-exclusao')?.addEventListener('click', () => { 
-    modalExclusao.style.display = 'none'; 
-    acaoExclusaoPendente = null; 
+document.getElementById('btn-cancelar-exclusao')?.addEventListener('click', () => {
+    modalExclusao.style.display = 'none';
+    acaoExclusaoPendente = null;
 });
 
 document.getElementById('btn-confirmar-exclusao')?.addEventListener('click', async () => {
-    if (!acaoExclusaoPendente) return;
-    const btnConf = document.getElementById('btn-confirmar-exclusao');
-    btnConf.textContent = "Processando..."; btnConf.disabled = true;
-    try { 
-        await acaoExclusaoPendente(); 
-        modalExclusao.style.display = 'none'; 
-    } catch (e) { 
-        console.error(e); alert("Erro na exclusão."); 
-    } finally { 
-        btnConf.textContent = "Confirmar"; btnConf.disabled = false; acaoExclusaoPendente = null; 
+    if (acaoExclusaoPendente) {
+        try {
+            await acaoExclusaoPendente();
+        } catch (e) {
+            console.error(e);
+        }
     }
+    modalExclusao.style.display = 'none';
+    acaoExclusaoPendente = null;
 });
 
 // =========================================================
-// 2. INICIALIZAÇÃO DE MÓDULOS (Conectando tudo)
+// 2. FUNÇÃO ADICIONADA: CONTAGEM GLOBAL DE ALUNOS (METRICA HOME)
 // =========================================================
-initLoja(confirmarExclusao);
-setupAcademiasUI();
+async function carregarTotalAlunos() {
+    const totalStudentsEl = document.getElementById('total-students');
+    if (!totalStudentsEl) return;
+
+    try {
+        // Consulta todos os usuários cujo papel seja estritamente 'aluno'
+        const q = query(collection(db, "users"), where("role", "==", "aluno"));
+        const snapshot = await getDocs(q);
+        
+        // Atribui o tamanho da query de forma segura como texto plano
+        totalStudentsEl.textContent = snapshot.size.toString();
+    } catch (error) {
+        console.error("Erro ao contabilizar alunos globais:", error);
+        totalStudentsEl.textContent = "0";
+    }
+}
 
 // =========================================================
-// 3. SEGURANÇA E NAVEGAÇÃO DE MENU
+// 3. ROTEAMENTO DE PERMISSÕES E INICIALIZAÇÃO (RBAC)
 // =========================================================
 const menuLinks = document.querySelectorAll('.nav-links li');
 const sectionMap = {
     'inicio': document.getElementById('section-inicio'),
     'academias': document.getElementById('section-academias'),
-    'detalhes-academia': document.getElementById('section-detalhes-academia'),
-    'planos': document.getElementById('section-planos'),
     'professores': document.getElementById('section-professores'),
     'templates': document.getElementById('section-templates'),
-    'feedbacks': document.getElementById('section-feedbacks')
+    'feedbacks': document.getElementById('section-feedbacks'),
+    'detalhes-academia': document.getElementById('section-detalhes-academia'),
+    'planos': document.getElementById('section-planos')
 };
 
 onAuthStateChanged(auth, async (user) => {
+    const loader = document.getElementById('loader-overlay');
+    
     if (user) {
         try {
-            const docRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(docRef);
+            const userDoc = await getDoc(doc(db, "users", user.uid));
             
-            if (docSnap.exists()) {
-                userRole = docSnap.data().role;
-                if (adminNameEl) adminNameEl.textContent = docSnap.data().name || user.email;
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                userRole = userData.role;
+                
+                if (adminNameEl) adminNameEl.textContent = userData.name || user.email;
 
-                // Informa o módulo de academias sobre quem está logado
+                // Inicializa os contextos necessários
                 initAcademiasContext(userRole, user.email, confirmarExclusao);
+                initLoja(confirmarExclusao);
+                setupAcademiasUI();
 
                 if (userRole === 'super_admin') {
-                    carregarAcademias();
-                    carregarTodosProfessores();
-                    carregarTemplatesLoja();
-                    carregarFeedbacksBeta();
-                    
-                    // Remove a cortina de carregamento com fade out
-                    const loader = document.getElementById('loader-overlay');
-                    if (loader) {
-                        loader.style.opacity = '0';
-                        setTimeout(() => loader.style.display = 'none', 300);
-                    }
-
+                    // SE FOR VOCÊ (Acesso total às métricas globais e tabelas)
+                    await Promise.all([
+                        carregarAcademias(),
+                        carregarTodosProfessores(),
+                        carregarTotalAlunos(), // <-- CARREGA A NOVA MÉTRICA AQUI
+                        carregarFeedbacksBeta(),
+                        carregarTemplatesLoja()
+                    ]);
                 } else if (userRole === 'gym_admin') {
-                    const menuFeedbacks = document.getElementById('menu-feedbacks');
-                    if (menuFeedbacks) menuFeedbacks.style.display = 'none';
-                    
-                    // A LINHA QUE FALTAVA: Mostra a aba de Planos no menu lateral
-                    const menuPlanos = document.getElementById('menu-planos');
-                    if (menuPlanos) menuPlanos.style.display = 'flex';
-                    
+                    // SE FOR GESTOR (Redireciona direto e esconde o painel global)
                     await configurarPainelAcademia(user.email);
-                    
-                    // Remove a cortina de carregamento com fade out
-                    const loader = document.getElementById('loader-overlay');
-                    if (loader) {
-                        loader.style.opacity = '0';
-                        setTimeout(() => loader.style.display = 'none', 300);
-                    }
-
                 } else {
-                    alert("Acesso Negado."); await signOut(auth); window.location.href = "index.html";
+                    // Segurança adicional contra invasão de papéis inválidos
+                    await signOut(auth);
+                    window.location.href = "index.html";
                 }
-            } else { await signOut(auth); window.location.href = "index.html"; }
-        } catch (error) { console.error(error); }
-    } else { window.location.href = "index.html"; }
+            } else {
+                await signOut(auth);
+                window.location.href = "index.html";
+            }
+        } catch (error) {
+            console.error("Erro ao validar sessão do administrador:", error);
+            window.location.href = "index.html";
+        } finally {
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 300);
+            }
+        }
+    } else {
+        window.location.href = "index.html";
+    }
 });
 
+// =========================================================
+// 4. EVENTOS DE INTERFACE (MENUS E LOGOUT)
+// =========================================================
 document.getElementById('logout-btn')?.addEventListener('click', async () => { 
     await signOut(auth); 
     window.location.href = "index.html"; 
@@ -122,7 +139,6 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
 
 menuLinks.forEach(link => {
     link.addEventListener('click', () => {
-        // PERMISSÃO ATUALIZADA: Gestor pode ver a Academia DELE e os Planos DELE
         if (userRole === 'gym_admin' && link.id !== 'menu-minha-academia' && link.id !== 'menu-planos') return;
         
         menuLinks.forEach(item => item.classList.remove('active'));
@@ -138,11 +154,6 @@ menuLinks.forEach(link => {
 });
 
 document.getElementById('btn-voltar-academias')?.addEventListener('click', () => { 
-    const target = document.querySelector('[data-target="academias"]');
-    if (target) target.click(); 
-});
-
-// Esconde o modal de exclusão global ao clicar fora
-window.addEventListener('click', (e) => {
-    if (e.target === modalExclusao) modalExclusao.style.display = 'none';
+    const target = document.querySelector('[data-target=\"academias\"]');
+    if (target) target.click();
 });
