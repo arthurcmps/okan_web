@@ -37,6 +37,52 @@ export function setupAcademiasUI() {
             licInput.disabled = false;
         }
         formNovaAcademia.reset();
+        
+        // Garante que o email do gestor esteja habilitado na criação
+        document.getElementById('acad-email').disabled = false;
+        document.getElementById('acad-email').style.opacity = '1';
+        
+        modalNovaAcademia.style.display = 'flex';
+    });
+
+    // NOVO: Evento para abrir a modal em MODO EDIÇÃO
+    document.getElementById('btn-editar-academia')?.addEventListener('click', () => {
+        if (!academiaAtualDados) return;
+
+        modoEdicaoAcademia = true; 
+        idAcademiaEditando = academiaAtualId;
+        
+        // Altera os textos da modal
+        document.getElementById('titulo-modal-academia').textContent = 'Editar Dados da Academia';
+        document.getElementById('btn-salvar-academia').textContent = 'Atualizar Dados';
+        
+        // Preenche o formulário com os dados atuais
+        document.getElementById('acad-nome').value = academiaAtualDados.nome || '';
+        document.getElementById('acad-cnpj').value = academiaAtualDados.cnpj || '';
+        document.getElementById('acad-cep').value = academiaAtualDados.cep || '';
+        document.getElementById('acad-endereco').value = academiaAtualDados.endereco || '';
+        document.getElementById('acad-bairro').value = academiaAtualDados.bairro || '';
+        document.getElementById('acad-uf').value = academiaAtualDados.uf || '';
+        document.getElementById('acad-email').value = academiaAtualDados.emailGestor || '';
+        document.getElementById('acad-telefone').value = academiaAtualDados.telefoneResponsavel || '';
+        
+        // Trava a edição do e-mail do gestor para evitar perda de acesso
+        document.getElementById('acad-email').disabled = true;
+        document.getElementById('acad-email').style.opacity = '0.5';
+
+        // Lida com o campo de licenças (O gestor não pode editar as próprias licenças)
+        const licInput = document.getElementById('acad-licencas');
+        if(licInput) {
+            licInput.value = academiaAtualDados.licencasTotais || 0;
+            if (userRole === 'gym_admin') {
+                licInput.disabled = true;
+                licInput.style.opacity = '0.5';
+            } else {
+                licInput.disabled = false;
+                licInput.style.opacity = '1';
+            }
+        }
+        
         modalNovaAcademia.style.display = 'flex';
     });
 
@@ -194,6 +240,22 @@ function abrirDetalhesAcademia(acad, id) {
     
     document.getElementById('detalhe-nome-titulo').textContent = acad.nome;
     document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
+    
+    // NOVO: Preenche os dados visuais que estavam a faltar
+    document.getElementById('detalhe-cnpj').textContent = acad.cnpj || '--';
+    document.getElementById('detalhe-email').textContent = acad.emailGestor || '--';
+    document.getElementById('detalhe-telefone').textContent = acad.telefoneResponsavel || '--';
+    document.getElementById('detalhe-cep').textContent = acad.cep || '--';
+    
+    const enderecoFormatado = acad.endereco ? `${acad.endereco} - ${acad.bairro || ''}, ${acad.uf || ''}` : '--';
+    document.getElementById('detalhe-endereco').textContent = enderecoFormatado;
+
+    // Formata a data de cadastro, se existir
+    if (acad.dataCadastro) {
+        document.getElementById('detalhe-data').textContent = acad.dataCadastro.toDate().toLocaleDateString('pt-BR');
+    } else {
+        document.getElementById('detalhe-data').textContent = '--';
+    }
     
     const statusAssinatura = acad.statusAssinatura || 'Aguardando Pagamento';
     const cancelamentoAgendado = acad.cancelamentoAgendado || false;
