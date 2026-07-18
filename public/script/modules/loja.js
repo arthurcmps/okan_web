@@ -4,9 +4,13 @@ import { db } from "../firebase.js";
 
 let idTemplateEditando = null;
 let exerciciosDoTemplateAtual = []; 
+
+// Variáveis de controlo de Edição
+let idExercicioCatalogoEditando = null;    // Controla a edição no banco de dados global
+let indexExercicioTemplateEditando = null; // Controla a edição do exercício que já está na ficha
+
 const tagsDisponiveis = ['Hipertrofia', 'Emagrecimento', 'Condicionamento', 'Iniciante', 'Intermediário', 'Avançado', 'Casa', 'Academia', 'Sem Impacto'];
 
-// Guarda a função de exclusão que virá do dashboard
 let confirmarExclusaoGlobal = null; 
 
 export function initLoja(funcaoConfirmarExclusao) {
@@ -24,7 +28,7 @@ export function initLoja(funcaoConfirmarExclusao) {
         });
     }
 
-    // 2. Modais e Botões principais
+    // 2. Modais e Botões principais do Template
     const modalTemplate = document.getElementById('modal-template-builder');
     document.getElementById('btn-novo-template')?.addEventListener('click', () => {
         idTemplateEditando = null;
@@ -73,7 +77,7 @@ export function initLoja(funcaoConfirmarExclusao) {
         finally { btnSalvar.textContent = "Salvar na Loja"; btnSalvar.disabled = false; }
     });
 
-    // 3. Catálogo de Exercícios
+    // 3. Catálogo de Exercícios (Abertura e Renderização)
     const modalCatalogo = document.getElementById('modal-catalogo');
     let exercicioSelecionadoTemporario = null;
 
@@ -88,71 +92,153 @@ export function initLoja(funcaoConfirmarExclusao) {
             
             snapshot.forEach(docSnap => {
                 const ex = docSnap.data();
-                const div = document.createElement('div');
-                div.style.padding = '12px'; div.style.borderBottom = '1px solid #333'; div.style.cursor = 'pointer';
-                div.innerHTML = `<strong style="color: white;">${ex.nome}</strong><br><span style="color: #aaa; font-size: 12px;">${ex.grupo || ''}</span>`;
+                const exId = docSnap.id; // Precisamos do ID para edição no banco
                 
-                div.addEventListener('click', () => {
+                const div = document.createElement('div');
+                div.style.padding = '12px'; 
+                div.style.borderBottom = '1px solid #333'; 
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.alignItems = 'center';
+                
+                // Área clicável para ADICIONAR à ficha
+                const infoDiv = document.createElement('div');
+                infoDiv.style.cursor = 'pointer';
+                infoDiv.style.flex = '1';
+                infoDiv.innerHTML = `<strong style="color: white;">${ex.nome}</strong><br><span style="color: #aaa; font-size: 12px;">${ex.grupo || ''}</span>`;
+                
+                infoDiv.addEventListener('click', () => {
+                    indexExercicioTemplateEditando = null; // Como veio do catálogo, é um NOVO exercício para a ficha
                     exercicioSelecionadoTemporario = ex;
-                    modalCatalogo.style.display = 'none';
+                    
                     document.getElementById('nome-exercicio-config').textContent = ex.nome;
+                    document.getElementById('config-series').value = "3";
+                    document.getElementById('config-reps').value = "10 a 12";
+                    
+                    const videoInput = document.getElementById('config-video');
+                    if (videoInput) videoInput.value = ex.videoUrl || '';
+
+                    modalCatalogo.style.display = 'none';
                     document.getElementById('modal-config-series').style.display = 'flex';
                 });
+
+                // Botão de EDITAR no Banco Global
+                const btnEditCatalogo = document.createElement('button');
+                btnEditCatalogo.className = 'action-btn';
+                btnEditCatalogo.innerHTML = '<span class="material-symbols-outlined" style="color: #00e676; font-size: 18px;">edit</span>';
+                btnEditCatalogo.title = "Editar Exercício no Banco";
+                
+                btnEditCatalogo.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Evita que o clique acione a adição à ficha
+                    
+                    idExercicioCatalogoEditando = exId; // Salva o ID para sabermos que é edição
+                    
+                    // Preenche o formulário de cadastro de exercício
+                    document.getElementById('novo-ex-nome').value = ex.nome || '';
+                    document.getElementById('novo-ex-grupo').value = ex.grupo || '';
+                    document.getElementById('novo-ex-video').value = ex.videoUrl || '';
+                    
+                    // Ajusta títulos e botões
+                    document.querySelector('#modal-novo-exercicio-global h2').textContent = "Editar Exercício (Global)";
+                    document.getElementById('btn-salvar-novo-exercicio').textContent = "Atualizar Catálogo";
+
+                    modalCatalogo.style.display = 'none';
+                    document.getElementById('modal-novo-exercicio-global').style.display = 'flex';
+                });
+
+                div.append(infoDiv, btnEditCatalogo);
                 lista.appendChild(div);
             });
         } catch(e) { console.error(e); }
     });
 
     document.getElementById('fechar-modal-catalogo')?.addEventListener('click', () => modalCatalogo.style.display = 'none');
-
-    document.getElementById('btn-confirmar-exercicio')?.addEventListener('click', () => {
-        exerciciosDoTemplateAtual.push({
-            id: Date.now().toString(),
-            nome: exercicioSelecionadoTemporario.nome,
-            series: document.getElementById('config-series').value,
-            repeticoes: document.getElementById('config-reps').value,
-            videoUrl: exercicioSelecionadoTemporario.videoUrl || ""
-        });
+    document.getElementById('fechar-modal-config-series')?.addEventListener('click', () => {
         document.getElementById('modal-config-series').style.display = 'none';
+    });
+
+    // 4. Salvar Configuração de Séries (Adiciona NOVO ou Edita EXISTENTE na ficha)
+    document.getElementById('btn-confirmar-exercicio')?.addEventListener('click', () => {
+        const videoInput = document.getElementById('config-video');
+        const videoValor = videoInput ? videoInput.value.trim() : "";
+
+        if (indexExercicioTemplateEditando !== null) {
+            // MODO EDIÇÃO NA FICHA
+            exerciciosDoTemplateAtual[indexExercicioTemplateEditando].series = document.getElementById('config-series').value;
+            exerciciosDoTemplateAtual[indexExercicioTemplateEditando].repeticoes = document.getElementById('config-reps').value;
+            exerciciosDoTemplateAtual[indexExercicioTemplateEditando].videoUrl = videoValor;
+        } else {
+            // MODO NOVO NA FICHA
+            exerciciosDoTemplateAtual.push({
+                id: Date.now().toString(),
+                nome: exercicioSelecionadoTemporario.nome,
+                series: document.getElementById('config-series').value,
+                repeticoes: document.getElementById('config-reps').value,
+                videoUrl: videoValor
+            });
+        }
+
+        document.getElementById('modal-config-series').style.display = 'none';
+        indexExercicioTemplateEditando = null; // Reseta a variável de controle
         atualizarListaExerciciosUI();
     });
 
-    // 4. Novo Exercício Global
+    // 5. Modal de Novo/Edição de Exercício Global
     const modalNovoExercicio = document.getElementById('modal-novo-exercicio-global');
     const formNovoExercicio = document.getElementById('form-novo-exercicio-global');
 
     document.getElementById('btn-novo-exercicio-global')?.addEventListener('click', () => {
-        modalCatalogo.style.display = 'none'; 
+        idExercicioCatalogoEditando = null; // É uma CRIAÇÃO
         formNovoExercicio.reset();
+        
+        document.querySelector('#modal-novo-exercicio-global h2').textContent = "Novo Exercício";
+        document.getElementById('btn-salvar-novo-exercicio').textContent = "Salvar no Catálogo";
+
+        modalCatalogo.style.display = 'none'; 
         modalNovoExercicio.style.display = 'flex';
     });
 
     document.getElementById('fechar-modal-novo-exercicio')?.addEventListener('click', () => {
         modalNovoExercicio.style.display = 'none';
-        modalCatalogo.style.display = 'flex'; 
+        modalCatalogo.style.display = 'flex'; // Volta pro catálogo
     });
 
+    // Salvar/Atualizar no Banco Global
     formNovoExercicio?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btnSalvar = document.getElementById('btn-salvar-novo-exercicio');
-        btnSalvar.textContent = "A salvar..."; btnSalvar.disabled = true;
+        btnSalvar.textContent = "A processar..."; btnSalvar.disabled = true;
 
         const nome = document.getElementById('novo-ex-nome').value.trim();
         const grupo = document.getElementById('novo-ex-grupo').value.trim();
         const videoUrl = document.getElementById('novo-ex-video').value.trim();
 
         try {
-            await addDoc(collection(db, "exercises"), {
-                nome: nome, grupo: grupo, videoUrl: videoUrl, criadoEm: serverTimestamp()
-            });
+            if (idExercicioCatalogoEditando) {
+                // ATUALIZA NO BANCO
+                await updateDoc(doc(db, "exercises", idExercicioCatalogoEditando), {
+                    nome: nome, grupo: grupo, videoUrl: videoUrl
+                });
+            } else {
+                // CRIA NO BANCO
+                await addDoc(collection(db, "exercises"), {
+                    nome: nome, grupo: grupo, videoUrl: videoUrl, criadoEm: serverTimestamp()
+                });
+            }
+            
             modalNovoExercicio.style.display = 'none';
-            document.getElementById('btn-abrir-catalogo').click();
+            idExercicioCatalogoEditando = null; // Reseta variável
+            document.getElementById('btn-abrir-catalogo').click(); // Reabre e atualiza a lista do catálogo
+            
         } catch (error) {
             console.error("Erro ao salvar:", error); alert("Erro ao salvar o exercício.");
-        } finally { btnSalvar.textContent = "Salvar no Catálogo"; btnSalvar.disabled = false; }
+        } finally { 
+            btnSalvar.textContent = "Salvar no Catálogo"; 
+            btnSalvar.disabled = false; 
+        }
     });
 
-    // Torna a função global para o HTML (Botão de X para remover exercício)
+    // Torna a função global para o HTML (Se necessário em algum momento)
     window.removerExercicioDoTemplate = function(index) {
         exerciciosDoTemplateAtual.splice(index, 1);
         atualizarListaExerciciosUI();
@@ -194,7 +280,8 @@ export async function carregarTemplatesLoja() {
 
             tr.querySelector('.btn-edit-tpl').addEventListener('click', () => {
                 idTemplateEditando = id;
-                exerciciosDoTemplateAtual = [...(tpl.exercicios || [])];
+                // Faz uma cópia profunda da lista para não alterar o banco sem salvar
+                exerciciosDoTemplateAtual = JSON.parse(JSON.stringify(tpl.exercicios || [])); 
                 
                 document.getElementById('titulo-modal-template').textContent = 'Editar Produto';
                 document.getElementById('btn-salvar-template').textContent = 'Atualizar na Loja';
@@ -227,8 +314,6 @@ export async function carregarTemplatesLoja() {
     } catch (error) { console.error(error); }
 }
 
-// Substitua a função atualizarListaExerciciosUI() no seu loja.js por esta versão:
-
 function criarItemExercicio(ex, index) {
     const li = document.createElement('li');
     li.className = 'exercise-item';
@@ -244,21 +329,43 @@ function criarItemExercicio(ex, index) {
 
     infoDiv.append(nomeStrong, seriesSpan);
 
+    // Div para agrupar os botões de ação (Editar e Remover)
+    const botoesDiv = document.createElement('div');
+    botoesDiv.style.display = 'flex';
+    botoesDiv.style.gap = '12px';
+    botoesDiv.style.alignItems = 'center';
+
+    // Botão de Editar na Ficha
+    const btnEditar = document.createElement('button');
+    btnEditar.className = 'action-btn';
+    btnEditar.style.color = '#fff';
+    btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">edit</span>';
+    
+    btnEditar.addEventListener('click', () => {
+        indexExercicioTemplateEditando = index; // Guardamos qual posição da lista estamos a editar
+        
+        document.getElementById('nome-exercicio-config').textContent = ex.nome;
+        document.getElementById('config-series').value = ex.series || '';
+        document.getElementById('config-reps').value = ex.repeticoes || '';
+        
+        const videoInput = document.getElementById('config-video');
+        if(videoInput) videoInput.value = ex.videoUrl || '';
+
+        document.getElementById('modal-config-series').style.display = 'flex';
+    });
+
+    // Botão de Remover da Ficha
     const btnRemover = document.createElement('button');
     btnRemover.className = 'action-btn';
     btnRemover.style.color = '#ff5252';
-    
-    const iconClose = document.createElement('span');
-    iconClose.className = 'material-symbols-outlined';
-    iconClose.textContent = 'close';
-    btnRemover.appendChild(iconClose);
+    btnRemover.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">close</span>';
 
-    // Adiciona o evento de forma direta, sem precisar colocar strings HTML como "onclick='...'"
     btnRemover.addEventListener('click', () => {
         removerExercicioDoTemplate(index);
     });
 
-    li.append(infoDiv, btnRemover);
+    botoesDiv.append(btnEditar, btnRemover);
+    li.append(infoDiv, botoesDiv);
     return li;
 }
 
@@ -266,7 +373,6 @@ function atualizarListaExerciciosUI() {
     const ul = document.getElementById('lista-exercicios-template');
     if(!ul) return;
     
-    // Limpeza segura
     while (ul.firstChild) {
         ul.removeChild(ul.firstChild);
     }
