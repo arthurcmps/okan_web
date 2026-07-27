@@ -335,7 +335,28 @@
                 <h2>Catálogo de Exercícios</h2>
                 <span class="close-btn" id="fechar-modal-catalogo">&times;</span>
             </div>
+            
             <button id="btn-novo-exercicio-global" class="btn-outline" style="width: 100%; margin-bottom: 16px;">+ Criar Novo no Banco</button>
+            
+            <!-- NOVOS FILTROS DE PESQUISA -->
+            <div class="form-row" style="margin-bottom: 16px;">
+                <div class="input-group" style="flex: 2; margin-bottom: 0;">
+                    <input type="text" id="filtro-nome-exercicio" placeholder="Buscar exercício por nome..." style="padding: 10px; font-size: 14px;">
+                </div>
+                <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                    <select id="filtro-grupo-exercicio" style="padding: 10px; font-size: 14px;">
+                        <option value="">Todos os Grupos</option>
+                        <option value="peito">Peito</option>
+                        <option value="costas">Costas</option>
+                        <option value="perna">Perna</option>
+                        <option value="ombro">Ombro</option>
+                        <option value="braço">Braço</option>
+                        <option value="abdômen">Abdômen</option>
+                        <option value="cardio">Cardio</option>
+                    </select>
+                </div>
+            </div>
+
             <div id="lista-catalogo" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 8px;">
                 </div>
         </div>
