@@ -316,13 +316,25 @@
                     </div>
             </div>
 
+            <!-- ESTRUTURA DO TREINO MULTI-SÉRIES -->
             <div style="margin-top: 24px; border-top: 1px solid #333; padding-top: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h3 style="color: white; font-size: 16px;">Exercícios do Treino</h3>
-                    <button type="button" id="btn-abrir-catalogo" class="btn-outline" style="padding: 6px 12px; font-size: 12px;">+ Adicionar</button>
+                    <h3 style="color: white; font-size: 16px;">Estrutura do Treino</h3>
+                    <button type="button" id="btn-abrir-catalogo" class="btn-outline" style="padding: 6px 12px; font-size: 12px;">+ Adicionar Exercício</button>
                 </div>
+                
+                <!-- NOVO: ABAS DE SÉRIES A, B, C, D, E -->
+                <div id="seletor-series" style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px;">
+                    <div class="tag-chip selected" data-serie="A" style="border-color: #ff5252;">Ficha A</div>
+                    <div class="tag-chip" data-serie="B">Ficha B</div>
+                    <div class="tag-chip" data-serie="C">Ficha C</div>
+                    <div class="tag-chip" data-serie="D">Ficha D</div>
+                    <div class="tag-chip" data-serie="E">Ficha E</div>
+                </div>
+
                 <ul id="lista-exercicios-template" class="exercise-list">
-                    </ul>
+                    <!-- A lista será renderizada via JS com base na aba ativa -->
+                </ul>
             </div>
 
             <button type="button" id="btn-salvar-template" class="btn-primary" style="width: 100%; margin-top: 24px; background-color: #ff5252; color: white;">Salvar na Loja</button>

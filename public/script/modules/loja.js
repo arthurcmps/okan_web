@@ -3,12 +3,14 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp
 import { db } from "../firebase.js";
 
 let idTemplateEditando = null;
-let exerciciosDoTemplateAtual = []; 
 
-// Variáveis de controlo de Edição e Busca
+// --- NOVA LÓGICA DE SÉRIES MÚLTIPLAS ---
+let seriesDoTemplateAtual = { 'A': [], 'B': [], 'C': [], 'D': [], 'E': [] };
+let serieAtiva = 'A'; // Aba que está aberta no momento
+
 let idExercicioCatalogoEditando = null;    
 let indexExercicioTemplateEditando = null; 
-let todosExerciciosCatalogo = []; // Guarda todos os exercícios para busca local
+let todosExerciciosCatalogo = []; 
 
 const tagsDisponiveis = ['Hipertrofia', 'Emagrecimento', 'Condicionamento', 'Iniciante', 'Intermediário', 'Avançado', 'Casa', 'Academia', 'Sem Impacto'];
 
@@ -29,11 +31,35 @@ export function initLoja(funcaoConfirmarExclusao) {
         });
     }
 
+    // 1.5 Controle das Abas (Fichas A, B, C...)
+    document.querySelectorAll('#seletor-series .tag-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            // Tira a seleção de todos
+            document.querySelectorAll('#seletor-series .tag-chip').forEach(c => {
+                c.classList.remove('selected');
+                c.style.borderColor = '#444'; 
+            });
+            // Seleciona o clicado
+            chip.classList.add('selected');
+            chip.style.borderColor = '#ff5252';
+            
+            // Muda a série ativa e atualiza a UI
+            serieAtiva = chip.getAttribute('data-serie');
+            atualizarListaExerciciosUI();
+        });
+    });
+
     // 2. Modais e Botões principais do Template
     const modalTemplate = document.getElementById('modal-template-builder');
     document.getElementById('btn-novo-template')?.addEventListener('click', () => {
         idTemplateEditando = null;
-        exerciciosDoTemplateAtual = [];
+        
+        // Zera o dicionário de séries
+        seriesDoTemplateAtual = { 'A': [], 'B': [], 'C': [], 'D': [], 'E': [] };
+        
+        // Volta a aba visual para "A"
+        document.querySelector('#seletor-series .tag-chip[data-serie="A"]').click();
+        
         document.getElementById('titulo-modal-template').textContent = 'Novo Produto';
         document.getElementById('btn-salvar-template').textContent = 'Salvar na Loja';
         document.getElementById('tpl-nome').value = '';
@@ -48,17 +74,28 @@ export function initLoja(funcaoConfirmarExclusao) {
 
     document.getElementById('btn-salvar-template')?.addEventListener('click', async () => {
         const nome = document.getElementById('tpl-nome').value.trim();
-        if(!nome || exerciciosDoTemplateAtual.length === 0) { alert("Preencha o nome e adicione pelo menos 1 exercício."); return; }
-
         const preco = parseFloat(document.getElementById('tpl-preco').value) || 0.0;
         const tagsSelecionadas = Array.from(document.querySelectorAll('.tag-chip input:checked')).map(cb => cb.value);
+
+        // Filtra para salvar apenas as fichas que têm exercícios dentro
+        const fichasParaSalvar = {};
+        for (const [letra, lista] of Object.entries(seriesDoTemplateAtual)) {
+            if (lista.length > 0) {
+                fichasParaSalvar[letra] = lista;
+            }
+        }
+
+        if(!nome || Object.keys(fichasParaSalvar).length === 0) { 
+            alert("Preencha o nome e adicione pelo menos 1 exercício em alguma das Fichas."); 
+            return; 
+        }
 
         const dataMap = {
             personalId: 'SYSTEM_ADMIN', 
             nome: nome,
             preco: preco,
             tags: tagsSelecionadas,
-            exercicios: exerciciosDoTemplateAtual,
+            fichas: fichasParaSalvar, // <--- NOVO FORMATO ESTRUTURADO
             isPremium: true
         };
 
@@ -67,7 +104,11 @@ export function initLoja(funcaoConfirmarExclusao) {
 
         try {
             if (idTemplateEditando) {
-                await updateDoc(doc(db, "workout_templates", idTemplateEditando), dataMap);
+                // Ao atualizar, o Firebase vai substituir o campo de fichas
+                await updateDoc(doc(db, "workout_templates", idTemplateEditando), {
+                    ...dataMap,
+                    exercicios: null // Remove o array legado, se existir
+                });
             } else {
                 dataMap.timestamp = serverTimestamp();
                 await addDoc(collection(db, "workout_templates"), dataMap);
@@ -82,7 +123,6 @@ export function initLoja(funcaoConfirmarExclusao) {
     const modalCatalogo = document.getElementById('modal-catalogo');
     let exercicioSelecionadoTemporario = null;
 
-    // Lógica para desenhar a lista com base nos filtros
     function renderizarCatalogoFiltrado() {
         const termoBusca = (document.getElementById('filtro-nome-exercicio')?.value || '').toLowerCase().trim();
         const grupoBusca = (document.getElementById('filtro-grupo-exercicio')?.value || '').toLowerCase();
@@ -93,10 +133,8 @@ export function initLoja(funcaoConfirmarExclusao) {
         const exerciciosFiltrados = todosExerciciosCatalogo.filter(ex => {
             const nomeStr = (ex.nome || '').toLowerCase();
             const grupoStr = (ex.grupo || '').toLowerCase();
-            
             const matchNome = nomeStr.includes(termoBusca);
             const matchGrupo = grupoBusca === '' || grupoStr.includes(grupoBusca);
-            
             return matchNome && matchGrupo;
         });
 
@@ -140,7 +178,6 @@ export function initLoja(funcaoConfirmarExclusao) {
             
             btnEditCatalogo.addEventListener('click', (e) => {
                 e.stopPropagation(); 
-                
                 idExercicioCatalogoEditando = ex.id; 
                 
                 document.getElementById('novo-ex-nome').value = ex.nome || '';
@@ -159,7 +196,6 @@ export function initLoja(funcaoConfirmarExclusao) {
         });
     }
 
-    // Eventos para ativar os filtros ao digitar ou selecionar
     document.getElementById('filtro-nome-exercicio')?.addEventListener('input', renderizarCatalogoFiltrado);
     document.getElementById('filtro-grupo-exercicio')?.addEventListener('change', renderizarCatalogoFiltrado);
 
@@ -167,27 +203,22 @@ export function initLoja(funcaoConfirmarExclusao) {
         modalCatalogo.style.display = 'flex';
         const lista = document.getElementById('lista-catalogo');
         
-        // Zera os filtros visuais
         if(document.getElementById('filtro-nome-exercicio')) document.getElementById('filtro-nome-exercicio').value = '';
         if(document.getElementById('filtro-grupo-exercicio')) document.getElementById('filtro-grupo-exercicio').value = '';
 
         lista.innerHTML = '<p style="color: #aaa; text-align: center; padding: 16px;">A buscar catálogo...</p>';
         try {
             const snapshot = await getDocs(collection(db, "exercises"));
-            todosExerciciosCatalogo = []; // Limpa a memória anterior
+            todosExerciciosCatalogo = []; 
             
             if (!snapshot.empty) {
                 snapshot.forEach(docSnap => {
                     const ex = docSnap.data();
-                    ex.id = docSnap.id; // Guarda a ID diretamente no objeto
+                    ex.id = docSnap.id; 
                     todosExerciciosCatalogo.push(ex);
                 });
-                
-                // Ordenar por ordem alfabética para facilitar
                 todosExerciciosCatalogo.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
             }
-            
-            // Chama a função para desenhar a lista completa (já que os filtros foram zerados)
             renderizarCatalogoFiltrado();
             
         } catch(e) { console.error(e); }
@@ -198,17 +229,17 @@ export function initLoja(funcaoConfirmarExclusao) {
         document.getElementById('modal-config-series').style.display = 'none';
     });
 
-    // 4. Salvar Configuração de Séries
+    // 4. Salvar Configuração de Séries (Guarda dentro da Ficha Ativa)
     document.getElementById('btn-confirmar-exercicio')?.addEventListener('click', () => {
         const videoInput = document.getElementById('config-video');
         const videoValor = videoInput ? videoInput.value.trim() : "";
 
         if (indexExercicioTemplateEditando !== null) {
-            exerciciosDoTemplateAtual[indexExercicioTemplateEditando].series = document.getElementById('config-series').value;
-            exerciciosDoTemplateAtual[indexExercicioTemplateEditando].repeticoes = document.getElementById('config-reps').value;
-            exerciciosDoTemplateAtual[indexExercicioTemplateEditando].videoUrl = videoValor;
+            seriesDoTemplateAtual[serieAtiva][indexExercicioTemplateEditando].series = document.getElementById('config-series').value;
+            seriesDoTemplateAtual[serieAtiva][indexExercicioTemplateEditando].repeticoes = document.getElementById('config-reps').value;
+            seriesDoTemplateAtual[serieAtiva][indexExercicioTemplateEditando].videoUrl = videoValor;
         } else {
-            exerciciosDoTemplateAtual.push({
+            seriesDoTemplateAtual[serieAtiva].push({
                 id: Date.now().toString(),
                 nome: exercicioSelecionadoTemporario.nome,
                 series: document.getElementById('config-series').value,
@@ -242,7 +273,6 @@ export function initLoja(funcaoConfirmarExclusao) {
         modalCatalogo.style.display = 'flex'; 
     });
 
-    // Salvar/Atualizar no Banco Global
     formNovoExercicio?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btnSalvar = document.getElementById('btn-salvar-novo-exercicio');
@@ -276,11 +306,10 @@ export function initLoja(funcaoConfirmarExclusao) {
     });
 
     window.removerExercicioDoTemplate = function(index) {
-        exerciciosDoTemplateAtual.splice(index, 1);
+        seriesDoTemplateAtual[serieAtiva].splice(index, 1);
         atualizarListaExerciciosUI();
     }
 
-    // Fechar modais ao clicar fora
     window.addEventListener('click', (e) => {
         if (e.target === modalTemplate) modalTemplate.style.display = 'none';
         if (e.target === modalCatalogo) modalCatalogo.style.display = 'none';
@@ -304,10 +333,19 @@ export async function carregarTemplatesLoja() {
             const precoStr = tpl.preco ? `R$ ${tpl.preco.toFixed(2)}` : 'Grátis';
             const tagsStr = (tpl.tags && tpl.tags.length > 0) ? tpl.tags.join(', ') : 'Sem tags';
 
+            // Conta quantas fichas diferentes o template tem
+            let qtdFichas = 0;
+            if (tpl.fichas) {
+                qtdFichas = Object.keys(tpl.fichas).length;
+            } else if (tpl.exercicios && tpl.exercicios.length > 0) {
+                qtdFichas = 1; // Template legado conta como 1 ficha
+            }
+            const infoFichas = qtdFichas > 0 ? `<span style="color: #00e676; font-weight:bold;">${qtdFichas} Ficha(s)</span> • ` : '';
+
             tr.innerHTML = `
                 <td style="font-weight: bold;">${tpl.nome}</td>
                 <td style="color: #ff5252;">${precoStr}</td>
-                <td style="font-size: 12px; color: #aaa;">${tagsStr}</td>
+                <td style="font-size: 12px; color: #aaa;">${infoFichas}${tagsStr}</td>
                 <td>
                     <button class="action-btn btn-edit-tpl" title="Editar Produto"><span class="material-symbols-outlined" style="font-size: 18px;">edit</span></button>
                     <button class="action-btn btn-delete-tpl" style="color: #ff5252;" title="Excluir da Loja"><span class="material-symbols-outlined" style="font-size: 18px;">delete</span></button>
@@ -316,7 +354,19 @@ export async function carregarTemplatesLoja() {
 
             tr.querySelector('.btn-edit-tpl').addEventListener('click', () => {
                 idTemplateEditando = id;
-                exerciciosDoTemplateAtual = JSON.parse(JSON.stringify(tpl.exercicios || [])); 
+                
+                // Conversão Inteligente: Lê do formato novo, ou converte o velho
+                seriesDoTemplateAtual = { 'A': [], 'B': [], 'C': [], 'D': [], 'E': [] };
+                if (tpl.fichas) {
+                    for (const key in tpl.fichas) {
+                        seriesDoTemplateAtual[key] = JSON.parse(JSON.stringify(tpl.fichas[key]));
+                    }
+                } else if (tpl.exercicios) {
+                    seriesDoTemplateAtual['A'] = JSON.parse(JSON.stringify(tpl.exercicios));
+                }
+
+                // Clica na Ficha A para abrir por defeito
+                document.querySelector('#seletor-series .tag-chip[data-serie="A"]').click();
                 
                 document.getElementById('titulo-modal-template').textContent = 'Editar Produto';
                 document.getElementById('btn-salvar-template').textContent = 'Atualizar na Loja';
@@ -329,7 +379,6 @@ export async function carregarTemplatesLoja() {
                     else { input.checked = false; input.parentElement.classList.remove('selected'); }
                 });
 
-                atualizarListaExerciciosUI();
                 document.getElementById('modal-template-builder').style.display = 'flex';
             });
 
@@ -404,13 +453,16 @@ function criarItemExercicio(ex, index) {
 function atualizarListaExerciciosUI() {
     const ul = document.getElementById('lista-exercicios-template');
     if(!ul) return;
+    ul.innerHTML = '';
     
-    while (ul.firstChild) {
-        ul.removeChild(ul.firstChild);
+    const exerciciosAtivos = seriesDoTemplateAtual[serieAtiva] || [];
+    
+    if (exerciciosAtivos.length === 0) {
+        ul.innerHTML = `<p style="color: #aaa; text-align: center; padding: 16px; font-size: 14px;">A Ficha ${serieAtiva} está vazia. Adicione exercícios pelo catálogo.</p>`;
+        return;
     }
 
-    exerciciosDoTemplateAtual.forEach((ex, index) => {
-        const liComponent = criarItemExercicio(ex, index);
-        ul.appendChild(liComponent);
+    exerciciosAtivos.forEach((ex, index) => {
+        ul.appendChild(criarItemExercicio(ex, index));
     });
 }
