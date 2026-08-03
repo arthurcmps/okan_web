@@ -4,7 +4,7 @@ import { db } from "../firebase.js";
 
 let idTemplateEditando = null;
 
-// --- NOVA LÓGICA DE SÉRIES MÚLTIPLAS ---
+// --- LÓGICA DE SÉRIES MÚLTIPLAS ---
 let seriesDoTemplateAtual = { 'A': [], 'B': [], 'C': [], 'D': [], 'E': [] };
 let serieAtiva = 'A'; // Aba que está aberta no momento
 
@@ -19,9 +19,9 @@ let confirmarExclusaoGlobal = null;
 export function initLoja(funcaoConfirmarExclusao) {
     confirmarExclusaoGlobal = funcaoConfirmarExclusao;
 
-    // 1. Gera as tags visuais
+    // 1. Gera as tags visuais[cite: 22]
     const tagsContainer = document.getElementById('tpl-tags-container');
-    if (tagsContainer) {
+    if (tagsContainer && tagsContainer.children.length === 0) {
         tagsDisponiveis.forEach(tag => {
             const label = document.createElement('label');
             label.className = 'tag-chip';
@@ -31,34 +31,28 @@ export function initLoja(funcaoConfirmarExclusao) {
         });
     }
 
-    // 1.5 Controle das Abas (Fichas A, B, C...)
+    // 1.5 Controle das Abas (Fichas A, B, C...)[cite: 22]
     document.querySelectorAll('#seletor-series .tag-chip').forEach(chip => {
         chip.addEventListener('click', () => {
-            // Tira a seleção de todos
             document.querySelectorAll('#seletor-series .tag-chip').forEach(c => {
                 c.classList.remove('selected');
                 c.style.borderColor = '#444'; 
             });
-            // Seleciona o clicado
             chip.classList.add('selected');
             chip.style.borderColor = '#ff5252';
             
-            // Muda a série ativa e atualiza a UI
             serieAtiva = chip.getAttribute('data-serie');
             atualizarListaExerciciosUI();
         });
     });
 
-    // 2. Modais e Botões principais do Template
+    // 2. Modais e Botões principais do Template[cite: 22]
     const modalTemplate = document.getElementById('modal-template-builder');
     document.getElementById('btn-novo-template')?.addEventListener('click', () => {
         idTemplateEditando = null;
-        
-        // Zera o dicionário de séries
         seriesDoTemplateAtual = { 'A': [], 'B': [], 'C': [], 'D': [], 'E': [] };
         
-        // Volta a aba visual para "A"
-        document.querySelector('#seletor-series .tag-chip[data-serie="A"]').click();
+        document.querySelector('#seletor-series .tag-chip[data-serie="A"]')?.click();
         
         document.getElementById('titulo-modal-template').textContent = 'Novo Produto';
         document.getElementById('btn-salvar-template').textContent = 'Salvar na Loja';
@@ -77,7 +71,6 @@ export function initLoja(funcaoConfirmarExclusao) {
         const preco = parseFloat(document.getElementById('tpl-preco').value) || 0.0;
         const tagsSelecionadas = Array.from(document.querySelectorAll('.tag-chip input:checked')).map(cb => cb.value);
 
-        // Filtra para salvar apenas as fichas que têm exercícios dentro
         const fichasParaSalvar = {};
         for (const [letra, lista] of Object.entries(seriesDoTemplateAtual)) {
             if (lista.length > 0) {
@@ -95,7 +88,7 @@ export function initLoja(funcaoConfirmarExclusao) {
             nome: nome,
             preco: preco,
             tags: tagsSelecionadas,
-            fichas: fichasParaSalvar, // <--- NOVO FORMATO ESTRUTURADO
+            fichas: fichasParaSalvar, 
             isPremium: true
         };
 
@@ -104,10 +97,9 @@ export function initLoja(funcaoConfirmarExclusao) {
 
         try {
             if (idTemplateEditando) {
-                // Ao atualizar, o Firebase vai substituir o campo de fichas
                 await updateDoc(doc(db, "workout_templates", idTemplateEditando), {
                     ...dataMap,
-                    exercicios: null // Remove o array legado, se existir
+                    exercicios: null 
                 });
             } else {
                 dataMap.timestamp = serverTimestamp();
@@ -119,7 +111,7 @@ export function initLoja(funcaoConfirmarExclusao) {
         finally { btnSalvar.textContent = "Salvar na Loja"; btnSalvar.disabled = false; }
     });
 
-    // 3. Catálogo de Exercícios com Filtros
+    // 3. Catálogo de Exercícios com Filtros[cite: 22]
     const modalCatalogo = document.getElementById('modal-catalogo');
     let exercicioSelecionadoTemporario = null;
 
@@ -163,6 +155,9 @@ export function initLoja(funcaoConfirmarExclusao) {
                 document.getElementById('nome-exercicio-config').textContent = ex.nome;
                 document.getElementById('config-series').value = "3";
                 document.getElementById('config-reps').value = "10 a 12";
+                
+                const obsInput = document.getElementById('config-obs');
+                if (obsInput) obsInput.value = ''; // <-- Limpa o campo de observação
                 
                 const videoInput = document.getElementById('config-video');
                 if (videoInput) videoInput.value = ex.videoUrl || '';
@@ -229,22 +224,29 @@ export function initLoja(funcaoConfirmarExclusao) {
         document.getElementById('modal-config-series').style.display = 'none';
     });
 
-    // 4. Salvar Configuração de Séries (Guarda dentro da Ficha Ativa)
+    // 4. Salvar Configuração de Séries (Guarda com a Observação dentro da Ficha Ativa)
+    // Dentro da função initLoja no loja.js:
     document.getElementById('btn-confirmar-exercicio')?.addEventListener('click', () => {
         const videoInput = document.getElementById('config-video');
         const videoValor = videoInput ? videoInput.value.trim() : "";
+        
+        // Lê a observação se preenchida, caso contrário deixa nulo
+        const obsInput = document.getElementById('config-obs');
+        const obsValor = (obsInput && obsInput.value.trim() !== "") ? obsInput.value.trim() : null;
 
         if (indexExercicioTemplateEditando !== null) {
             seriesDoTemplateAtual[serieAtiva][indexExercicioTemplateEditando].series = document.getElementById('config-series').value;
             seriesDoTemplateAtual[serieAtiva][indexExercicioTemplateEditando].repeticoes = document.getElementById('config-reps').value;
             seriesDoTemplateAtual[serieAtiva][indexExercicioTemplateEditando].videoUrl = videoValor;
+            seriesDoTemplateAtual[serieAtiva][indexExercicioTemplateEditando].observacao = obsValor;
         } else {
             seriesDoTemplateAtual[serieAtiva].push({
                 id: Date.now().toString(),
                 nome: exercicioSelecionadoTemporario.nome,
                 series: document.getElementById('config-series').value,
                 repeticoes: document.getElementById('config-reps').value,
-                videoUrl: videoValor
+                videoUrl: videoValor,
+                observacao: obsValor
             });
         }
 
@@ -253,7 +255,7 @@ export function initLoja(funcaoConfirmarExclusao) {
         atualizarListaExerciciosUI();
     });
 
-    // 5. Modal de Novo/Edição de Exercício Global
+    // 5. Modal de Novo/Edição de Exercício Global[cite: 22]
     const modalNovoExercicio = document.getElementById('modal-novo-exercicio-global');
     const formNovoExercicio = document.getElementById('form-novo-exercicio-global');
 
@@ -333,12 +335,11 @@ export async function carregarTemplatesLoja() {
             const precoStr = tpl.preco ? `R$ ${tpl.preco.toFixed(2)}` : 'Grátis';
             const tagsStr = (tpl.tags && tpl.tags.length > 0) ? tpl.tags.join(', ') : 'Sem tags';
 
-            // Conta quantas fichas diferentes o template tem
             let qtdFichas = 0;
             if (tpl.fichas) {
                 qtdFichas = Object.keys(tpl.fichas).length;
             } else if (tpl.exercicios && tpl.exercicios.length > 0) {
-                qtdFichas = 1; // Template legado conta como 1 ficha
+                qtdFichas = 1; 
             }
             const infoFichas = qtdFichas > 0 ? `<span style="color: #00e676; font-weight:bold;">${qtdFichas} Ficha(s)</span> • ` : '';
 
@@ -355,7 +356,6 @@ export async function carregarTemplatesLoja() {
             tr.querySelector('.btn-edit-tpl').addEventListener('click', () => {
                 idTemplateEditando = id;
                 
-                // Conversão Inteligente: Lê do formato novo, ou converte o velho
                 seriesDoTemplateAtual = { 'A': [], 'B': [], 'C': [], 'D': [], 'E': [] };
                 if (tpl.fichas) {
                     for (const key in tpl.fichas) {
@@ -365,8 +365,7 @@ export async function carregarTemplatesLoja() {
                     seriesDoTemplateAtual['A'] = JSON.parse(JSON.stringify(tpl.exercicios));
                 }
 
-                // Clica na Ficha A para abrir por defeito
-                document.querySelector('#seletor-series .tag-chip[data-serie="A"]').click();
+                document.querySelector('#seletor-series .tag-chip[data-serie="A"]')?.click();
                 
                 document.getElementById('titulo-modal-template').textContent = 'Editar Produto';
                 document.getElementById('btn-salvar-template').textContent = 'Atualizar na Loja';
@@ -413,6 +412,19 @@ function criarItemExercicio(ex, index) {
 
     infoDiv.append(nomeStrong, seriesSpan);
 
+    // Renderiza SÓ se o texto existir
+    if (ex.observacao && ex.observacao.trim() !== '') {
+        const obsSpan = document.createElement('span');
+        obsSpan.style.display = 'block';
+        obsSpan.style.fontSize = '12px';
+        obsSpan.style.color = '#00e676';
+        obsSpan.style.marginTop = '4px';
+        obsSpan.style.fontStyle = 'italic';
+        obsSpan.textContent = `Obs: ${ex.observacao}`;
+        infoDiv.appendChild(obsSpan);
+    }
+
+
     const botoesDiv = document.createElement('div');
     botoesDiv.style.display = 'flex';
     botoesDiv.style.gap = '12px';
@@ -429,6 +441,9 @@ function criarItemExercicio(ex, index) {
         document.getElementById('nome-exercicio-config').textContent = ex.nome;
         document.getElementById('config-series').value = ex.series || '';
         document.getElementById('config-reps').value = ex.repeticoes || '';
+        
+        const obsInput = document.getElementById('config-obs');
+        if (obsInput) obsInput.value = ex.observacao || ''; // <-- Carrega o texto atual no modal
         
         const videoInput = document.getElementById('config-video');
         if(videoInput) videoInput.value = ex.videoUrl || '';
