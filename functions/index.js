@@ -1,16 +1,24 @@
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onRequest} = require("firebase-functions/v2/https");
+const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const {MercadoPagoConfig, Payment, Preference} = require("mercadopago");
-const cors = require("cors")({origin: true}); 
-const { onSchedule } = require("firebase-functions/v2/scheduler");
+const cors = require("cors")({origin: true});
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 
 admin.initializeApp();
 
-// 1. CONFIGURAÇÃO DO MERCADO PAGO
-const accessToken = "TEST-7836166911445116-031722-d0c5e5953a3c421c2de9067cfad9f2f4-230652618";
-const client = new MercadoPagoConfig({accessToken: accessToken});
+// 1. CONFIGURACAO DO MERCADO PAGO
+const mercadoPagoAccessToken = defineSecret(
+  "MERCADO_PAGO_ACCESS_TOKEN"
+);
+
+function getMercadoPagoClient() {
+  return new MercadoPagoConfig({
+    accessToken: mercadoPagoAccessToken.value(),
+  });
+}
 
 // 2. MOTOR DE NOTIFICAÇÕES PUSH
 exports.enviarPushNotificationGenerica = onDocumentCreated(
@@ -48,7 +56,9 @@ exports.enviarPushNotificationGenerica = onDocumentCreated(
 );
 
 // 3A. GERAR PIX (V2) - APP
-exports.criarPagamentoPix = onCall(async (request) => {
+exports.criarPagamentoPix = onCall(
+  {secrets: [mercadoPagoAccessToken]},
+  async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Precisa de estar autenticado.");
   }
@@ -57,6 +67,7 @@ exports.criarPagamentoPix = onCall(async (request) => {
   const email = request.auth.token.email || "email@teste.com";
 
   try {
+    const client = getMercadoPagoClient();
     const payment = new Payment(client);
     const result = await payment.create({
       body: {
@@ -81,7 +92,9 @@ exports.criarPagamentoPix = onCall(async (request) => {
 });
 
 // 3B. PAGAMENTO COM CARTÃO DE CRÉDITO (V2) - APP
-exports.criarPagamentoCartao = onCall(async (request) => {
+exports.criarPagamentoCartao = onCall(
+  {secrets: [mercadoPagoAccessToken]},
+  async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Precisa de estar autenticado.");
   }
@@ -92,6 +105,7 @@ exports.criarPagamentoCartao = onCall(async (request) => {
   const uid = request.auth.uid;
 
   try {
+    const client = getMercadoPagoClient();
     const payment = new Payment(client);
     const result = await payment.create({
       body: {
@@ -120,10 +134,12 @@ exports.criarPagamentoCartao = onCall(async (request) => {
 });
 
 // 4. WEBHOOK (V2)
-exports.webhookMercadoPago = onRequest(async (req, res) => {
-  const {type, data} = req.body;
+exports.webhookMercadoPago = onRequest(
+  {secrets: [mercadoPagoAccessToken]},
+  async (req, res) => {  const {type, data} = req.body;
   if (type === "payment") {
     try {
+      const client = getMercadoPagoClient();
       const payment = new Payment(client);
       const pagamentoInfo = await payment.get({id: data.id});
       if (pagamentoInfo.status === "approved") {
@@ -145,17 +161,27 @@ exports.webhookMercadoPago = onRequest(async (req, res) => {
 });
 
 // =========================================================================
-// 5. CHECKOUT TRANSPARENTE B2B (NOVO: PAGAMENTO DIRETO NO SITE)
-// =========================================================================
-// =========================================================================
 // 5. CHECKOUT TRANSPARENTE B2B (PAGAMENTO DIRETO NO SITE)
 // =========================================================================
-exports.processarPagamentoWeb = onRequest((req, res) => {
-  cors(req, res, async () => {
+exports.processarPagamentoWeb = onRequest(
+  {secrets: [mercadoPagoAccessToken]},
+  async (req, res) => {
+    await cors(req, res, async () => {
     if (req.method !== "POST") return res.status(405).send({error: "Método não permitido."});
 
     try {
-      const { quantidade, diaVencimento, emailGestor, token, payment_method_id, payer, installments, issuer_id } = req.body;
+    const client = getMercadoPagoClient();
+
+    const {
+      quantidade,
+      diaVencimento,
+      emailGestor,
+      token,
+      payment_method_id,
+      payer,
+      installments,
+      issuer_id
+    } = req.body;
 
       const VALOR_MENSAL_LICENCA = 45.00;
       const VALOR_DIARIO_LICENCA = VALOR_MENSAL_LICENCA / 30;
@@ -184,7 +210,7 @@ exports.processarPagamentoWeb = onRequest((req, res) => {
       }
 
       // 2. DEBITA O CARTÃO
-      const payment = new Payment(client);
+      const payment = Payment(client);
       const result = await payment.create({ body: paymentBody });
 
       // 3. SE APROVOU, SALVA PARA COBRANÇA MENSAL
@@ -244,13 +270,19 @@ exports.processarPagamentoWeb = onRequest((req, res) => {
 // =========================================================================
 // 6. ROBÔ MENSAL DE ASSINATURAS (CRON JOB)
 // =========================================================================
-exports.motorDeCobrancaMensal = onSchedule("every day 01:00", async (event) => {
+exports.motorDeCobrancaMensal = onSchedule(
+  {
+    schedule: "every day 01:00",
+    secrets: [mercadoPagoAccessToken],
+  },
+  async (event) => {
   console.log("Iniciando rotina de cobrança diária...");
   
   const hoje = new Date();
   const diaAtual = hoje.getDate(); // Ex: 10
 
   try {
+  const client = getMercadoPagoClient();
     // 1. Busca todas as academias ativas no banco de dados
     const academiasSnapshot = await admin.firestore()
       .collection("academias")
