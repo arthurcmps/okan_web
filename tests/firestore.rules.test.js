@@ -205,7 +205,33 @@ beforeEach(async () => {
     await setDoc(doc(db, "beta_feedback", "feedback-1"), {
       userId: "aluno-1",
       mensagem: "Feedback de teste",
-    });
+            });
+
+            await setDoc(
+          doc(
+            db,
+            "users",
+            "aluno-1",
+            "entitlements",
+            "workout_template_template-1",
+          ),
+          {
+            schemaVersion: 1,
+            entitlementId:
+              "workout_template_template-1",
+            userId: "aluno-1",
+            entitlementType:
+              "workout_template",
+            productId:
+              "workout_template:template-1",
+            productKind:
+              "workout_template",
+            sourceId:
+              "template-1",
+            status:
+              "active",
+          },
+        );
   });
 });
 
@@ -2074,6 +2100,155 @@ test(
         {
           personalId: "personal-2",
           text: "Tentativa indevida",
+        },
+      ),
+    );
+  },
+);
+
+test(
+  "usuario nao pode criar perfil com templates comprados",
+  async () => {
+    const db = testEnv
+      .authenticatedContext("novo-aluno", {
+        email: "novo@okan.test",
+      })
+      .firestore();
+
+    await assertFails(
+      setDoc(
+        doc(db, "users", "novo-aluno"),
+        {
+          uid: "novo-aluno",
+          name: "Novo Aluno",
+          email: "novo@okan.test",
+          tipo: "aluno",
+          purchased_templates: [
+            "template-pago",
+          ],
+        },
+      ),
+    );
+  },
+);
+
+test(
+  "usuario nao pode adicionar template comprado manualmente",
+  async () => {
+    const db = testEnv
+      .authenticatedContext("aluno-1", {
+        email: "aluno@okan.test",
+      })
+      .firestore();
+
+    await assertFails(
+      updateDoc(
+        doc(db, "users", "aluno-1"),
+        {
+          purchased_templates: [
+            "template-pago",
+          ],
+        },
+      ),
+    );
+  },
+);
+
+test(
+  "usuario pode ler o proprio entitlement",
+  async () => {
+    const db = testEnv
+      .authenticatedContext("aluno-1", {
+        email: "aluno@okan.test",
+      })
+      .firestore();
+
+    await assertSucceeds(
+      getDoc(
+        doc(
+          db,
+          "users",
+          "aluno-1",
+          "entitlements",
+          "workout_template_template-1",
+        ),
+      ),
+    );
+  },
+);
+
+test(
+  "outro usuario nao pode ler entitlement alheio",
+  async () => {
+    const db = testEnv
+      .authenticatedContext("personal-2", {
+        email: "personal2@okan.test",
+      })
+      .firestore();
+
+    await assertFails(
+      getDoc(
+        doc(
+          db,
+          "users",
+          "aluno-1",
+          "entitlements",
+          "workout_template_template-1",
+        ),
+      ),
+    );
+  },
+);
+
+test(
+  "usuario nao pode criar o proprio entitlement",
+  async () => {
+    const db = testEnv
+      .authenticatedContext("aluno-1", {
+        email: "aluno@okan.test",
+      })
+      .firestore();
+
+    await assertFails(
+      setDoc(
+        doc(
+          db,
+          "users",
+          "aluno-1",
+          "entitlements",
+          "personal_premium",
+        ),
+        {
+          userId: "aluno-1",
+          entitlementType:
+            "personal_premium",
+          status: "active",
+        },
+      ),
+    );
+  },
+);
+
+test(
+  "usuario nao pode alterar o proprio entitlement",
+  async () => {
+    const db = testEnv
+      .authenticatedContext("aluno-1", {
+        email: "aluno@okan.test",
+      })
+      .firestore();
+
+    await assertFails(
+      updateDoc(
+        doc(
+          db,
+          "users",
+          "aluno-1",
+          "entitlements",
+          "workout_template_template-1",
+        ),
+        {
+          status: "canceled",
         },
       ),
     );
