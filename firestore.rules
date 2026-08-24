@@ -141,14 +141,15 @@ service cloud.firestore {
   && request.resource.data.get('uid', '') == userId
   && request.resource.data.get('email', '') == authEmail()
   && !request.resource.data.keys().hasAny([
-    'isPremium',
-    'subscriptionPlan',
-    'subscriptionDate',
-    'teacherNotes',
-    'personalId',
-    'personalName',
-    'inviteFromPersonalId'
-  ])
+      'isPremium',
+      'subscriptionPlan',
+      'subscriptionDate',
+      'purchased_templates',
+      'teacherNotes',
+      'personalId',
+      'personalName',
+      'inviteFromPersonalId'
+    ])
   && (
     (
       !('role' in request.resource.data)
@@ -193,7 +194,8 @@ service cloud.firestore {
             'subscriptionPlan',
             'subscriptionDate',
             'academiaId',
-            'teacherNotes'
+            'teacherNotes',
+            'purchased_templates',
           ]);
 
                 /*
@@ -246,6 +248,25 @@ service cloud.firestore {
        * O proprio usuario pode excluir a propria conta.
        */
       allow delete: if isOwnUser(userId);
+
+      // --------------------------------------------------------
+    // ENTITLEMENTS SERVER-SIDE
+    // users/{uid}/entitlements/{entitlementId}
+    // --------------------------------------------------------
+
+    match /entitlements/{entitlementId} {
+
+      /*
+      * O usuario pode consultar os proprios beneficios,
+      * mas nenhum cliente pode conceder, alterar ou excluir
+      * entitlements diretamente.
+      *
+      * Escritas sao exclusivas do backend via Admin SDK.
+      */
+      allow read: if isOwnUser(userId);
+
+      allow create, update, delete: if false;
+    }
 
       // --------------------------------------------------------
       // NOTIFICACOES
