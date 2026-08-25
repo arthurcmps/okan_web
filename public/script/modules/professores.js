@@ -1,7 +1,7 @@
-// script/modules/professores.js
-import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 import { renderSkeleton } from "./skeleton.js";
+import { USER_ROLES, normalizeUser} from "../models/user-model.mjs";
 
 function criarBadgeVinculo(prof) {
     const span = document.createElement('span');
@@ -9,7 +9,7 @@ function criarBadgeVinculo(prof) {
         span.style.color = '#00e676';
         span.style.fontWeight = '500';
         span.textContent = prof.academiaNome;
-    } else if (prof.academiaId) {
+    } else if (prof.academyId) {
         span.style.color = '#00e676';
         span.style.fontWeight = '500';
         span.textContent = 'Vinculado';
@@ -74,51 +74,130 @@ function criarLinhaProfessor(prof) {
 }
 
 export async function carregarTodosProfessores() {
-    // Aciona o Skeleton Loader (5 colunas, 3 linhas)
-    renderSkeleton('table-todos-professores-body', 5, 3);
-    
-    const tbody = document.getElementById('table-todos-professores-body');
+    renderSkeleton(
+        'table-todos-professores-body',
+        5,
+        3
+    );
+
+    const tbody =
+        document.getElementById(
+            'table-todos-professores-body'
+        );
+
     if (!tbody) return;
-    
+
     try {
-        const q = query(collection(db, "users"), where("role", "==", "professor"));
-        const snapshot = await getDocs(q);
-        
-        // Limpeza segura dos skeletons apenas quando a query termina
+        /*
+         * Compatibilidade Fase 4.
+         *
+         * Precisamos encontrar tanto:
+         * - role=professor
+         * - role=personal legado
+         * - tipo=personal legado
+         *
+         * Depois da migração, voltaremos para uma query
+         * direta role == professor.
+         */
+        const snapshot =
+            await getDocs(collection(db, "users"));
+
+        const professores = snapshot.docs
+            .map((docSnap) => {
+                const raw = docSnap.data();
+
+                const normalized = normalizeUser(
+                    raw,
+                    docSnap.id
+                );
+
+                return {
+                    ...normalized,
+
+                    // Apenas compatibilidade visual temporária.
+                    academiaNome:
+                        typeof raw.academiaNome === "string"
+                            ? raw.academiaNome.trim()
+                            : null,
+
+                    /*
+                     * Campo legado usado somente pela UI atual.
+                     * String "true" não é considerada premium.
+                     */
+                    isPremium:
+                        raw.isPremium === true
+                };
+            })
+            .filter(
+                (user) =>
+                    user.role ===
+                    USER_ROLES.professor
+            );
+
         while (tbody.firstChild) {
             tbody.removeChild(tbody.firstChild);
         }
-        
+
         let contagemPremium = 0;
-        
-        if (snapshot.empty) { 
-            const tr = document.createElement('tr');
-            const td = document.createElement('td');
+
+        if (professores.length === 0) {
+            const tr =
+                document.createElement('tr');
+
+            const td =
+                document.createElement('td');
+
             td.colSpan = 5;
             td.style.textAlign = 'center';
             td.style.color = '#aaa';
-            td.textContent = 'Nenhum professor na base de dados.';
-            
+            td.textContent =
+                'Nenhum professor na base de dados.';
+
             tr.appendChild(td);
             tbody.appendChild(tr);
-            
-            const totalProfsEl = document.getElementById('total-profs');
-            if (totalProfsEl) totalProfsEl.textContent = "0"; 
-            return; 
+
+            const totalProfsEl =
+                document.getElementById(
+                    'total-profs'
+                );
+
+            if (totalProfsEl) {
+                totalProfsEl.textContent = "0";
+            }
+
+            return;
         }
 
-        snapshot.forEach((docSnap) => {
-            const prof = docSnap.data();
-            if (prof.isPremium) contagemPremium++;
-            const linhaDom = criarLinhaProfessor(prof);
+        professores.forEach((prof) => {
+            if (prof.isPremium) {
+                contagemPremium++;
+            }
+
+            const linhaDom =
+                criarLinhaProfessor(prof);
+
             tbody.appendChild(linhaDom);
         });
 
-        const totalProfsEl = document.getElementById('total-profs');
-        if (totalProfsEl) totalProfsEl.textContent = contagemPremium.toString();
+        const totalProfsEl =
+            document.getElementById(
+                'total-profs'
+            );
 
-    } catch (error) { 
-        console.error("Erro ao carregar professores:", error); 
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #ff5252;">Erro ao carregar dados.</td></tr>';
+        if (totalProfsEl) {
+            totalProfsEl.textContent =
+                contagemPremium.toString();
+        }
+
+    } catch (error) {
+        console.error(
+            "Erro ao carregar professores:",
+            error
+        );
+
+        tbody.innerHTML =
+            '<tr><td colspan="5" ' +
+            'style="text-align: center; color: #ff5252;">' +
+            'Erro ao carregar dados.</td></tr>';
     }
 }
