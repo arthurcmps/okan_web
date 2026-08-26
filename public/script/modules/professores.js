@@ -1,7 +1,7 @@
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 import { renderSkeleton } from "./skeleton.js";
-import { USER_ROLES, normalizeUser} from "../models/user-model.mjs";
+import { USER_ROLES, normalizeUser } from "../models/user-model.mjs";
 
 function criarBadgeVinculo(prof) {
     const span = document.createElement('span');
