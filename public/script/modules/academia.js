@@ -1,6 +1,10 @@
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 import { showToast } from "./toast.js";
+import {
+    grantAcademyLicense,
+    revokeAcademyLicense
+} from "../services/academy-license-service.js";
 import {
     USER_ROLES
 } from "../models/user-model.mjs";
@@ -153,16 +157,28 @@ export function setupAcademiasUI() {
         btnSubmit.textContent = "A salvar..."; btnSubmit.disabled = true;
         try {
             const emailProf = document.getElementById('prof-email').value.trim().toLowerCase();
-            await addDoc(collection(db, "academias", academiaAtualId, "professores"), { email: emailProf, dataVinculo: serverTimestamp(), status: "Pendente" });
-            await updateDoc(doc(db, "academias", academiaAtualId), { licencasUsadas: increment(1) });
-            academiaAtualLicencasUsadas++;
+            const result = await grantAcademyLicense({
+                academyId: academiaAtualId,
+                professorEmail: emailProf
+            });
+
+            academiaAtualLicencasUsadas = result.licensesUsed;
+            academiaAtualLicencasTotais = result.licensesTotal;
             document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
             modalNovoProfessor.style.display = 'none';
+
+            showToast(
+                result.alreadyGranted
+                    ? "Este professor já possui uma licença nesta academia."
+                    : "Licença concedida com sucesso!",
+                "success"
+            );
+
             carregarProfessoresDaAcademia(); 
             if (userRole === USER_ROLES.superAdmin) carregarAcademias();
         } catch (e) { 
             console.error(e); 
-            showToast("Erro ao adicionar.", "error"); 
+            showToast("Não foi possível conceder a licença.", "error"); 
         } finally { btnSubmit.textContent = "Conceder Licença"; btnSubmit.disabled = false; }
     });
 
@@ -193,7 +209,7 @@ export async function carregarAcademias() {
             `;
             tr.querySelector('.btn-view').addEventListener('click', () => abrirDetalhesAcademia(acad, id));
             tr.querySelector('.btn-delete').addEventListener('click', () => {
-                if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Tem a certeza que deseja excluir a academia <strong>"${acad.nome}"</strong>?`, async () => { await deleteDoc(doc(db, "academias", id)); carregarAcademias(); });
+                if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Tem a certeza que deseja excluir a academia <strong>"${acad.nome}</strong>?`, async () => { await deleteDoc(doc(db, "academias", id)); carregarAcademias(); });
             });
             tbody.appendChild(tr);
         });
@@ -201,16 +217,14 @@ export async function carregarAcademias() {
 }
 
 export async function configurarPainelAcademia(emailGestor) {
-    // 1. ESCONDE TODOS OS MENUS GLOBAIS DO SUPER ADMIN
     const menusGlobais = ['menu-inicio', 'menu-academias', 'menu-professores', 'menu-templates', 'menu-feedbacks'];
     menusGlobais.forEach(id => {
         const menu = document.getElementById(id);
         if (menu) menu.style.display = 'none';
     });
 
-    // 2. EXIBE APENAS OS MENUS DA ACADEMIA
     const menuMinha = document.getElementById('menu-minha-academia');
-    const menuPlanos = document.getElementById('menu-planos'); // Este estava oculto antes!
+    const menuPlanos = document.getElementById('menu-planos');
     
     if (menuMinha) menuMinha.style.display = 'flex';
     if (menuPlanos) menuPlanos.style.display = 'flex'; 
@@ -244,7 +258,6 @@ function abrirDetalhesAcademia(acad, id) {
     document.getElementById('detalhe-nome-titulo').textContent = acad.nome;
     document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
     
-    // NOVO: Preenche os dados visuais que estavam a faltar
     document.getElementById('detalhe-cnpj').textContent = acad.cnpj || '--';
     document.getElementById('detalhe-email').textContent = acad.emailGestor || '--';
     document.getElementById('detalhe-telefone').textContent = acad.telefoneResponsavel || '--';
@@ -253,7 +266,6 @@ function abrirDetalhesAcademia(acad, id) {
     const enderecoFormatado = acad.endereco ? `${acad.endereco} - ${acad.bairro || ''}, ${acad.uf || ''}` : '--';
     document.getElementById('detalhe-endereco').textContent = enderecoFormatado;
 
-    // Formata a data de cadastro, se existir
     if (acad.dataCadastro) {
         document.getElementById('detalhe-data').textContent = acad.dataCadastro.toDate().toLocaleDateString('pt-BR');
     } else {
@@ -342,11 +354,29 @@ async function carregarProfessoresDaAcademia() {
             tr.innerHTML = `<td><strong>${prof.email}</strong></td><td><span style="color: ${statusColor}; border: 1px solid ${statusColor}; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${prof.status}</span></td><td><button class="action-btn btn-delete-prof" style="color: #ff5252;" title="Remover Licença"><span class="material-symbols-outlined" style="font-size: 18px;">person_remove</span></button></td>`;
             tr.querySelector('.btn-delete-prof').addEventListener('click', async () => {
                 if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Remover o acesso Premium de <strong>${prof.email}</strong>?`, async () => {
-                    await deleteDoc(doc(db, "academias", academiaAtualId, "professores", profId));
-                    await updateDoc(doc(db, "academias", academiaAtualId), { licencasUsadas: increment(-1) });
-                    academiaAtualLicencasUsadas--;
-                    document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
-                    carregarProfessoresDaAcademia(); if (userRole === USER_ROLES.superAdmin) carregarAcademias();
+                    try {
+                        const result = await revokeAcademyLicense({
+                            academyId: academiaAtualId,
+                            licenseId: profId
+                        });
+
+                        academiaAtualLicencasUsadas = result.licensesUsed;
+                        academiaAtualLicencasTotais = result.licensesTotal;
+                        document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
+
+                        showToast(
+                            result.alreadyRemoved
+                                ? "A licença já havia sido removida."
+                                : "Licença removida com sucesso!",
+                            "success"
+                        );
+
+                        carregarProfessoresDaAcademia();
+                        if (userRole === USER_ROLES.superAdmin) carregarAcademias();
+                    } catch (e) {
+                        console.error(e);
+                        showToast("Não foi possível remover a licença.", "error");
+                    }
                 });
             });
             tbody.appendChild(tr);
