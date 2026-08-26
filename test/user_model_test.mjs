@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
@@ -17,7 +17,7 @@ test(
             {
                 schemaVersion: 2,
                 uid: "wrong-payload-id",
-                name: "UsuÃ¡rio Teste",
+                name: "Usuário Teste",
                 email: "teste@example.com",
                 role: "professor",
                 memberType: "professor",
@@ -39,7 +39,7 @@ test(
 
         assert.equal(
             user.name,
-            "UsuÃ¡rio Teste"
+            "Usuário Teste"
         );
 
         assert.equal(
@@ -69,7 +69,7 @@ test(
     () => {
         const user = normalizeUser(
             {
-                nome: "UsuÃ¡rio Legado",
+                nome: "Usuário Legado",
                 email: "legado@example.com",
                 tipo: "personal",
                 academiaId: "academy-old",
@@ -90,7 +90,7 @@ test(
 
         assert.equal(
             user.name,
-            "UsuÃ¡rio Legado"
+            "Usuário Legado"
         );
 
         assert.equal(

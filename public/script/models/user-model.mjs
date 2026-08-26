@@ -1,4 +1,4 @@
-﻿export const USER_ROLES = Object.freeze({
+export const USER_ROLES = Object.freeze({
     aluno: "aluno",
     professor: "professor",
     gymAdmin: "gym_admin",
@@ -73,9 +73,9 @@ export function resolveUserRole(data = {}) {
         stringFrom(data.role)?.toLowerCase();
 
     /*
-     * Role representa autorizaÃ§Ã£o/RBAC.
+     * Role representa autorização/RBAC.
      *
-     * Um valor canÃ´nico sempre tem precedÃªncia
+     * Um valor canônico sempre tem precedência
      * sobre campos legados como `tipo`.
      */
     if (role) {
@@ -100,10 +100,10 @@ export function resolveUserRole(data = {}) {
     }
 
     /*
-     * Marcadores de aluno sÃ³ sÃ£o usados quando
-     * nÃ£o existe role explÃ­cita.
+     * Marcadores de aluno só são usados quando
+     * não existe role explícita.
      *
-     * Nunca inferimos privilÃ©gios elevados.
+     * Nunca inferimos privilégios elevados.
      */
     if (hasStudentMarkers(data)) {
         return USER_ROLES.aluno;
@@ -118,8 +118,8 @@ export function resolveMemberType(data = {}) {
             ?.toLowerCase();
 
     /*
-     * memberType canÃ´nico tem precedÃªncia
-     * sobre a representaÃ§Ã£o legada `tipo`.
+     * memberType canônico tem precedência
+     * sobre a representação legada `tipo`.
      */
     if (
         memberType &&
@@ -151,10 +151,10 @@ export function resolveMemberType(data = {}) {
     }
 
     /*
-     * Para usuÃ¡rios comuns, role tambÃ©m pode
-     * fornecer a persona quando nÃ£o existe tipo.
+     * Para usuários comuns, role também pode
+     * fornecer a persona quando não existe tipo.
      *
-     * Para gym_admin/super_admin nÃ£o inferimos
+     * Para gym_admin/super_admin não inferimos
      * persona automaticamente.
      */
     const role =
@@ -182,7 +182,7 @@ export function normalizeUser(
             ),
 
         /*
-         * O ID do documento Ã© a fonte
+         * O ID do documento é a fonte
          * de verdade para UID.
          */
         uid: documentId,
@@ -198,7 +198,7 @@ export function normalizeUser(
 
         /*
          * role:
-         * autorizaÃ§Ã£o / RBAC.
+         * autorização / RBAC.
          *
          * memberType:
          * persona funcional do app.
