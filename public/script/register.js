@@ -11,6 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 import { auth, db } from "./firebase.js";
+import { USER_ROLES } from "./models/user-model.mjs";
 
 // =========================================================
 // 1. MASCARAS E BUSCA DE CEP
@@ -209,20 +210,21 @@ registerForm.addEventListener("submit", async (e) => {
         });
 
         /*
-         * Perfil do gestor.
-         *
-         * academiaId cria o vinculo inverso:
-         *
-         * users/{uid}.academiaId
-         *          ->
-         * academias/{academiaId}
-         */
+        * Perfil do gestor.
+        *
+        * academyId cria o vínculo inverso canônico:
+        *
+        * users/{uid}.academyId
+        *          ->
+        * academias/{academyId}
+        */
         batch.set(userRef, {
+            schemaVersion: 2,
             uid: user.uid,
             name: adminName,
             email: authenticatedEmail,
-            role: "gym_admin",
-            academiaId: academiaRef.id,
+            role: USER_ROLES.gymAdmin,
+            academyId: academiaRef.id,
             createdAt: serverTimestamp()
         });
 

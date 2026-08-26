@@ -1,6 +1,6 @@
 // script/dashboard.js
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { auth, db } from "./firebase.js"; 
 
 // Importação dos Nossos Módulos
@@ -8,6 +8,7 @@ import { carregarFeedbacksBeta } from "./modules/feedbacks.js";
 import { initLoja, carregarTemplatesLoja } from "./modules/loja.js";
 import { carregarTodosProfessores } from "./modules/professores.js";
 import { setupAcademiasUI, initAcademiasContext, carregarAcademias, configurarPainelAcademia } from "./modules/academia.js";
+import { USER_ROLES, normalizeUser } from "./models/user-model.mjs";
 
 const adminNameEl = document.getElementById('admin-name');
 let userRole = null; 
@@ -46,18 +47,47 @@ document.getElementById('btn-confirmar-exclusao')?.addEventListener('click', asy
 // 2. FUNÇÃO ADICIONADA: CONTAGEM GLOBAL DE ALUNOS (METRICA HOME)
 // =========================================================
 async function carregarTotalAlunos() {
-    const totalStudentsEl = document.getElementById('total-students');
+    const totalStudentsEl =
+        document.getElementById('total-students');
+
     if (!totalStudentsEl) return;
 
     try {
-        // Consulta todos os usuários cujo papel seja estritamente 'aluno'
-        const q = query(collection(db, "users"), where("role", "==", "aluno"));
-        const snapshot = await getDocs(q);
-        
-        // Atribui o tamanho da query de forma segura como texto plano
-        totalStudentsEl.textContent = snapshot.size.toString();
+        /*
+         * Compatibilidade temporária da Fase 4:
+         *
+         * Enquanto ainda existem documentos com `tipo=aluno`
+         * e documentos User v2 com `role=aluno`, carregamos a
+         * coleção e normalizamos antes de contabilizar.
+         *
+         * Após a migração completa, a consulta poderá voltar
+         * a filtrar diretamente pelo role canônico.
+         */
+        const snapshot =
+            await getDocs(collection(db, "users"));
+
+        const totalAlunos = snapshot.docs
+            .map((docSnap) =>
+                normalizeUser(
+                    docSnap.data(),
+                    docSnap.id
+                )
+            )
+            .filter(
+                (user) =>
+                    user.role === USER_ROLES.aluno
+            )
+            .length;
+
+        totalStudentsEl.textContent =
+            totalAlunos.toString();
+
     } catch (error) {
-        console.error("Erro ao contabilizar alunos globais:", error);
+        console.error(
+            "Erro ao contabilizar alunos globais:",
+            error
+        );
+
         totalStudentsEl.textContent = "0";
     }
 }
@@ -84,17 +114,24 @@ onAuthStateChanged(auth, async (user) => {
             const userDoc = await getDoc(doc(db, "users", user.uid));
             
             if (userDoc.exists()) {
-                const userData = userDoc.data();
+                const userData = normalizeUser(
+                    userDoc.data(),
+                    userDoc.id
+                );
+
                 userRole = userData.role;
-                
-                if (adminNameEl) adminNameEl.textContent = userData.name || user.email;
+
+                if (adminNameEl) {
+                    adminNameEl.textContent =
+                        userData.name || user.email;
+                }
 
                 // Inicializa os contextos necessários
                 initAcademiasContext(userRole, user.email, confirmarExclusao);
                 initLoja(confirmarExclusao);
                 setupAcademiasUI();
 
-                if (userRole === 'super_admin') {
+                if (userRole === USER_ROLES.superAdmin) {
                     // SE FOR VOCÊ (Acesso total às métricas globais e tabelas)
                     await Promise.all([
                         carregarAcademias(),
@@ -103,7 +140,7 @@ onAuthStateChanged(auth, async (user) => {
                         carregarFeedbacksBeta(),
                         carregarTemplatesLoja()
                     ]);
-                } else if (userRole === 'gym_admin') {
+                } else if (userRole === USER_ROLES.gymAdmin) {
                     // SE FOR GESTOR (Redireciona direto e esconde o painel global)
                     await configurarPainelAcademia(user.email);
                 } else {
@@ -139,16 +176,31 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
 
 menuLinks.forEach(link => {
     link.addEventListener('click', () => {
-        if (userRole === 'gym_admin' && link.id !== 'menu-minha-academia' && link.id !== 'menu-planos') return;
-        
+        if (
+            userRole === USER_ROLES.gymAdmin &&
+            link.id !== 'menu-minha-academia' &&
+            link.id !== 'menu-planos'
+        ) {
+            return;
+        }
+
         menuLinks.forEach(item => item.classList.remove('active'));
         link.classList.add('active');
-        Object.values(sectionMap).forEach(s => { if(s) s.style.display = 'none'; });
+
+        Object.values(sectionMap).forEach(s => {
+            if (s) s.style.display = 'none';
+        });
+
         const target = link.getAttribute('data-target');
+
         if (sectionMap[target]) {
             sectionMap[target].style.display = 'block';
+
             const pageTitle = document.getElementById('page-title');
-            if (pageTitle) pageTitle.textContent = link.textContent.trim();
+
+            if (pageTitle) {
+                pageTitle.textContent = link.textContent.trim();
+            }
         }
     });
 });
