@@ -3,15 +3,8 @@ import {
     deleteUser
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-import {
-    collection,
-    doc,
-    serverTimestamp,
-    writeBatch
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-import { auth, db } from "./firebase.js";
-import { USER_ROLES } from "./models/user-model.mjs";
+import { auth } from "./firebase.js";
+import { registerAcademy } from "./services/academy-registration-service.js";
 
 // =========================================================
 // 1. MASCARAS E BUSCA DE CEP
@@ -141,7 +134,7 @@ registerForm.addEventListener("submit", async (e) => {
     errorMessage.textContent = "";
 
     let createdUser = null;
-    let firestoreSetupCompleted = false;
+    let backendSetupCompleted = false;
 
     try {
         // -----------------------------------------------------
@@ -155,92 +148,33 @@ registerForm.addEventListener("submit", async (e) => {
                 password
             );
 
-        const user = userCredential.user;
-        createdUser = user;
-
-        /*
-         * Usamos o e-mail devolvido pelo Firebase Auth.
-         * Assim ele fica exatamente igual ao request.auth.token.email
-         * utilizado pelas Firestore Rules.
-         */
-        const authenticatedEmail = user.email || email;
+        createdUser = userCredential.user;
 
         // -----------------------------------------------------
-        // 2. GERAR O ID DA ACADEMIA ANTES DE SALVAR
+        // 2. SOLICITAR CADASTRO B2B AO BACKEND
+        // -----------------------------------------------------
+        //
+        // O navegador nao cria role, academyId nem academia
+        // diretamente. A Callable autenticada valida o usuario
+        // e persiste academia + gym_admin atomicamente.
         // -----------------------------------------------------
 
-        const academiaRef = doc(
-            collection(db, "academias")
-        );
-
-        const userRef = doc(
-            db,
-            "users",
-            user.uid
-        );
-
-        // -----------------------------------------------------
-        // 3. CRIAR ACADEMIA + GESTOR NO MESMO BATCH
-        // -----------------------------------------------------
-
-        const batch = writeBatch(db);
-
-        /*
-         * Academia.
-         *
-         * ownerUid e emailGestor permitem que as Rules provem
-         * que esta academia pertence ao usuario autenticado.
-         */
-        batch.set(academiaRef, {
-            nome: gymName,
-            emailGestor: authenticatedEmail,
-            ownerUid: user.uid,
-
-            cnpj: cnpj,
-            telefoneResponsavel: telefone,
-            cep: cep,
-            endereco: endereco,
-            bairro: bairro,
-            uf: uf,
-
-            licencasTotais: 0,
-            licencasUsadas: 0,
-
-            dataCadastro: serverTimestamp()
+        await registerAcademy({
+            gymName,
+            adminName,
+            cnpj,
+            telefone,
+            cep,
+            endereco,
+            bairro,
+            uf
         });
 
-        /*
-        * Perfil do gestor.
-        *
-        * academyId cria o vínculo inverso canônico:
-        *
-        * users/{uid}.academyId
-        *          ->
-        * academias/{academyId}
-        */
-        batch.set(userRef, {
-            schemaVersion: 2,
-            uid: user.uid,
-            name: adminName,
-            email: authenticatedEmail,
-            role: USER_ROLES.gymAdmin,
-            academyId: academiaRef.id,
-            createdAt: serverTimestamp()
-        });
-
-        /*
-         * O Firestore valida os dois documentos juntos.
-         *
-         * Se qualquer uma das duas operacoes for rejeitada,
-         * nenhuma delas sera gravada.
-         */
-        await batch.commit();
-        firestoreSetupCompleted = true;
-
+        backendSetupCompleted = true;
         window.location.href = "dashboard.html";
 
     } catch (error) {
-        if (createdUser && !firestoreSetupCompleted) {
+        if (createdUser && !backendSetupCompleted) {
             try {
                 await deleteUser(createdUser);
             } catch (cleanupError) {
@@ -250,17 +184,25 @@ registerForm.addEventListener("submit", async (e) => {
                 );
             }
         }
+
         console.error("Erro no cadastro:", error);
 
         if (error.code === "auth/email-already-in-use") {
             errorMessage.textContent =
                 "Este e-mail já está cadastrado.";
-        } else if (error.code === "permission-denied") {
+        } else if (
+            error.code === "functions/failed-precondition"
+        ) {
             errorMessage.textContent =
-                "Não foi possível concluir o cadastro da academia.";
+                "Esta conta já possui um perfil cadastrado.";
+        } else if (
+            error.code === "functions/invalid-argument"
+        ) {
+            errorMessage.textContent =
+                "Verifique os dados informados para a academia.";
         } else {
             errorMessage.textContent =
-                "Erro ao criar conta. Verifique os dados.";
+                "Não foi possível concluir o cadastro da academia.";
         }
 
         btnRegister.textContent = "Cadastrar Academia";
