@@ -209,7 +209,7 @@ export async function carregarAcademias() {
             `;
             tr.querySelector('.btn-view').addEventListener('click', () => abrirDetalhesAcademia(acad, id));
             tr.querySelector('.btn-delete').addEventListener('click', () => {
-                if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Tem a certeza que deseja excluir a academia <strong>"${acad.nome}</strong>?`, async () => { await deleteDoc(doc(db, "academias", id)); carregarAcademias(); });
+                if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Tem a certeza que deseja excluir a academia <strong>"${acad.nome}"</strong>?`, async () => { await deleteDoc(doc(db, "academias", id)); carregarAcademias(); });
             });
             tbody.appendChild(tr);
         });
