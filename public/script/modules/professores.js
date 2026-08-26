@@ -1,7 +1,7 @@
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 import { renderSkeleton } from "./skeleton.js";
-import { USER_ROLES, normalizeUser } from "../models/user-model.mjs";
+import { MEMBER_TYPES, normalizeUser } from "../models/user-model.mjs";
 
 function criarBadgeVinculo(prof) {
     const span = document.createElement('span');
@@ -89,15 +89,12 @@ export async function carregarTodosProfessores() {
 
     try {
         /*
-         * Compatibilidade Fase 4.
+         * Professor é persona funcional, não papel RBAC.
          *
-         * Precisamos encontrar tanto:
-         * - role=professor
-         * - role=personal legado
-         * - tipo=personal legado
-         *
-         * Depois da migração, voltaremos para uma query
-         * direta role == professor.
+         * A normalização mantém a compatibilidade com `tipo=personal`
+         * durante a janela de transição, enquanto o filtro por memberType
+         * inclui corretamente identidades híbridas como
+         * super_admin + memberType=professor.
          */
         const snapshot =
             await getDocs(collection(db, "users"));
@@ -130,8 +127,8 @@ export async function carregarTodosProfessores() {
             })
             .filter(
                 (user) =>
-                    user.role ===
-                    USER_ROLES.professor
+                    user.memberType ===
+                    MEMBER_TYPES.professor
             );
 
         while (tbody.firstChild) {
