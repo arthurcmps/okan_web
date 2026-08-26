@@ -133,22 +133,36 @@ registerForm.addEventListener("submit", async (e) => {
     btnRegister.disabled = true;
     errorMessage.textContent = "";
 
-    let createdUser = null;
+    let authenticatedUser = null;
+    let accountCreatedThisAttempt = false;
     let backendSetupCompleted = false;
 
     try {
         // -----------------------------------------------------
-        // 1. CRIAR CONTA NO FIREBASE AUTH
+        // 1. GARANTIR CONTA AUTENTICADA
+        // -----------------------------------------------------
+        //
+        // Se uma tentativa anterior criou o Auth mas a resposta
+        // da Callable se perdeu, reaproveitamos a mesma sessao.
+        // Isso torna o cadastro recuperavel sem duplicar contas.
         // -----------------------------------------------------
 
-        const userCredential =
-            await createUserWithEmailAndPassword(
-                auth,
-                email,
-                password
-            );
+        const currentEmail =
+            (auth.currentUser?.email || "").toLowerCase();
 
-        createdUser = userCredential.user;
+        if (auth.currentUser && currentEmail === email) {
+            authenticatedUser = auth.currentUser;
+        } else {
+            const userCredential =
+                await createUserWithEmailAndPassword(
+                    auth,
+                    email,
+                    password
+                );
+
+            authenticatedUser = userCredential.user;
+            accountCreatedThisAttempt = true;
+        }
 
         // -----------------------------------------------------
         // 2. SOLICITAR CADASTRO B2B AO BACKEND
@@ -174,9 +188,20 @@ registerForm.addEventListener("submit", async (e) => {
         window.location.href = "dashboard.html";
 
     } catch (error) {
-        if (createdUser && !backendSetupCompleted) {
+        /*
+         * So removemos uma conta criada nesta tentativa quando
+         * o backend confirmou erro de argumento, isto e, antes
+         * de qualquer persistencia valida. Falhas de rede/internal
+         * preservam a conta para retry idempotente.
+         */
+        if (
+            authenticatedUser &&
+            accountCreatedThisAttempt &&
+            !backendSetupCompleted &&
+            error.code === "functions/invalid-argument"
+        ) {
             try {
-                await deleteUser(createdUser);
+                await deleteUser(authenticatedUser);
             } catch (cleanupError) {
                 console.error(
                     "Erro ao remover conta incompleta:",
@@ -202,7 +227,7 @@ registerForm.addEventListener("submit", async (e) => {
                 "Verifique os dados informados para a academia.";
         } else {
             errorMessage.textContent =
-                "Não foi possível concluir o cadastro da academia.";
+                "Não foi possível concluir o cadastro. Tente novamente.";
         }
 
         btnRegister.textContent = "Cadastrar Academia";
