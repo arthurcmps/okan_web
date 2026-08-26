@@ -1,4 +1,4 @@
-export const USER_ROLES = Object.freeze({
+﻿export const USER_ROLES = Object.freeze({
     aluno: "aluno",
     professor: "professor",
     gymAdmin: "gym_admin",
@@ -6,11 +6,21 @@ export const USER_ROLES = Object.freeze({
     unresolved: "unresolved"
 });
 
+export const MEMBER_TYPES = Object.freeze({
+    aluno: "aluno",
+    professor: "professor"
+});
+
 const CANONICAL_ROLES = new Set([
     USER_ROLES.aluno,
     USER_ROLES.professor,
     USER_ROLES.gymAdmin,
     USER_ROLES.superAdmin
+]);
+
+const CANONICAL_MEMBER_TYPES = new Set([
+    MEMBER_TYPES.aluno,
+    MEMBER_TYPES.professor
 ]);
 
 function stringFrom(value) {
@@ -62,7 +72,12 @@ export function resolveUserRole(data = {}) {
     const role =
         stringFrom(data.role)?.toLowerCase();
 
-    // Role canônico sempre tem precedência sobre `tipo`.
+    /*
+     * Role representa autorizaÃ§Ã£o/RBAC.
+     *
+     * Um valor canÃ´nico sempre tem precedÃªncia
+     * sobre campos legados como `tipo`.
+     */
     if (role) {
         if (CANONICAL_ROLES.has(role)) {
             return role;
@@ -84,12 +99,76 @@ export function resolveUserRole(data = {}) {
         return USER_ROLES.aluno;
     }
 
+    /*
+     * Marcadores de aluno sÃ³ sÃ£o usados quando
+     * nÃ£o existe role explÃ­cita.
+     *
+     * Nunca inferimos privilÃ©gios elevados.
+     */
     if (hasStudentMarkers(data)) {
         return USER_ROLES.aluno;
     }
 
-    // Nunca inferimos privilégios elevados.
     return USER_ROLES.unresolved;
+}
+
+export function resolveMemberType(data = {}) {
+    const memberType =
+        stringFrom(data.memberType)
+            ?.toLowerCase();
+
+    /*
+     * memberType canÃ´nico tem precedÃªncia
+     * sobre a representaÃ§Ã£o legada `tipo`.
+     */
+    if (
+        memberType &&
+        CANONICAL_MEMBER_TYPES.has(
+            memberType
+        )
+    ) {
+        return memberType;
+    }
+
+    const tipo =
+        stringFrom(data.tipo)
+            ?.toLowerCase();
+
+    /*
+     * No app legado:
+     *
+     * tipo=aluno
+     * tipo=personal
+     *
+     * representam a persona funcional mobile.
+     */
+    if (tipo === "aluno") {
+        return MEMBER_TYPES.aluno;
+    }
+
+    if (tipo === "personal") {
+        return MEMBER_TYPES.professor;
+    }
+
+    /*
+     * Para usuÃ¡rios comuns, role tambÃ©m pode
+     * fornecer a persona quando nÃ£o existe tipo.
+     *
+     * Para gym_admin/super_admin nÃ£o inferimos
+     * persona automaticamente.
+     */
+    const role =
+        resolveUserRole(data);
+
+    if (role === USER_ROLES.aluno) {
+        return MEMBER_TYPES.aluno;
+    }
+
+    if (role === USER_ROLES.professor) {
+        return MEMBER_TYPES.professor;
+    }
+
+    return null;
 }
 
 export function normalizeUser(
@@ -98,9 +177,14 @@ export function normalizeUser(
 ) {
     return Object.freeze({
         schemaVersion:
-            schemaVersionFrom(data.schemaVersion),
+            schemaVersionFrom(
+                data.schemaVersion
+            ),
 
-        // O documentId é a fonte de verdade.
+        /*
+         * O ID do documento Ã© a fonte
+         * de verdade para UID.
+         */
         uid: documentId,
 
         name:
@@ -109,10 +193,21 @@ export function normalizeUser(
             "",
 
         email:
-            stringFrom(data.email) ?? "",
+            stringFrom(data.email) ??
+            "",
 
+        /*
+         * role:
+         * autorizaÃ§Ã£o / RBAC.
+         *
+         * memberType:
+         * persona funcional do app.
+         */
         role:
             resolveUserRole(data),
+
+        memberType:
+            resolveMemberType(data),
 
         photoUrl:
             stringFrom(data.photoUrl),

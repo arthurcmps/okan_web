@@ -1,4 +1,4 @@
-﻿import fs from "node:fs/promises";
+import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
@@ -12,6 +12,7 @@ import {
 } from "firebase-admin/firestore";
 
 import {
+    MEMBER_TYPES,
     normalizeUser,
     USER_ROLES
 } from "../public/script/models/user-model.mjs";
@@ -243,6 +244,23 @@ function buildPatch(
     }
 
     /*
+     * memberType representa a persona funcional
+     * no aplicativo mobile.
+     *
+     * Ele e independente do RBAC. Por isso um
+     * super_admin pode ter memberType aluno ou
+     * professor.
+     */
+    if (
+        normalized.memberType !== null &&
+        raw.memberType !==
+            normalized.memberType
+    ) {
+        patch.memberType =
+            normalized.memberType;
+    }
+
+    /*
      * Relacionamentos canonicos.
      *
      * Nao removemos academiaId/personalId nesta fase.
@@ -279,6 +297,73 @@ function hasChanges(patch) {
         patch &&
         Object.keys(patch).length > 0
     );
+}
+
+function auditProfessorRelationships(records) {
+    const usersById =
+        new Map(
+            records.map(
+                (record) => [
+                    record.id,
+                    record
+                ]
+            )
+        );
+
+    const relationships = [];
+
+    for (const record of records) {
+        const professorId =
+            record.normalized.professorId;
+
+        if (!professorId) {
+            continue;
+        }
+
+        const target =
+            usersById.get(professorId);
+
+        let status = "OK";
+
+        if (record.id === professorId) {
+            status = "SELF_REFERENCE";
+        } else if (
+            record.normalized.memberType !==
+            MEMBER_TYPES.aluno
+        ) {
+            status =
+                "SOURCE_NOT_ALUNO_MEMBER";
+        } else if (!target) {
+            status = "MISSING_TARGET";
+        } else if (
+            target.normalized.memberType !==
+            MEMBER_TYPES.professor
+        ) {
+            status =
+                "TARGET_NOT_PROFESSOR_MEMBER";
+        }
+
+        relationships.push({
+            sourceId:
+                record.id,
+
+            sourceMemberType:
+                record.normalized.memberType,
+
+            professorId,
+
+            targetExists:
+                Boolean(target),
+
+            targetMemberType:
+                target?.normalized.memberType ??
+                null,
+
+            status
+        });
+    }
+
+    return relationships;
 }
 
 async function writeJson(
@@ -388,6 +473,17 @@ async function main() {
             }
         );
 
+    const relationships =
+        auditProfessorRelationships(
+            records
+        );
+
+    const invalidRelationships =
+        relationships.filter(
+            (relationship) =>
+                relationship.status !== "OK"
+        );
+
     const unresolved =
         records.filter(
             (record) =>
@@ -423,6 +519,31 @@ async function main() {
     console.log(
         `Role unresolved           : ${unresolved.length}`
     );
+
+    console.log(
+        `Relacionamentos professorId: ${relationships.length}`
+    );
+
+    console.log(
+        `Relacionamentos invalidos : ${invalidRelationships.length}`
+    );
+
+    if (invalidRelationships.length > 0) {
+        console.log(
+            "\n--- RELACIONAMENTOS INVALIDOS ---"
+        );
+
+        for (
+            const relationship
+            of invalidRelationships
+        ) {
+            console.log(
+                `${relationship.sourceId} -> ` +
+                `${relationship.professorId}: ` +
+                relationship.status
+            );
+        }
+    }
 
     if (changes.length > 0) {
         console.log(
@@ -519,6 +640,21 @@ async function main() {
                             )
                     })
                 ),
+
+            relationshipAudit: {
+                total:
+                    relationships.length,
+
+                invalid:
+                    invalidRelationships.length,
+
+                relationships:
+                    relationships.map(
+                        (relationship) => ({
+                            ...relationship
+                        })
+                    )
+            },
 
             unresolved:
                 unresolved.map(

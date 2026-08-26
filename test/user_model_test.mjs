@@ -1,10 +1,12 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+    MEMBER_TYPES,
     USER_ROLES,
     isCanonicalUser,
     normalizeUser,
+    resolveMemberType,
     resolveUserRole
 } from "../public/script/models/user-model.mjs";
 
@@ -15,26 +17,46 @@ test(
             {
                 schemaVersion: 2,
                 uid: "wrong-payload-id",
-                name: "Usuário Teste",
+                name: "UsuÃ¡rio Teste",
                 email: "teste@example.com",
                 role: "professor",
+                memberType: "professor",
                 academyId: "academy-1",
                 professorId: null
             },
             "user-1"
         );
 
-        assert.equal(user.uid, "user-1");
-        assert.equal(user.schemaVersion, 2);
-        assert.equal(user.name, "Usuário Teste");
+        assert.equal(
+            user.uid,
+            "user-1"
+        );
+
+        assert.equal(
+            user.schemaVersion,
+            2
+        );
+
+        assert.equal(
+            user.name,
+            "UsuÃ¡rio Teste"
+        );
+
         assert.equal(
             user.role,
             USER_ROLES.professor
         );
+
+        assert.equal(
+            user.memberType,
+            MEMBER_TYPES.professor
+        );
+
         assert.equal(
             user.academyId,
             "academy-1"
         );
+
         assert.equal(
             isCanonicalUser(user),
             true
@@ -47,7 +69,7 @@ test(
     () => {
         const user = normalizeUser(
             {
-                nome: "Usuário Legado",
+                nome: "UsuÃ¡rio Legado",
                 email: "legado@example.com",
                 tipo: "personal",
                 academiaId: "academy-old",
@@ -56,20 +78,36 @@ test(
             "legacy-1"
         );
 
-        assert.equal(user.uid, "legacy-1");
-        assert.equal(user.schemaVersion, 1);
+        assert.equal(
+            user.uid,
+            "legacy-1"
+        );
+
+        assert.equal(
+            user.schemaVersion,
+            1
+        );
+
         assert.equal(
             user.name,
-            "Usuário Legado"
+            "UsuÃ¡rio Legado"
         );
+
         assert.equal(
             user.role,
             USER_ROLES.professor
         );
+
+        assert.equal(
+            user.memberType,
+            MEMBER_TYPES.professor
+        );
+
         assert.equal(
             user.academyId,
             "academy-old"
         );
+
         assert.equal(
             user.professorId,
             "personal-old"
@@ -88,6 +126,94 @@ test(
         assert.equal(
             role,
             USER_ROLES.superAdmin
+        );
+    }
+);
+
+test(
+    "super admin can also be an aluno member",
+    () => {
+        const user = normalizeUser(
+            {
+                schemaVersion: 2,
+                role: "super_admin",
+                tipo: "aluno"
+            },
+            "admin-student"
+        );
+
+        assert.equal(
+            user.role,
+            USER_ROLES.superAdmin
+        );
+
+        assert.equal(
+            user.memberType,
+            MEMBER_TYPES.aluno
+        );
+    }
+);
+
+test(
+    "super admin can also be a professor member",
+    () => {
+        const user = normalizeUser(
+            {
+                schemaVersion: 2,
+                role: "super_admin",
+                tipo: "personal"
+            },
+            "admin-professor"
+        );
+
+        assert.equal(
+            user.role,
+            USER_ROLES.superAdmin
+        );
+
+        assert.equal(
+            user.memberType,
+            MEMBER_TYPES.professor
+        );
+    }
+);
+
+test(
+    "canonical memberType wins over conflicting tipo",
+    () => {
+        const memberType =
+            resolveMemberType({
+                role: "super_admin",
+                memberType: "professor",
+                tipo: "aluno"
+            });
+
+        assert.equal(
+            memberType,
+            MEMBER_TYPES.professor
+        );
+    }
+);
+
+test(
+    "gym admin without mobile persona has null memberType",
+    () => {
+        const user = normalizeUser(
+            {
+                schemaVersion: 2,
+                role: "gym_admin"
+            },
+            "gym-admin-1"
+        );
+
+        assert.equal(
+            user.role,
+            USER_ROLES.gymAdmin
+        );
+
+        assert.equal(
+            user.memberType,
+            null
         );
     }
 );
@@ -121,6 +247,21 @@ test(
 );
 
 test(
+    "legacy tipo personal becomes professor member",
+    () => {
+        const memberType =
+            resolveMemberType({
+                tipo: "personal"
+            });
+
+        assert.equal(
+            memberType,
+            MEMBER_TYPES.professor
+        );
+    }
+);
+
+test(
     "student markers resolve missing role as aluno",
     () => {
         const role = resolveUserRole({
@@ -136,6 +277,21 @@ test(
 );
 
 test(
+    "role aluno provides aluno member type",
+    () => {
+        const memberType =
+            resolveMemberType({
+                role: "aluno"
+            });
+
+        assert.equal(
+            memberType,
+            MEMBER_TYPES.aluno
+        );
+    }
+);
+
+test(
     "unknown user remains unresolved",
     () => {
         const role = resolveUserRole({
@@ -145,6 +301,21 @@ test(
         assert.equal(
             role,
             USER_ROLES.unresolved
+        );
+    }
+);
+
+test(
+    "unknown user has no member type",
+    () => {
+        const memberType =
+            resolveMemberType({
+                email: "unknown@example.com"
+            });
+
+        assert.equal(
+            memberType,
+            null
         );
     }
 );
