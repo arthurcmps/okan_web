@@ -1,0 +1,14 @@
+{
+  "name": "okan-web-maintenance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local maintenance tools for Okan Web",
+  "type": "module",
+  "scripts": {
+    "test:user-model": "node --test ./test/user_model_test.mjs",
+    "migrate:users:v2": "node ./scripts/migrate-users-v2.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.3.0"
+  }
+}
