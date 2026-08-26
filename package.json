@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test:user-model": "node --test ./test/user_model_test.mjs",
+    "test:academy-licenses": "node --test ./test/academy_license_flow_test.mjs",
     "migrate:users:v2": "node ./scripts/migrate-users-v2.mjs",
     "repair:users:professor-link": "node ./scripts/repair-invalid-professor-link.mjs"
   },
