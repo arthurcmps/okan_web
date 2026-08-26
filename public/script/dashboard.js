@@ -8,7 +8,7 @@ import { carregarFeedbacksBeta } from "./modules/feedbacks.js";
 import { initLoja, carregarTemplatesLoja } from "./modules/loja.js";
 import { carregarTodosProfessores } from "./modules/professores.js";
 import { setupAcademiasUI, initAcademiasContext, carregarAcademias, configurarPainelAcademia } from "./modules/academia.js";
-import {USER_ROLES, normalizeUser} from "./models/user-model.mjs";
+import { USER_ROLES, normalizeUser } from "./models/user-model.mjs";
 
 const adminNameEl = document.getElementById('admin-name');
 let userRole = null; 
@@ -176,16 +176,31 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
 
 menuLinks.forEach(link => {
     link.addEventListener('click', () => {
-        if (userRole === 'gym_admin' && link.id !== 'menu-minha-academia' && link.id !== 'menu-planos') return;
-        
+        if (
+            userRole === USER_ROLES.gymAdmin &&
+            link.id !== 'menu-minha-academia' &&
+            link.id !== 'menu-planos'
+        ) {
+            return;
+        }
+
         menuLinks.forEach(item => item.classList.remove('active'));
         link.classList.add('active');
-        Object.values(sectionMap).forEach(s => { if(s) s.style.display = 'none'; });
+
+        Object.values(sectionMap).forEach(s => {
+            if (s) s.style.display = 'none';
+        });
+
         const target = link.getAttribute('data-target');
+
         if (sectionMap[target]) {
             sectionMap[target].style.display = 'block';
+
             const pageTitle = document.getElementById('page-title');
-            if (pageTitle) pageTitle.textContent = link.textContent.trim();
+
+            if (pageTitle) {
+                pageTitle.textContent = link.textContent.trim();
+            }
         }
     });
 });

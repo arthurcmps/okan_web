@@ -1,6 +1,9 @@
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 import { showToast } from "./toast.js";
+import {
+    USER_ROLES
+} from "../models/user-model.mjs";
 
 let userRole = null;
 let currentUserEmail = null;
@@ -74,7 +77,7 @@ export function setupAcademiasUI() {
         const licInput = document.getElementById('acad-licencas');
         if(licInput) {
             licInput.value = academiaAtualDados.licencasTotais || 0;
-            if (userRole === 'gym_admin') {
+            if (userRole === USER_ROLES.gymAdmin) {
                 licInput.disabled = true;
                 licInput.style.opacity = '0.5';
             } else {
@@ -112,7 +115,7 @@ export function setupAcademiasUI() {
 
             if (modoEdicaoAcademia) {
                 await updateDoc(doc(db, "academias", idAcademiaEditando), dadosAcademia);
-                if (userRole === 'gym_admin') configurarPainelAcademia(currentUserEmail);
+                if (userRole === USER_ROLES.gymAdmin) configurarPainelAcademia(currentUserEmail);
                 else {
                     carregarAcademias(); 
                     if(academiaAtualId === idAcademiaEditando) {
@@ -156,7 +159,7 @@ export function setupAcademiasUI() {
             document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
             modalNovoProfessor.style.display = 'none';
             carregarProfessoresDaAcademia(); 
-            if (userRole === 'super_admin') carregarAcademias(); 
+            if (userRole === USER_ROLES.superAdmin) carregarAcademias();
         } catch (e) { 
             console.error(e); 
             showToast("Erro ao adicionar.", "error"); 
@@ -231,7 +234,7 @@ export async function configurarPainelAcademia(emailGestor) {
 }
 
 function abrirDetalhesAcademia(acad, id) {
-    document.getElementById('btn-voltar-academias').style.display = (userRole === 'super_admin') ? 'inline-flex' : 'none';
+    document.getElementById('btn-voltar-academias').style.display = (userRole === USER_ROLES.superAdmin) ? 'inline-flex' : 'none';
 
     academiaAtualId = id; 
     academiaAtualDados = acad;
@@ -343,7 +346,7 @@ async function carregarProfessoresDaAcademia() {
                     await updateDoc(doc(db, "academias", academiaAtualId), { licencasUsadas: increment(-1) });
                     academiaAtualLicencasUsadas--;
                     document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
-                    carregarProfessoresDaAcademia(); if (userRole === 'super_admin') carregarAcademias();
+                    carregarProfessoresDaAcademia(); if (userRole === USER_ROLES.superAdmin) carregarAcademias();
                 });
             });
             tbody.appendChild(tr);
