@@ -8,7 +8,7 @@ import { carregarFeedbacksBeta } from "./modules/feedbacks.js";
 import { initLoja, carregarTemplatesLoja } from "./modules/loja.js";
 import { carregarTodosProfessores } from "./modules/professores.js";
 import { setupAcademiasUI, initAcademiasContext, carregarAcademias, configurarPainelAcademia } from "./modules/academia.js";
-import { USER_ROLES, normalizeUser } from "./models/user-model.mjs";
+import { MEMBER_TYPES, USER_ROLES, normalizeUser } from "./models/user-model.mjs";
 
 const adminNameEl = document.getElementById('admin-name');
 let userRole = null; 
@@ -44,7 +44,7 @@ document.getElementById('btn-confirmar-exclusao')?.addEventListener('click', asy
 });
 
 // =========================================================
-// 2. FUNÇÃO ADICIONADA: CONTAGEM GLOBAL DE ALUNOS (METRICA HOME)
+// 2. CONTAGEM GLOBAL DE ALUNOS (PERSONA MOBILE)
 // =========================================================
 async function carregarTotalAlunos() {
     const totalStudentsEl =
@@ -54,14 +54,11 @@ async function carregarTotalAlunos() {
 
     try {
         /*
-         * Compatibilidade temporária da Fase 4:
+         * Aluno/professor é uma persona funcional, não um papel RBAC.
          *
-         * Enquanto ainda existem documentos com `tipo=aluno`
-         * e documentos User v2 com `role=aluno`, carregamos a
-         * coleção e normalizamos antes de contabilizar.
-         *
-         * Após a migração completa, a consulta poderá voltar
-         * a filtrar diretamente pelo role canônico.
+         * A coleção ainda é normalizada por compatibilidade com clientes
+         * legados, mas a métrica usa memberType para incluir corretamente
+         * identidades híbridas como super_admin + memberType=aluno.
          */
         const snapshot =
             await getDocs(collection(db, "users"));
@@ -75,7 +72,7 @@ async function carregarTotalAlunos() {
             )
             .filter(
                 (user) =>
-                    user.role === USER_ROLES.aluno
+                    user.memberType === MEMBER_TYPES.aluno
             )
             .length;
 
