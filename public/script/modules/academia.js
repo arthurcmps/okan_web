@@ -470,7 +470,7 @@ setTimeout(() => {
 }, 500);
 
 const mp = new MercadoPago(
-    'TEST-13b66d79-52ea-410d-9efb-57db088806b4',
+    'APP_USR-a228ff68-eeb9-41ba-9432-830451583ffb',
     { locale: 'pt-BR' }
 );
 const bricksBuilder = mp.bricks();
