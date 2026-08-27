@@ -13,12 +13,6 @@ const startAcademySubscriptionCallable =
         "iniciarAssinaturaAcademia",
     );
 
-const cancelAcademySubscriptionCallable =
-    httpsCallable(
-        billingFunctions,
-        "cancelarAssinaturaAcademia",
-    );
-
 export async function getAcademySubscriptionQuote({
     licenseQuantity,
     billingDay
@@ -44,10 +38,5 @@ export async function startAcademySubscription({
         cardTokenId
     });
 
-    return response.data;
-}
-
-export async function cancelAcademySubscription() {
-    const response = await cancelAcademySubscriptionCallable({});
     return response.data;
 }
