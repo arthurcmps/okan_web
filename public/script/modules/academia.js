@@ -6,6 +6,10 @@ import {
     revokeAcademyLicense
 } from "../services/academy-license-service.js";
 import {
+    getAcademySubscriptionQuote,
+    startAcademySubscription
+} from "../services/academy-subscription-service.js";
+import {
     USER_ROLES
 } from "../models/user-model.mjs";
 
@@ -272,7 +276,8 @@ function abrirDetalhesAcademia(acad, id) {
         document.getElementById('detalhe-data').textContent = '--';
     }
     
-    const statusAssinatura = acad.statusAssinatura || 'Aguardando Pagamento';
+    const statusAssinatura = acad.statusAssinatura ||
+        (academiaAtualLicencasTotais > 0 ? 'Ativa' : 'Aguardando Pagamento');
     const cancelamentoAgendado = acad.cancelamentoAgendado || false;
     
     const painelAtiva = document.getElementById('painel-assinatura-ativa');
@@ -384,119 +389,200 @@ async function carregarProfessoresDaAcademia() {
     } catch (e) { console.error(e); }
 }
 
-const VALOR_MENSAL_LICENCA = 45.00;
-const VALOR_DIARIO_LICENCA = VALOR_MENSAL_LICENCA / 30;
-
 const inputQtd = document.getElementById('qtd-licencas-compra');
 const selectVencimento = document.getElementById('dia-vencimento-compra');
 const btnPagamento = document.getElementById('btn-ir-pagamento');
 
+let ultimaCotacaoAssinatura = null;
+let idTentativaAssinatura = null;
+let sequenciaCotacao = 0;
+
+function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function prepararResumoAssinatura() {
+    const diasProRata = document.getElementById('dias-pro-rata');
+    const dataProxima = document.getElementById('data-proxima-cobranca');
+
+    if (diasProRata?.parentElement) {
+        diasProRata.parentElement.textContent =
+            'Valor mensal calculado com segurança pelo servidor:';
+    }
+
+    if (dataProxima?.parentElement) {
+        dataProxima.parentElement.textContent =
+            'O Mercado Pago calcula eventual valor proporcional conforme o dia de vencimento escolhido.';
+    }
+}
+
+async function atualizarCotacaoAssinatura() {
+    if (!inputQtd || !selectVencimento) return null;
+
+    const licenseQuantity = parseInt(inputQtd.value) || 1;
+    const billingDay = parseInt(selectVencimento.value);
+    const requestSequence = ++sequenciaCotacao;
+
+    try {
+        const quote = await getAcademySubscriptionQuote({
+            licenseQuantity,
+            billingDay
+        });
+
+        if (requestSequence !== sequenciaCotacao) {
+            return ultimaCotacaoAssinatura;
+        }
+
+        ultimaCotacaoAssinatura = quote;
+        idTentativaAssinatura = null;
+
+        const valorHoje = document.getElementById('valor-hoje');
+        if (valorHoje) {
+            valorHoje.textContent = formatarMoeda(quote.monthlyAmount);
+        }
+
+        return quote;
+    } catch (error) {
+        if (requestSequence === sequenciaCotacao) {
+            ultimaCotacaoAssinatura = null;
+        }
+
+        console.error(
+            'Erro ao obter cotação da assinatura:',
+            error?.code || error?.message || error
+        );
+
+        return null;
+    }
+}
+
 setTimeout(() => {
+    prepararResumoAssinatura();
+
     if (inputQtd && selectVencimento) {
-        calcularProRata(); 
-        inputQtd.addEventListener('input', calcularProRata);
-        selectVencimento.addEventListener('change', calcularProRata);
+        atualizarCotacaoAssinatura();
+        inputQtd.addEventListener('change', atualizarCotacaoAssinatura);
+        selectVencimento.addEventListener('change', atualizarCotacaoAssinatura);
     }
 }, 500);
 
-function calcularProRata() {
-    if (!inputQtd || !selectVencimento) return;
-
-    const qtd = parseInt(inputQtd.value) || 1;
-    const diaVencimentoEscolhido = parseInt(selectVencimento.value);
-    
-    const hoje = new Date();
-    const diaHoje = hoje.getDate();
-    
-    let diasRestantes = 0;
-    let mesProximaCobranca = hoje.getMonth(); 
-
-    if (diaHoje < diaVencimentoEscolhido) {
-        diasRestantes = diaVencimentoEscolhido - diaHoje;
-    } else if (diaHoje === diaVencimentoEscolhido) {
-        diasRestantes = 30; 
-        mesProximaCobranca++; 
-    } else {
-        const diasAteFimDoMes = 30 - diaHoje; 
-        diasRestantes = diasAteFimDoMes + diaVencimentoEscolhido;
-        mesProximaCobranca++; 
-    }
-
-    const valorProporcionalUnidade = diasRestantes * VALOR_DIARIO_LICENCA;
-    const valorHojeTotal = valorProporcionalUnidade * qtd;
-    const valorRecorrenteTotal = VALOR_MENSAL_LICENCA * qtd;
-
-    const dataProxima = new Date(hoje.getFullYear(), mesProximaCobranca, diaVencimentoEscolhido);
-    const dataFormatada = dataProxima.toLocaleDateString('pt-BR');
-
-    document.getElementById('dias-pro-rata').textContent = diasRestantes;
-    document.getElementById('valor-hoje').textContent = valorHojeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    document.getElementById('valor-recorrente').textContent = valorRecorrenteTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    document.getElementById('data-proxima-cobranca').textContent = dataFormatada;
-}
-
-const mp = new MercadoPago('TEST-13b66d79-52ea-410d-9efb-57db088806b4', { locale: 'pt-BR' });
+const mp = new MercadoPago(
+    'TEST-13b66d79-52ea-410d-9efb-57db088806b4',
+    { locale: 'pt-BR' }
+);
 const bricksBuilder = mp.bricks();
 window.paymentBrickController = null;
 
 btnPagamento?.addEventListener('click', async () => {
+    const quote = await atualizarCotacaoAssinatura();
+
+    if (!quote) {
+        showToast(
+            'Não foi possível calcular a assinatura. Atualize a página e tente novamente.',
+            'error'
+        );
+        return;
+    }
+
     btnPagamento.style.display = 'none';
     inputQtd.disabled = true;
     selectVencimento.disabled = true;
 
-    const valorS = document.getElementById('valor-hoje').textContent.replace('.','').replace(',','.');
-    const valorParaCobrar = parseFloat(valorS);
+    idTentativaAssinatura = crypto.randomUUID();
 
-    const renderPaymentBrick = async (bricksBuilder) => {
-        const settings = {
-            initialization: { amount: valorParaCobrar },
-            customization: {
-                paymentMethods: { creditCard: "all" },
-                visual: { style: { theme: 'dark' } } 
+    if (window.paymentBrickController) {
+        await window.paymentBrickController.unmount();
+        window.paymentBrickController = null;
+    }
+
+    const settings = {
+        initialization: {
+            amount: quote.monthlyAmount
+        },
+        customization: {
+            paymentMethods: {
+                creditCard: "all"
             },
-            callbacks: {
-                onReady: () => { console.log("Formulário MP injetado com sucesso."); },
-                onSubmit: ({ selectedPaymentMethod, formData }) => {
-                    return new Promise((resolve, reject) => {
-                        const payload = {
-                            ...formData,
-                            quantidade: parseInt(inputQtd.value) || 1,
-                            diaVencimento: parseInt(selectVencimento.value),
-                            emailGestor: currentUserEmail
-                        };
+            visual: {
+                style: {
+                    theme: 'dark'
+                }
+            }
+        },
+        callbacks: {
+            onReady: () => {
+                console.log('Formulário de pagamento pronto.');
+            },
+            onSubmit: async ({ formData }) => {
+                try {
+                    const cardTokenId = String(formData?.token || '').trim();
 
-                        fetch("https://processarpagamentoweb-pxytyhhu5q-uc.a.run.app", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload)
-                        })
-                        .then((res) => res.json())
-                        .then((response) => {
-                            resolve(); 
-                            if (response.status === "approved") {
-                                showToast("Pagamento Aprovado! As licenças foram adicionadas com sucesso.", "success");
-                                setTimeout(() => {
-                                    window.location.reload(); 
-                                }, 2000);
-                            } else if (response.error) {
-                                showToast("ERRO DO BANCO: " + response.detalheMP, "error");
-                            } else {
-                                showToast("Pagamento recusado. Motivo: " + response.status_detail, "error");
-                            }
-                        })
-                        .catch((error) => {
-                            reject();
-                            console.error(error);
-                            showToast("Falha de conexão com o servidor de pagamento.", "error");
-                        });
+                    if (!cardTokenId) {
+                        throw new Error('CARD_TOKEN_REQUIRED');
+                    }
+
+                    const result = await startAcademySubscription({
+                        licenseQuantity: quote.licenseQuantity,
+                        billingDay: quote.billingDay,
+                        attemptId: idTentativaAssinatura,
+                        cardTokenId
                     });
-                },
-                onError: (error) => { console.error(error); },
+
+                    showToast(
+                        result.providerStatus === 'authorized'
+                            ? 'Assinatura criada. Aguardando a confirmação da cobrança para liberar as licenças.'
+                            : 'Assinatura enviada ao Mercado Pago. Aguardando confirmação.',
+                        'success'
+                    );
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3500);
+                } catch (error) {
+                    console.error(
+                        'Erro ao iniciar assinatura:',
+                        error?.code || error?.message || error
+                    );
+
+                    const mensagem =
+                        error?.code === 'functions/failed-precondition'
+                            ? error.message
+                            : error?.code === 'functions/already-exists'
+                                ? 'Esta academia já possui uma assinatura ativa ou em processamento.'
+                                : error?.code === 'functions/unavailable'
+                                    ? 'O Mercado Pago está temporariamente indisponível.'
+                                    : 'Não foi possível concluir a assinatura.';
+
+                    showToast(mensagem, 'error');
+                    throw error;
+                }
             },
-        };
-        
-        window.paymentBrickController = await bricksBuilder.create('payment', 'paymentBrick_container', settings);
+            onError: (error) => {
+                console.error(
+                    'Erro no formulário de pagamento:',
+                    error?.type || error?.message || error
+                );
+            },
+        },
     };
 
-    renderPaymentBrick(bricksBuilder);
+    try {
+        window.paymentBrickController = await bricksBuilder.create(
+            'payment',
+            'paymentBrick_container',
+            settings
+        );
+    } catch (error) {
+        console.error(
+            'Erro ao renderizar pagamento:',
+            error?.message || error
+        );
+        showToast('Não foi possível abrir o formulário de pagamento.', 'error');
+        btnPagamento.style.display = 'block';
+        inputQtd.disabled = false;
+        selectVencimento.disabled = false;
+    }
 });

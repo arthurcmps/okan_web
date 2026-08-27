@@ -24,7 +24,14 @@ const appCheck = initializeAppCheck(app, {
 });
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Callables novas ficam próximas ao Firestore em southamerica-east1.
 const functions = getFunctions(app, "southamerica-east1");
 
+// O motor B2B existente ainda está publicado na região padrão.
+// Mantemos essa instância até a migração de região ser planejada
+// como uma mudança própria, sem mover endpoints durante o hotfix.
+const billingFunctions = getFunctions(app, "us-central1");
+
 // Exporta para ser usado nos outros ficheiros
-export { auth, db, functions, appCheck };
+export { auth, db, functions, billingFunctions, appCheck };
