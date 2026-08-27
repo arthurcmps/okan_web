@@ -49,6 +49,24 @@ test(
 );
 
 test(
+    "cancelamento de academia usa callable canonica",
+    () => {
+        assert.match(
+            serviceSource,
+            /cancelarAssinaturaAcademia/,
+        );
+        assert.match(
+            academiaSource,
+            /cancelAcademySubscription\s*\(/,
+        );
+        assert.doesNotMatch(
+            academiaSource,
+            /cancelamentoAgendado\s*:\s*true/,
+        );
+    },
+);
+
+test(
     "checkout nao usa endpoint nem preco legado como autoridade",
     () => {
         assert.doesNotMatch(
