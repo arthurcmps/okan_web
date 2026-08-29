@@ -9,6 +9,7 @@
     "test:academy-licenses": "node --test ./test/academy_license_flow_test.mjs",
     "test:academy-registration": "node --test ./test/academy_registration_flow_test.mjs",
     "test:academy-billing": "node --test ./test/academy_billing_flow_test.mjs",
+    "test:xss": "node --test ./test/xss_safety_test.mjs",
     "migrate:users:v2": "node ./scripts/migrate-users-v2.mjs",
     "repair:users:professor-link": "node ./scripts/repair-invalid-professor-link.mjs"
   },
