@@ -2,6 +2,7 @@
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 import { renderSkeleton } from "./skeleton.js";
+import { escapeHtml } from "../utils/html.js";
 
 export async function carregarFeedbacksBeta() {
     // Aciona o Skeleton Loader (5 colunas, 4 linhas) ANTES da requisição
@@ -29,11 +30,11 @@ export async function carregarFeedbacksBeta() {
             const dataFormatada = fb.timestamp ? fb.timestamp.toDate().toLocaleDateString('pt-BR') : '--';
             
             tr.innerHTML = `
-                <td style="color: #aaa; font-size: 12px;">${dataFormatada}</td>
-                <td><strong style="color: #ffc107;">⭐ ${fb.nota}/5</strong></td>
-                <td style="font-size: 13px; color: #ddd;">${fb.confuso || '--'}</td>
-                <td style="font-size: 13px; color: #ff5252;">${fb.bugs || '--'}</td>
-                <td style="font-size: 13px; color: #00e676;">${fb.gostou || '--'}</td>
+                <td style="color: #aaa; font-size: 12px;">${escapeHtml(dataFormatada)}</td>
+                <td><strong style="color: #ffc107;">⭐ ${escapeHtml(fb.nota)}/5</strong></td>
+                <td style="font-size: 13px; color: #ddd;">${escapeHtml(fb.confuso || '--')}</td>
+                <td style="font-size: 13px; color: #ff5252;">${escapeHtml(fb.bugs || '--')}</td>
+                <td style="font-size: 13px; color: #00e676;">${escapeHtml(fb.gostou || '--')}</td>
             `;
             tbody.appendChild(tr);
         });
