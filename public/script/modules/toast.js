@@ -11,25 +11,34 @@ export function showToast(message, type = 'info') {
 
     // Cria o elemento da notificação
     const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
+    const safeType = ['success', 'error', 'info'].includes(type)
+        ? type
+        : 'info';
+    toast.className = `toast toast-${safeType}`;
 
     // Define o ícone e a cor baseando-se no tipo (sucesso, erro, info)
     let icon = 'info';
     let color = '#2196f3'; // Azul padrão
     
-    if (type === 'success') { 
+    if (safeType === 'success') { 
         icon = 'check_circle'; 
         color = '#00e676'; // Verde Okan
-    } else if (type === 'error') { 
+    } else if (safeType === 'error') { 
         icon = 'error'; 
         color = '#ff5252'; // Vermelho de erro
     }
 
-    // Estrutura interna do Toast
-    toast.innerHTML = `
-        <span class="material-symbols-outlined toast-icon" style="color: ${color};">${icon}</span>
-        <span style="flex-grow: 1;">${message}</span>
-    `;
+    // Estrutura interna do Toast sem interpretar HTML da mensagem.
+    const iconElement = document.createElement('span');
+    iconElement.className = 'material-symbols-outlined toast-icon';
+    iconElement.style.color = color;
+    iconElement.textContent = icon;
+
+    const messageElement = document.createElement('span');
+    messageElement.style.flexGrow = '1';
+    messageElement.textContent = String(message ?? '');
+
+    toast.append(iconElement, messageElement);
 
     // Adiciona o Toast à tela
     container.appendChild(toast);

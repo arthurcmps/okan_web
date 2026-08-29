@@ -20,8 +20,8 @@ const modalExclusao = document.getElementById('modal-confirmar-exclusao');
 const textoConfirmacao = document.getElementById('texto-confirmacao-exclusao');
 let acaoExclusaoPendente = null;
 
-function confirmarExclusao(mensagemHtml, acaoConfirmada) {
-    textoConfirmacao.innerHTML = mensagemHtml;
+function confirmarExclusao(mensagem, acaoConfirmada) {
+    textoConfirmacao.textContent = mensagem;
     acaoExclusaoPendente = acaoConfirmada;
     modalExclusao.style.display = 'flex';
 }

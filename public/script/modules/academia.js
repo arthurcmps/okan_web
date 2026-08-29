@@ -1,6 +1,7 @@
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
 import { showToast } from "./toast.js";
+import { escapeHtml } from "../utils/html.js";
 import {
     grantAcademyLicense,
     revokeAcademyLicense
@@ -168,7 +169,7 @@ export function setupAcademiasUI() {
 
             academiaAtualLicencasUsadas = result.licensesUsed;
             academiaAtualLicencasTotais = result.licensesTotal;
-            document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
+            document.getElementById('detalhe-licencas').innerHTML = `${escapeHtml(academiaAtualLicencasUsadas)} de <strong style="color:white;">${escapeHtml(academiaAtualLicencasTotais)}</strong> em uso`;
             modalNovoProfessor.style.display = 'none';
 
             showToast(
@@ -204,8 +205,8 @@ export async function carregarAcademias() {
             const acad = docSnap.data(); const id = docSnap.id; 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="font-weight: bold;">${acad.nome}</td><td>${acad.emailGestor}</td>
-                <td><span style="color: #00e676;">${acad.licencasUsadas || 0}</span> / ${acad.licencasTotais || 0}</td>
+                <td style="font-weight: bold;">${escapeHtml(acad.nome)}</td><td>${escapeHtml(acad.emailGestor)}</td>
+                <td><span style="color: #00e676;">${escapeHtml(acad.licencasUsadas || 0)}</span> / ${escapeHtml(acad.licencasTotais || 0)}</td>
                 <td>
                     <button class="action-btn btn-view" title="Ver Detalhes"><span class="material-symbols-outlined" style="font-size: 18px;">visibility</span></button>
                     <button class="action-btn btn-delete" style="color: #ff5252;" title="Excluir"><span class="material-symbols-outlined" style="font-size: 18px;">delete</span></button>
@@ -213,7 +214,7 @@ export async function carregarAcademias() {
             `;
             tr.querySelector('.btn-view').addEventListener('click', () => abrirDetalhesAcademia(acad, id));
             tr.querySelector('.btn-delete').addEventListener('click', () => {
-                if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Tem a certeza que deseja excluir a academia <strong>"${acad.nome}"</strong>?`, async () => { await deleteDoc(doc(db, "academias", id)); carregarAcademias(); });
+                if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Tem a certeza que deseja excluir a academia "${acad.nome}"?`, async () => { await deleteDoc(doc(db, "academias", id)); carregarAcademias(); });
             });
             tbody.appendChild(tr);
         });
@@ -260,7 +261,7 @@ function abrirDetalhesAcademia(acad, id) {
     academiaAtualLicencasUsadas = acad.licencasUsadas || 0;
     
     document.getElementById('detalhe-nome-titulo').textContent = acad.nome;
-    document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
+    document.getElementById('detalhe-licencas').innerHTML = `${escapeHtml(academiaAtualLicencasUsadas)} de <strong style="color:white;">${escapeHtml(academiaAtualLicencasTotais)}</strong> em uso`;
     
     document.getElementById('detalhe-cnpj').textContent = acad.cnpj || '--';
     document.getElementById('detalhe-email').textContent = acad.emailGestor || '--';
@@ -356,9 +357,9 @@ async function carregarProfessoresDaAcademia() {
             const prof = docSnap.data(); const profId = docSnap.id;
             const tr = document.createElement('tr');
             const statusColor = prof.status === 'Pendente' ? '#ff9800' : '#00e676';
-            tr.innerHTML = `<td><strong>${prof.email}</strong></td><td><span style="color: ${statusColor}; border: 1px solid ${statusColor}; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${prof.status}</span></td><td><button class="action-btn btn-delete-prof" style="color: #ff5252;" title="Remover Licença"><span class="material-symbols-outlined" style="font-size: 18px;">person_remove</span></button></td>`;
+            tr.innerHTML = `<td><strong>${escapeHtml(prof.email)}</strong></td><td><span style="color: ${escapeHtml(statusColor)}; border: 1px solid ${escapeHtml(statusColor)}; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${escapeHtml(prof.status)}</span></td><td><button class="action-btn btn-delete-prof" style="color: #ff5252;" title="Remover Licença"><span class="material-symbols-outlined" style="font-size: 18px;">person_remove</span></button></td>`;
             tr.querySelector('.btn-delete-prof').addEventListener('click', async () => {
-                if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Remover o acesso Premium de <strong>${prof.email}</strong>?`, async () => {
+                if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Remover o acesso Premium de ${prof.email}?`, async () => {
                     try {
                         const result = await revokeAcademyLicense({
                             academyId: academiaAtualId,
@@ -367,7 +368,7 @@ async function carregarProfessoresDaAcademia() {
 
                         academiaAtualLicencasUsadas = result.licensesUsed;
                         academiaAtualLicencasTotais = result.licensesTotal;
-                        document.getElementById('detalhe-licencas').innerHTML = `${academiaAtualLicencasUsadas} de <strong style="color:white;">${academiaAtualLicencasTotais}</strong> em uso`;
+                        document.getElementById('detalhe-licencas').innerHTML = `${escapeHtml(academiaAtualLicencasUsadas)} de <strong style="color:white;">${escapeHtml(academiaAtualLicencasTotais)}</strong> em uso`;
 
                         showToast(
                             result.alreadyRemoved

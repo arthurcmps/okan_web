@@ -1,6 +1,7 @@
 // script/modules/loja.js
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "../firebase.js";
+import { escapeHtml } from "../utils/html.js";
 
 let idTemplateEditando = null;
 
@@ -25,7 +26,7 @@ export function initLoja(funcaoConfirmarExclusao) {
         tagsDisponiveis.forEach(tag => {
             const label = document.createElement('label');
             label.className = 'tag-chip';
-            label.innerHTML = `<input type="checkbox" value="${tag}"> ${tag}`;
+            label.innerHTML = `<input type="checkbox" value="${escapeHtml(tag)}"> ${escapeHtml(tag)}`;
             label.addEventListener('change', (e) => { e.target.checked ? label.classList.add('selected') : label.classList.remove('selected'); });
             tagsContainer.appendChild(label);
         });
@@ -146,7 +147,7 @@ export function initLoja(funcaoConfirmarExclusao) {
             const infoDiv = document.createElement('div');
             infoDiv.style.cursor = 'pointer';
             infoDiv.style.flex = '1';
-            infoDiv.innerHTML = `<strong style="color: white;">${ex.nome}</strong><br><span style="color: #aaa; font-size: 12px;">${ex.grupo || 'Sem grupo'}</span>`;
+            infoDiv.innerHTML = `<strong style="color: white;">${escapeHtml(ex.nome)}</strong><br><span style="color: #aaa; font-size: 12px;">${escapeHtml(ex.grupo || 'Sem grupo')}</span>`;
             
             infoDiv.addEventListener('click', () => {
                 indexExercicioTemplateEditando = null; 
@@ -341,12 +342,12 @@ export async function carregarTemplatesLoja() {
             } else if (tpl.exercicios && tpl.exercicios.length > 0) {
                 qtdFichas = 1; 
             }
-            const infoFichas = qtdFichas > 0 ? `<span style="color: #00e676; font-weight:bold;">${qtdFichas} Ficha(s)</span> • ` : '';
+            const infoFichas = qtdFichas > 0 ? `${qtdFichas} Ficha(s) • ` : '';
 
             tr.innerHTML = `
-                <td style="font-weight: bold;">${tpl.nome}</td>
-                <td style="color: #ff5252;">${precoStr}</td>
-                <td style="font-size: 12px; color: #aaa;">${infoFichas}${tagsStr}</td>
+                <td style="font-weight: bold;">${escapeHtml(tpl.nome)}</td>
+                <td style="color: #ff5252;">${escapeHtml(precoStr)}</td>
+                <td style="font-size: 12px; color: #aaa;">${escapeHtml(infoFichas)}${escapeHtml(tagsStr)}</td>
                 <td>
                     <button class="action-btn btn-edit-tpl" title="Editar Produto"><span class="material-symbols-outlined" style="font-size: 18px;">edit</span></button>
                     <button class="action-btn btn-delete-tpl" style="color: #ff5252;" title="Excluir da Loja"><span class="material-symbols-outlined" style="font-size: 18px;">delete</span></button>
@@ -384,7 +385,7 @@ export async function carregarTemplatesLoja() {
             tr.querySelector('.btn-delete-tpl').addEventListener('click', () => {
                 if(confirmarExclusaoGlobal) {
                     confirmarExclusaoGlobal(
-                        `Remover o treino <strong>"${tpl.nome}"</strong> da loja oficial?<br>Os professores que já compraram continuarão a ter acesso.`,
+                        `Remover o treino "${tpl.nome}" da loja oficial? Os professores que já compraram continuarão a ter acesso.`,
                         async () => {
                             await deleteDoc(doc(db, "workout_templates", id));
                             carregarTemplatesLoja();
@@ -473,7 +474,7 @@ function atualizarListaExerciciosUI() {
     const exerciciosAtivos = seriesDoTemplateAtual[serieAtiva] || [];
     
     if (exerciciosAtivos.length === 0) {
-        ul.innerHTML = `<p style="color: #aaa; text-align: center; padding: 16px; font-size: 14px;">A Ficha ${serieAtiva} está vazia. Adicione exercícios pelo catálogo.</p>`;
+        ul.innerHTML = `<p style="color: #aaa; text-align: center; padding: 16px; font-size: 14px;">A Ficha ${escapeHtml(serieAtiva)} está vazia. Adicione exercícios pelo catálogo.</p>`;
         return;
     }
 
