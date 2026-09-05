@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Okan Admin | Dashboard</title>
-    <link rel="stylesheet" href="css/style.css?v=1.0">
+    <link rel="stylesheet" href="css/style.css?v=1.1">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
@@ -16,23 +16,23 @@
         <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
     </div>
     
-    <aside class="sidebar">
+    <aside class="sidebar" aria-label="Navegação do painel">
         <div class="sidebar-header">
             <h2>Okan<span style="color: #00e676;">.Admin</span></h2>
         </div>
-        <ul class="nav-links">
-            <li id="menu-inicio" class="active" data-target="inicio"><span class="material-symbols-outlined"></span> Início</li>
-            <li id="menu-academias" data-target="academias"><span class="material-symbols-outlined"></span> Academias</li>
-            <li id="menu-professores" data-target="professores"><span class="material-symbols-outlined"></span> Professores</li>
-            <li id="menu-templates" data-target="templates"><span class="material-symbols-outlined"></span> Loja (Templates)</li>
-            <li id="menu-feedbacks" data-target="feedbacks"><span class="material-symbols-outlined"></span> Feedback Beta</li>
+        <ul class="nav-links" aria-label="Seções do painel">
+            <li id="menu-inicio" class="active" data-target="inicio" data-label="Início" role="button" tabindex="0" aria-controls="section-inicio" aria-current="page"><span class="material-symbols-outlined" aria-hidden="true">home</span> Início</li>
+            <li id="menu-academias" data-target="academias" data-label="Academias" role="button" tabindex="0" aria-controls="section-academias"><span class="material-symbols-outlined" aria-hidden="true">domain</span> Academias</li>
+            <li id="menu-professores" data-target="professores" data-label="Professores" role="button" tabindex="0" aria-controls="section-professores"><span class="material-symbols-outlined" aria-hidden="true">fitness_center</span> Professores</li>
+            <li id="menu-templates" data-target="templates" data-label="Loja (Templates)" role="button" tabindex="0" aria-controls="section-templates"><span class="material-symbols-outlined" aria-hidden="true">storefront</span> Loja (Templates)</li>
+            <li id="menu-feedbacks" data-target="feedbacks" data-label="Feedback Beta" role="button" tabindex="0" aria-controls="section-feedbacks"><span class="material-symbols-outlined" aria-hidden="true">feedback</span> Feedback Beta</li>
             
-            <li id="menu-minha-academia" data-target="detalhes-academia" style="display: none;"><span class="material-symbols-outlined"></span> Minha Academia</li>
-            <li id="menu-planos" data-target="planos" style="display: none;"><span class="material-symbols-outlined"></span> Assinatura</li>
+            <li id="menu-minha-academia" data-target="detalhes-academia" data-label="Minha Academia" role="button" tabindex="0" aria-controls="section-detalhes-academia" style="display: none;"><span class="material-symbols-outlined" aria-hidden="true">apartment</span> Minha Academia</li>
+            <li id="menu-planos" data-target="planos" data-label="Assinatura" role="button" tabindex="0" aria-controls="section-planos" style="display: none;"><span class="material-symbols-outlined" aria-hidden="true">credit_card</span> Assinatura</li>
         </ul>
         <div class="sidebar-footer">
             <button id="logout-btn" class="btn-outline">
-                <span class="material-symbols-outlined"></span> Sair
+                <span class="material-symbols-outlined" aria-hidden="true">logout</span> Sair
             </button>
         </div>
     </aside>
@@ -238,7 +238,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="titulo-modal-academia">Cadastrar Academia</h2>
-                <span class="close-btn" id="fechar-modal-academia">&times;</span>
+                <span class="close-btn" id="fechar-modal-academia" role="button" tabindex="0" aria-label="Fechar cadastro de academia">&times;</span>
             </div>
             <form id="form-nova-academia">
                 <div class="input-group"><label>Nome</label><input type="text" id="acad-nome" required></div>
@@ -277,7 +277,7 @@
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <h2>Convidar Professor</h2>
-                <span class="close-btn" id="fechar-modal-professor">&times;</span>
+                <span class="close-btn" id="fechar-modal-professor" role="button" tabindex="0" aria-label="Fechar convite de professor">&times;</span>
             </div>
             <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">
                 O professor receberá acesso Premium automático ao registar-se na aplicação com este e-mail.
@@ -296,7 +296,7 @@
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
                 <h2 id="titulo-modal-template">Novo Produto</h2>
-                <span class="close-btn" id="fechar-modal-template">&times;</span>
+                <span class="close-btn" id="fechar-modal-template" role="button" tabindex="0" aria-label="Fechar editor de produto">&times;</span>
             </div>
             
             <div class="form-row">
@@ -324,12 +324,12 @@
                 </div>
                 
                 <!-- NOVO: ABAS DE SÉRIES A, B, C, D, E -->
-                <div id="seletor-series" style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px;">
-                    <div class="tag-chip selected" data-serie="A" style="border-color: #ff5252;">Ficha A</div>
-                    <div class="tag-chip" data-serie="B">Ficha B</div>
-                    <div class="tag-chip" data-serie="C">Ficha C</div>
-                    <div class="tag-chip" data-serie="D">Ficha D</div>
-                    <div class="tag-chip" data-serie="E">Ficha E</div>
+                <div id="seletor-series" role="tablist" aria-label="Fichas do treino" style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px;">
+                    <button type="button" class="tag-chip selected" data-serie="A" role="tab" aria-selected="true" style="border-color: #ff5252;">Ficha A</button>
+                    <button type="button" class="tag-chip" data-serie="B" role="tab" aria-selected="false">Ficha B</button>
+                    <button type="button" class="tag-chip" data-serie="C" role="tab" aria-selected="false">Ficha C</button>
+                    <button type="button" class="tag-chip" data-serie="D" role="tab" aria-selected="false">Ficha D</button>
+                    <button type="button" class="tag-chip" data-serie="E" role="tab" aria-selected="false">Ficha E</button>
                 </div>
 
                 <ul id="lista-exercicios-template" class="exercise-list">
@@ -345,7 +345,7 @@
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>Catálogo de Exercícios</h2>
-                <span class="close-btn" id="fechar-modal-catalogo">&times;</span>
+                <span class="close-btn" id="fechar-modal-catalogo" role="button" tabindex="0" aria-label="Fechar catálogo de exercícios">&times;</span>
             </div>
             
             <button id="btn-novo-exercicio-global" class="btn-outline" style="width: 100%; margin-bottom: 16px;">+ Criar Novo no Banco</button>
@@ -378,7 +378,7 @@
         <div class="modal-content" style="max-width: 400px; text-align: center;">
             <div class="modal-header" style="justify-content: space-between; display: flex; align-items: center; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 16px;">
                 <h3 id="nome-exercicio-config" style="color: #00e676; margin: 0;">Nome do Exercício</h3>
-                <span class="close-btn" id="fechar-modal-config-series" style="cursor:pointer;">&times;</span>
+                <span class="close-btn" id="fechar-modal-config-series" role="button" tabindex="0" aria-label="Fechar configuração do exercício">&times;</span>
             </div>
             
             <div class="form-row">
@@ -411,7 +411,7 @@
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <h2>Novo Exercício</h2>
-                <span class="close-btn" id="fechar-modal-novo-exercicio">&times;</span>
+                <span class="close-btn" id="fechar-modal-novo-exercicio" role="button" tabindex="0" aria-label="Fechar cadastro de exercício">&times;</span>
             </div>
             <form id="form-novo-exercicio-global">
                 <div class="input-group">
@@ -431,6 +431,6 @@
         </div>
     </div>
 
-    <script type="module" src="script/dashboard.js?v=1.0"></script>
+    <script type="module" src="script/dashboard.js?v=1.1"></script>
 </body>
 </html>

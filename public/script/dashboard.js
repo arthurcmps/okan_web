@@ -171,35 +171,53 @@ document.getElementById('logout-btn')?.addEventListener('click', async () => {
     window.location.href = "index.html"; 
 });
 
-menuLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        if (
-            userRole === USER_ROLES.gymAdmin &&
-            link.id !== 'menu-minha-academia' &&
-            link.id !== 'menu-planos'
-        ) {
-            return;
-        }
+function ativarItemMenu(link) {
+    if (
+        userRole === USER_ROLES.gymAdmin &&
+        link.id !== 'menu-minha-academia' &&
+        link.id !== 'menu-planos'
+    ) {
+        return;
+    }
 
-        menuLinks.forEach(item => item.classList.remove('active'));
-        link.classList.add('active');
-
-        Object.values(sectionMap).forEach(s => {
-            if (s) s.style.display = 'none';
-        });
-
-        const target = link.getAttribute('data-target');
-
-        if (sectionMap[target]) {
-            sectionMap[target].style.display = 'block';
-
-            const pageTitle = document.getElementById('page-title');
-
-            if (pageTitle) {
-                pageTitle.textContent = link.textContent.trim();
-            }
-        }
+    menuLinks.forEach(item => {
+        item.classList.remove('active');
+        item.removeAttribute('aria-current');
     });
+    link.classList.add('active');
+    link.setAttribute('aria-current', 'page');
+
+    Object.values(sectionMap).forEach(s => {
+        if (s) s.style.display = 'none';
+    });
+
+    const target = link.getAttribute('data-target');
+
+    if (sectionMap[target]) {
+        sectionMap[target].style.display = 'block';
+
+        const pageTitle = document.getElementById('page-title');
+
+        if (pageTitle) {
+            pageTitle.textContent = link.dataset.label || link.textContent.trim();
+        }
+    }
+}
+
+function acionarComTeclado(event, element) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    element.click();
+}
+
+menuLinks.forEach(link => {
+    link.addEventListener('click', () => ativarItemMenu(link));
+    link.addEventListener('keydown', event => acionarComTeclado(event, link));
+});
+
+document.querySelectorAll('.close-btn[role="button"]').forEach(button => {
+    button.addEventListener('keydown', event => acionarComTeclado(event, button));
 });
 
 document.getElementById('btn-voltar-academias')?.addEventListener('click', () => { 
