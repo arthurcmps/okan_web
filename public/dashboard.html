@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Okan Admin | Dashboard</title>
-    <link rel="stylesheet" href="css/style.css?v=1.1">
+    <link rel="stylesheet" href="css/style.css?v=1.2">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
@@ -60,8 +60,8 @@
                     <h2>Gestão de Academias</h2>
                     <button id="btn-nova-academia" class="btn-primary">+ Nova Academia</button>
                 </div>
-                <div class="panel-box">
-                    <table class="data-table">
+                <div class="panel-box table-panel">
+                    <table class="data-table responsive-table" aria-label="Academias cadastradas">
                         <thead><tr><th>Nome</th><th>E-mail Gestor</th><th>Licenças</th><th>Ações</th></tr></thead>
                         <tbody id="table-academias-body">
                             <tr><td colspan="4" style="text-align: center; color: #aaa;">A carregar academias...</td></tr>
@@ -74,8 +74,8 @@
                 <div class="section-header">
                     <h2>Feedbacks dos Testadores (Beta)</h2>
                 </div>
-                <div class="panel-box">
-                    <table class="data-table">
+                <div class="panel-box table-panel">
+                    <table class="data-table responsive-table" aria-label="Feedbacks dos testadores">
                         <thead>
                             <tr>
                                 <th>Data</th>
@@ -127,7 +127,7 @@
                                 + Adicionar Professor
                             </button>
                         </div>
-                        <table class="data-table">
+                        <table class="data-table responsive-table" aria-label="Professores vinculados à academia">
                             <thead><tr><th>E-mail do Professor</th><th>Status no App</th><th>Ações</th></tr></thead>
                             <tbody id="table-professores-body">
                                 <tr><td colspan="3" style="text-align: center; color: #aaa;">A carregar professores...</td></tr>
@@ -207,8 +207,8 @@
                 <div class="section-header">
                     <h2>Gestão Global de Professores</h2>
                 </div>
-                <div class="panel-box">
-                    <table class="data-table">
+                <div class="panel-box table-panel">
+                    <table class="data-table responsive-table" aria-label="Professores cadastrados">
                         <thead><tr><th>Nome do Professor</th><th>E-mail</th><th>Vínculo</th><th>Plano</th><th>Ações</th></tr></thead>
                         <tbody id="table-todos-professores-body">
                             <tr><td colspan="5" style="text-align: center; color: #aaa;">A carregar base de dados...</td></tr>
@@ -222,8 +222,8 @@
                     <h2>Loja Oficial: Produtos (Treinos)</h2>
                     <button id="btn-novo-template" class="btn-primary" style="background-color: #ff5252; color: white;">+ Novo Produto</button>
                 </div>
-                <div class="panel-box">
-                    <table class="data-table">
+                <div class="panel-box table-panel">
+                    <table class="data-table responsive-table" aria-label="Produtos da loja">
                         <thead><tr><th>Nome do Treino</th><th>Preço (R$)</th><th>Tags</th><th>Ações</th></tr></thead>
                         <tbody id="table-templates-body">
                             <tr><td colspan="4" style="text-align: center; color: #aaa;">A carregar loja...</td></tr>
