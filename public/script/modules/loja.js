@@ -170,9 +170,11 @@ export function initLoja(funcaoConfirmarExclusao) {
             });
 
             const btnEditCatalogo = document.createElement('button');
+            btnEditCatalogo.type = 'button';
             btnEditCatalogo.className = 'action-btn';
-            btnEditCatalogo.innerHTML = '<span class="material-symbols-outlined" style="color: #00e676; font-size: 18px;">edit</span>';
+            btnEditCatalogo.innerHTML = '<span class="material-symbols-outlined" style="color: #00e676; font-size: 18px;" aria-hidden="true">edit</span>';
             btnEditCatalogo.title = "Editar Exercício no Banco";
+            btnEditCatalogo.setAttribute('aria-label', 'Editar exercício no catálogo');
             
             btnEditCatalogo.addEventListener('click', (e) => {
                 e.stopPropagation(); 
@@ -351,8 +353,8 @@ export async function carregarTemplatesLoja() {
                 <td style="color: #ff5252;">${escapeHtml(precoStr)}</td>
                 <td style="font-size: 12px; color: #aaa;">${escapeHtml(infoFichas)}${escapeHtml(tagsStr)}</td>
                 <td>
-                    <button class="action-btn btn-edit-tpl" title="Editar Produto"><span class="material-symbols-outlined" style="font-size: 18px;">edit</span></button>
-                    <button class="action-btn btn-delete-tpl" style="color: #ff5252;" title="Excluir da Loja"><span class="material-symbols-outlined" style="font-size: 18px;">delete</span></button>
+                    <button type="button" class="action-btn btn-edit-tpl" title="Editar produto" aria-label="Editar produto"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">edit</span></button>
+                    <button type="button" class="action-btn btn-delete-tpl" style="color: #ff5252;" title="Excluir da loja" aria-label="Excluir produto da loja"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">delete</span></button>
                 </td>
             `;
 
@@ -434,9 +436,12 @@ function criarItemExercicio(ex, index) {
     botoesDiv.style.alignItems = 'center';
 
     const btnEditar = document.createElement('button');
+    btnEditar.type = 'button';
     btnEditar.className = 'action-btn';
     btnEditar.style.color = '#fff';
-    btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">edit</span>';
+    btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">edit</span>';
+    btnEditar.title = 'Editar exercício';
+    btnEditar.setAttribute('aria-label', 'Editar exercício do treino');
     
     btnEditar.addEventListener('click', () => {
         indexExercicioTemplateEditando = index; 
@@ -455,9 +460,12 @@ function criarItemExercicio(ex, index) {
     });
 
     const btnRemover = document.createElement('button');
+    btnRemover.type = 'button';
     btnRemover.className = 'action-btn';
     btnRemover.style.color = '#ff5252';
-    btnRemover.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">close</span>';
+    btnRemover.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">close</span>';
+    btnRemover.title = 'Remover exercício';
+    btnRemover.setAttribute('aria-label', 'Remover exercício do treino');
 
     btnRemover.addEventListener('click', () => {
         removerExercicioDoTemplate(index);

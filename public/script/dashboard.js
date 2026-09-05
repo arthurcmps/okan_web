@@ -216,10 +216,6 @@ menuLinks.forEach(link => {
     link.addEventListener('keydown', event => acionarComTeclado(event, link));
 });
 
-document.querySelectorAll('.close-btn[role="button"]').forEach(button => {
-    button.addEventListener('keydown', event => acionarComTeclado(event, button));
-});
-
 document.getElementById('btn-voltar-academias')?.addEventListener('click', () => { 
     const target = document.querySelector('[data-target=\"academias\"]');
     if (target) target.click();
