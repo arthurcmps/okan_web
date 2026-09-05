@@ -37,10 +37,12 @@ export function initLoja(funcaoConfirmarExclusao) {
         chip.addEventListener('click', () => {
             document.querySelectorAll('#seletor-series .tag-chip').forEach(c => {
                 c.classList.remove('selected');
-                c.style.borderColor = '#444'; 
+                c.style.borderColor = '#444';
+                c.setAttribute('aria-selected', 'false');
             });
             chip.classList.add('selected');
             chip.style.borderColor = '#ff5252';
+            chip.setAttribute('aria-selected', 'true');
             
             serieAtiva = chip.getAttribute('data-serie');
             atualizarListaExerciciosUI();

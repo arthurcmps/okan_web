@@ -5,6 +5,7 @@
   "description": "Local maintenance tools for Okan Web",
   "type": "module",
   "scripts": {
+    "test:dashboard-a11y": "node --test ./test/dashboard_accessibility_test.mjs",
     "test:user-model": "node --test ./test/user_model_test.mjs",
     "test:academy-licenses": "node --test ./test/academy_license_flow_test.mjs",
     "test:academy-registration": "node --test ./test/academy_registration_flow_test.mjs",
