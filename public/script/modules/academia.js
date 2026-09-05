@@ -208,8 +208,8 @@ export async function carregarAcademias() {
                 <td style="font-weight: bold;">${escapeHtml(acad.nome)}</td><td>${escapeHtml(acad.emailGestor)}</td>
                 <td><span style="color: #00e676;">${escapeHtml(acad.licencasUsadas || 0)}</span> / ${escapeHtml(acad.licencasTotais || 0)}</td>
                 <td>
-                    <button class="action-btn btn-view" title="Ver Detalhes"><span class="material-symbols-outlined" style="font-size: 18px;">visibility</span></button>
-                    <button class="action-btn btn-delete" style="color: #ff5252;" title="Excluir"><span class="material-symbols-outlined" style="font-size: 18px;">delete</span></button>
+                    <button type="button" class="action-btn btn-view" title="Ver detalhes" aria-label="Ver detalhes da academia"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">visibility</span></button>
+                    <button type="button" class="action-btn btn-delete" style="color: #ff5252;" title="Excluir" aria-label="Excluir academia"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">delete</span></button>
                 </td>
             `;
             tr.querySelector('.btn-view').addEventListener('click', () => abrirDetalhesAcademia(acad, id));
@@ -357,7 +357,7 @@ async function carregarProfessoresDaAcademia() {
             const prof = docSnap.data(); const profId = docSnap.id;
             const tr = document.createElement('tr');
             const statusColor = prof.status === 'Pendente' ? '#ff9800' : '#00e676';
-            tr.innerHTML = `<td><strong>${escapeHtml(prof.email)}</strong></td><td><span style="color: ${escapeHtml(statusColor)}; border: 1px solid ${escapeHtml(statusColor)}; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${escapeHtml(prof.status)}</span></td><td><button class="action-btn btn-delete-prof" style="color: #ff5252;" title="Remover Licença"><span class="material-symbols-outlined" style="font-size: 18px;">person_remove</span></button></td>`;
+            tr.innerHTML = `<td><strong>${escapeHtml(prof.email)}</strong></td><td><span style="color: ${escapeHtml(statusColor)}; border: 1px solid ${escapeHtml(statusColor)}; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${escapeHtml(prof.status)}</span></td><td><button type="button" class="action-btn btn-delete-prof" style="color: #ff5252;" title="Remover licença" aria-label="Remover licença do professor"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">person_remove</span></button></td>`;
             tr.querySelector('.btn-delete-prof').addEventListener('click', async () => {
                 if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Remover o acesso Premium de ${prof.email}?`, async () => {
                     try {

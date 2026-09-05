@@ -117,6 +117,7 @@ function criarLinhaProfessor(prof) {
 
     const tdAcoes = document.createElement('td');
     const btnDetalhes = document.createElement('button');
+    btnDetalhes.type = 'button';
     btnDetalhes.className = 'action-btn';
     btnDetalhes.title = 'Ver Detalhes';
     btnDetalhes.setAttribute(
@@ -130,6 +131,7 @@ function criarLinhaProfessor(prof) {
     
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined';
+    icon.setAttribute('aria-hidden', 'true');
     icon.textContent = 'visibility';
     
     btnDetalhes.appendChild(icon);

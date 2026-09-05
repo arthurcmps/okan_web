@@ -2,10 +2,20 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [dashboardHtml, dashboardScript, stylesheet] = await Promise.all([
+const [
+    dashboardHtml,
+    dashboardScript,
+    stylesheet,
+    academiaScript,
+    professoresScript,
+    lojaScript,
+] = await Promise.all([
     readFile(new URL('../public/dashboard.html', import.meta.url), 'utf8'),
     readFile(new URL('../public/script/dashboard.js', import.meta.url), 'utf8'),
     readFile(new URL('../public/css/style.css', import.meta.url), 'utf8'),
+    readFile(new URL('../public/script/modules/academia.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/script/modules/professores.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/script/modules/loja.js', import.meta.url), 'utf8'),
 ]);
 
 test('dashboard navigation exposes labels, icons and keyboard semantics', () => {
@@ -35,22 +45,39 @@ test('dashboard navigation exposes labels, icons and keyboard semantics', () => 
     assert.match(navigation, /id="menu-inicio"[^>]*aria-current="page"/);
 });
 
-test('custom modal close controls can be named and reached by keyboard', () => {
+test('modal close controls use native named buttons', () => {
     const closeControls = [
-        ...dashboardHtml.matchAll(/<span class="close-btn"[^>]*>/g),
+        ...dashboardHtml.matchAll(/<button type="button" class="close-btn"[^>]*>/g),
     ];
 
     assert.equal(closeControls.length, 7);
 
     for (const [control] of closeControls) {
-        assert.match(control, /role="button"/);
-        assert.match(control, /tabindex="0"/);
         assert.match(control, /aria-label="Fechar [^"]+"/);
     }
 
-    assert.match(dashboardScript, /\.close-btn\[role="button"\]/);
+    assert.doesNotMatch(dashboardScript, /\.close-btn\[role="button"\]/);
     assert.match(dashboardScript, /event\.key !== 'Enter'/);
     assert.match(dashboardScript, /event\.key !== ' '/);
+});
+
+test('icon-only actions expose names and decorative icons stay hidden', () => {
+    assert.match(stylesheet, /\.action-btn:disabled/);
+    assert.match(stylesheet, /\.action-btn:active/);
+
+    for (const script of [academiaScript, professoresScript, lojaScript]) {
+        assert.match(script, /aria-label/);
+        assert.match(script, /aria-hidden/);
+    }
+
+    assert.match(academiaScript, /aria-label="Ver detalhes da academia"/);
+    assert.match(academiaScript, /aria-label="Excluir academia"/);
+    assert.match(academiaScript, /aria-label="Remover licença do professor"/);
+    assert.match(professoresScript, /Ver detalhes de \$\{prof\.name/);
+    assert.match(lojaScript, /aria-label="Editar produto"/);
+    assert.match(lojaScript, /aria-label="Excluir produto da loja"/);
+    assert.match(lojaScript, /'Editar exercício do treino'/);
+    assert.match(lojaScript, /'Remover exercício do treino'/);
 });
 
 test('workout sheets use semantic tabs without changing their data contract', () => {
