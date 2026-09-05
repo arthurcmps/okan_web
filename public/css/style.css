@@ -216,7 +216,7 @@ select:focus-visible,
     }
 
     .content-area {
-        padding: 20px;
+        padding: 20px 20px calc(112px + env(safe-area-inset-bottom));
     }
 
     #page-title {
@@ -360,6 +360,10 @@ select:focus-visible,
         min-width: 44px;
         height: 44px;
         margin: 0;
+    }
+
+    .professor-details-modal {
+        margin-bottom: calc(72px + env(safe-area-inset-bottom));
     }
 
     /* 5. Formulários e Inputs */

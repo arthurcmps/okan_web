@@ -3,6 +3,64 @@ import { db } from "../firebase.js";
 import { renderSkeleton } from "./skeleton.js";
 import { MEMBER_TYPES, normalizeUser } from "../models/user-model.mjs";
 
+const modalDetalhesProfessor =
+    document.getElementById('modal-detalhes-professor');
+let focoAntesDosDetalhes = null;
+
+function textoVinculoProfessor(prof) {
+    if (prof.academiaNome) {
+        return prof.academiaNome;
+    }
+
+    return prof.academyId
+        ? 'Vinculado a uma academia'
+        : 'Profissional autônomo';
+}
+
+function fecharDetalhesProfessor() {
+    if (modalDetalhesProfessor) {
+        modalDetalhesProfessor.style.display = 'none';
+    }
+
+    focoAntesDosDetalhes?.focus();
+    focoAntesDosDetalhes = null;
+}
+
+function abrirDetalhesProfessor(prof, trigger) {
+    if (!modalDetalhesProfessor) return;
+
+    document.getElementById('prof-detalhe-nome').textContent =
+        prof.name || 'Sem nome';
+    document.getElementById('prof-detalhe-email').textContent =
+        prof.email || '--';
+    document.getElementById('prof-detalhe-vinculo').textContent =
+        textoVinculoProfessor(prof);
+    document.getElementById('prof-detalhe-plano').textContent =
+        prof.isPremium ? 'Premium' : 'Gratuito';
+
+    focoAntesDosDetalhes = trigger;
+    modalDetalhesProfessor.style.display = 'flex';
+    document.getElementById('fechar-modal-detalhes-professor')?.focus();
+}
+
+document.getElementById('fechar-modal-detalhes-professor')
+    ?.addEventListener('click', fecharDetalhesProfessor);
+
+modalDetalhesProfessor?.addEventListener('click', (event) => {
+    if (event.target === modalDetalhesProfessor) {
+        fecharDetalhesProfessor();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (
+        event.key === 'Escape' &&
+        modalDetalhesProfessor?.style.display === 'flex'
+    ) {
+        fecharDetalhesProfessor();
+    }
+});
+
 function criarBadgeVinculo(prof) {
     const span = document.createElement('span');
     if (prof.academiaNome) {
@@ -61,6 +119,14 @@ function criarLinhaProfessor(prof) {
     const btnDetalhes = document.createElement('button');
     btnDetalhes.className = 'action-btn';
     btnDetalhes.title = 'Ver Detalhes';
+    btnDetalhes.setAttribute(
+        'aria-label',
+        `Ver detalhes de ${prof.name || 'professor'}`
+    );
+    btnDetalhes.addEventListener(
+        'click',
+        () => abrirDetalhesProfessor(prof, btnDetalhes)
+    );
     
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined';

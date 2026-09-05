@@ -43,6 +43,10 @@ test('responsive tables stop forcing a wide mobile canvas', () => {
         stylesheet,
         /\.data-table \{\s*min-width:\s*600px;/,
     );
+    assert.match(
+        stylesheet,
+        /padding: 20px 20px calc\(112px \+ env\(safe-area-inset-bottom\)\);/,
+    );
 });
 
 test('desktop table headers remain available to assistive technology', () => {

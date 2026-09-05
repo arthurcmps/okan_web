@@ -6,7 +6,7 @@ import { auth, db } from "./firebase.js";
 // Importação dos Nossos Módulos
 import { carregarFeedbacksBeta } from "./modules/feedbacks.js";
 import { initLoja, carregarTemplatesLoja } from "./modules/loja.js";
-import { carregarTodosProfessores } from "./modules/professores.js";
+import { carregarTodosProfessores } from "./modules/professores.js?v=1.1";
 import { setupAcademiasUI, initAcademiasContext, carregarAcademias, configurarPainelAcademia } from "./modules/academia.js";
 import { MEMBER_TYPES, USER_ROLES, normalizeUser } from "./models/user-model.mjs";
 

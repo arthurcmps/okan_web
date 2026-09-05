@@ -40,7 +40,7 @@ test('custom modal close controls can be named and reached by keyboard', () => {
         ...dashboardHtml.matchAll(/<span class="close-btn"[^>]*>/g),
     ];
 
-    assert.equal(closeControls.length, 6);
+    assert.equal(closeControls.length, 7);
 
     for (const [control] of closeControls) {
         assert.match(control, /role="button"/);
