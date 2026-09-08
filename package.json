@@ -5,6 +5,12 @@
   "description": "Local maintenance tools for Okan Web",
   "type": "module",
   "scripts": {
+    "test": "node --test ./test/*.mjs",
+    "build:staging": "node ./scripts/build-web.mjs --env staging",
+    "build:staging:fixture": "node ./scripts/build-web.mjs --env staging --config ./test/fixtures/staging-web-config.json",
+    "build:prod": "node ./scripts/build-web.mjs --env prod",
+    "verify:staging": "node ./scripts/verify-deploy-artifact.mjs --env staging",
+    "verify:prod": "node ./scripts/verify-deploy-artifact.mjs --env prod",
     "test:dashboard-a11y": "node --test ./test/dashboard_accessibility_test.mjs",
     "test:dashboard-responsive": "node --test ./test/dashboard_responsive_tables_test.mjs",
     "test:professor-details": "node --test ./test/professor_details_test.mjs",

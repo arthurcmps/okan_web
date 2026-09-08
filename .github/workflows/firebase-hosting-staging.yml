@@ -1,0 +1,40 @@
+name: Deploy STAGING - Manual
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build STAGING
+        run: npm run build:staging
+        env:
+          OKAN_WEB_CONFIG_JSON: ${{ secrets.OKAN_WEB_STAGING_CONFIG_JSON }}
+
+      - name: Verify STAGING artifact
+        run: npm run verify:staging
+
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OKAN_STAGING_24829 }}
+          projectId: okan-staging-24829
+          target: staging
+          channelId: live

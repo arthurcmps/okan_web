@@ -4,20 +4,21 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+import {
+  installEnvironmentBanner,
+  validateOkanWebConfig
+} from "./environment.js";
+import { okanWebConfig } from "./runtime-config.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBRbLUy03Y7628Lv3ruMy5PDq0Y3_zwykw",
-  authDomain: "app-academia-2914d.firebaseapp.com",
-  projectId: "app-academia-2914d",
-  storageBucket: "app-academia-2914d.firebasestorage.app",
-  messagingSenderId: "1080333508962",
-  appId: "1:1080333508962:web:e93dccc19e32aaaf4ccc3b"
-};
+const webEnvironment = validateOkanWebConfig(okanWebConfig);
+const firebaseConfig = webEnvironment.firebase;
+
+installEnvironmentBanner(webEnvironment);
 
 // Inicializa os serviços
 const app = initializeApp(firebaseConfig);
 const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LcGNk4tAAAAALb-DBADJhVIBm1-j9gjMnGRCAwT'),
+  provider: new ReCaptchaV3Provider(webEnvironment.appCheck.siteKey),
   
   // Isso faz com que o token se renove sozinho antes de expirar
   isTokenAutoRefreshEnabled: true
@@ -33,5 +34,17 @@ const functions = getFunctions(app, "southamerica-east1");
 // como uma mudança própria, sem mover endpoints durante o hotfix.
 const billingFunctions = getFunctions(app, "us-central1");
 
+const externalPaymentsEnabled = webEnvironment.payments.enabled;
+const mercadoPagoPublicKey = webEnvironment.payments.publicKey;
+
 // Exporta para ser usado nos outros ficheiros
-export { auth, db, functions, billingFunctions, appCheck };
+export {
+  auth,
+  db,
+  functions,
+  billingFunctions,
+  appCheck,
+  webEnvironment,
+  externalPaymentsEnabled,
+  mercadoPagoPublicKey
+};

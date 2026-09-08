@@ -1,0 +1,20 @@
+{
+  "environment": "staging",
+  "firebase": {
+    "apiKey": "test-staging-api-key",
+    "authDomain": "okan-staging-24829.firebaseapp.com",
+    "projectId": "okan-staging-24829",
+    "storageBucket": "okan-staging-24829.firebasestorage.app",
+    "messagingSenderId": "993246251446",
+    "appId": "1:993246251446:web:test-fixture"
+  },
+  "appCheck": {
+    "enabled": true,
+    "siteKey": "test-staging-recaptcha-site-key"
+  },
+  "payments": {
+    "enabled": false,
+    "publicKey": ""
+  },
+  "fixture": true
+}

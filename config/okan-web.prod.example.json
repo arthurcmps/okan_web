@@ -1,0 +1,19 @@
+{
+  "environment": "prod",
+  "firebase": {
+    "apiKey": "<OKAN_PROD_WEB_API_KEY>",
+    "authDomain": "app-academia-2914d.firebaseapp.com",
+    "projectId": "app-academia-2914d",
+    "storageBucket": "app-academia-2914d.firebasestorage.app",
+    "messagingSenderId": "1080333508962",
+    "appId": "<OKAN_PROD_WEB_APP_ID>"
+  },
+  "appCheck": {
+    "enabled": true,
+    "siteKey": "<OKAN_PROD_RECAPTCHA_V3_SITE_KEY>"
+  },
+  "payments": {
+    "enabled": true,
+    "publicKey": "<OKAN_PROD_MERCADO_PAGO_PUBLIC_KEY>"
+  }
+}
