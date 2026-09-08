@@ -87,6 +87,17 @@ async function main() {
     throw new Error(`Ambiente de build inválido: ${requestedEnvironment || "ausente"}.`);
   }
 
+  const distRoot = path.join(projectRoot, "dist");
+  const targetDirectory = path.join(distRoot, requestedEnvironment);
+
+  if (!targetDirectory.startsWith(`${distRoot}${path.sep}`)) {
+    throw new Error("Diretório de saída inválido.");
+  }
+
+  // Nunca preserve um artefato anterior quando o novo build falhar.
+  // Isso impede que uma etapa de deploy posterior publique conteúdo obsoleto.
+  await rm(targetDirectory, { recursive: true, force: true });
+
   const config = validateOkanWebConfig(
     parseConfig(await readRawConfig())
   );
@@ -97,14 +108,6 @@ async function main() {
     );
   }
 
-  const distRoot = path.join(projectRoot, "dist");
-  const targetDirectory = path.join(distRoot, requestedEnvironment);
-
-  if (!targetDirectory.startsWith(`${distRoot}${path.sep}`)) {
-    throw new Error("Diretório de saída inválido.");
-  }
-
-  await rm(targetDirectory, { recursive: true, force: true });
   await mkdir(targetDirectory, { recursive: true });
   await cp(path.join(projectRoot, "public"), targetDirectory, {
     recursive: true

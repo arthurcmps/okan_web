@@ -3,6 +3,9 @@
     {
       "target": "staging",
       "public": "dist/staging",
+      "predeploy": [
+        "npm run verify:staging"
+      ],
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -12,6 +15,9 @@
     {
       "target": "prod",
       "public": "dist/prod",
+      "predeploy": [
+        "npm run verify:prod"
+      ],
       "ignore": [
         "firebase.json",
         "**/.*",

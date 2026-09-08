@@ -28,12 +28,16 @@ O build é interrompido quando:
 - STAGING habilita pagamentos ou contém chave pública do provedor;
 - PROD não habilita pagamentos explicitamente.
 
+Antes de validar a configuração, o build remove o artefato anterior do mesmo ambiente. Assim, uma falha nunca deixa conteúdo obsoleto disponível para um comando de deploy posterior.
+
 O deploy é interrompido quando:
 
 - o manifesto aponta para ambiente ou projeto inesperado;
 - o artefato foi gerado com fixture de teste;
 - o artefato STAGING contém SDK/configuração do Mercado Pago;
 - o artefato STAGING contém referência ao projeto PROD.
+
+Cada target do `firebase.json` possui uma etapa `predeploy` obrigatória. Mesmo que o operador execute o comando de deploy depois de uma falha anterior, o Firebase repete a verificação e bloqueia a publicação.
 
 ## 4. Estrutura de build
 
@@ -108,6 +112,8 @@ npm.cmd run build:staging -- `
 
 npm.cmd run verify:staging
 ```
+
+Somente execute o deploy depois das duas mensagens de aprovação. No PowerShell, comandos colados em linhas separadas continuam sendo executados mesmo quando um comando anterior falha; a etapa `predeploy` existe como proteção adicional contra esse comportamento.
 
 Resultado esperado:
 

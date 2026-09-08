@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import test from "node:test";
@@ -145,6 +145,14 @@ test("aliases e targets não possuem projeto default", () => {
     firebaseConfig.hosting.map((entry) => entry.target),
     ["staging", "prod"]
   );
+  assert.deepEqual(
+    firebaseConfig.hosting.find((entry) => entry.target === "staging").predeploy,
+    ["npm run verify:staging"]
+  );
+  assert.deepEqual(
+    firebaseConfig.hosting.find((entry) => entry.target === "prod").predeploy,
+    ["npm run verify:prod"]
+  );
 });
 
 test("artefato fixture de staging não contém PROD nem SDK de pagamentos", () => {
@@ -189,6 +197,33 @@ test("artefato fixture de staging não contém PROD nem SDK de pagamentos", () =
 
   assert.notEqual(deployVerification.status, 0);
   assert.match(deployVerification.stderr, /fixture nunca pode ser implantado/);
+
+  const invalidBuild = spawnSync(
+    process.execPath,
+    ["./scripts/build-web.mjs", "--env", "staging"],
+    {
+      cwd: projectRoot,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        OKAN_WEB_CONFIG_JSON: JSON.stringify({
+          ...stagingFixture,
+          appCheck: {
+            ...stagingFixture.appCheck,
+            provider: ""
+          }
+        })
+      }
+    }
+  );
+
+  assert.notEqual(invalidBuild.status, 0);
+  assert.match(invalidBuild.stderr, /appCheck\.provider/);
+  assert.equal(
+    existsSync(path.join(projectRoot, "dist", "staging")),
+    false,
+    "build inválido não deve preservar artefato anterior"
+  );
 });
 
 test("billing possui bloqueio adicional no cliente", () => {
