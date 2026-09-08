@@ -161,15 +161,21 @@ Nunca substituir o project ID por PROD. O site usa recursos reais do projeto STA
 7. confirmar ausência de erros de App Check;
 8. confirmar que nenhum dado de PROD aparece.
 
-## 11. Estado e pendências
+## 11. Estado concluído e pendências operacionais
 
-Implementação local e testes automatizados podem ser concluídos sem valores reais. UX-02 somente muda para `done` depois de:
+A UX-02 foi concluída em 8 de setembro de 2026:
 
-- configurar os dois secrets no GitHub;
-- habilitar Hosting e App Check no projeto STAGING;
-- publicar manualmente no target `staging` do projeto isolado;
-- concluir o roteiro autenticado com dados sintéticos;
-- registrar a URL e o SHA validados sem incluir credenciais.
+- [PR 11](https://github.com/arthurcmps/okan_web/pull/11) integrada na `main`;
+- SHA validado: `687fadddf78a27b39f2bb3dfdea66a005736be95`;
+- Hosting e App Check habilitados no projeto STAGING;
+- publicação realizada no target explícito `staging`;
+- URL validada: `https://okan-staging-24829.web.app`;
+- cadastro de academia, login, sessão, dashboard e logout exercitados com dados sintéticos;
+- banner de STAGING e bloqueio de pagamentos confirmados;
+- 50 testes automatizados aprovados;
+- nenhuma publicação ou alteração realizada em PROD.
+
+Os secrets `FIREBASE_SERVICE_ACCOUNT_OKAN_STAGING_24829` e `OKAN_WEB_STAGING_CONFIG_JSON` são necessários apenas para usar o workflow manual de deploy pelo GitHub Actions. Se ainda não estiverem configurados, isso permanece como melhoria operacional de CI/CD e não invalida o deploy manual explícito já homologado.
 
 ## 12. Rollback
 
