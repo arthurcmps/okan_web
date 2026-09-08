@@ -1,5 +1,9 @@
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db } from "../firebase.js";
+import {
+    db,
+    externalPaymentsEnabled,
+    mercadoPagoPublicKey
+} from "../firebase.js";
 import { showToast } from "./toast.js";
 import { escapeHtml } from "../utils/html.js";
 import {
@@ -463,6 +467,16 @@ async function atualizarCotacaoAssinatura() {
 setTimeout(() => {
     prepararResumoAssinatura();
 
+    if (!externalPaymentsEnabled) {
+        if (btnPagamento) {
+            btnPagamento.disabled = true;
+            btnPagamento.textContent = "Pagamentos indisponíveis em STAGING";
+        }
+        if (inputQtd) inputQtd.disabled = true;
+        if (selectVencimento) selectVencimento.disabled = true;
+        return;
+    }
+
     if (inputQtd && selectVencimento) {
         atualizarCotacaoAssinatura();
         inputQtd.addEventListener('change', atualizarCotacaoAssinatura);
@@ -470,14 +484,33 @@ setTimeout(() => {
     }
 }, 500);
 
-const mp = new MercadoPago(
-    'APP_USR-a228ff68-eeb9-41ba-9432-830451583ffb',
-    { locale: 'pt-BR' }
-);
-const bricksBuilder = mp.bricks();
+const mercadoPagoConstructor = globalThis.MercadoPago;
+
+if (
+    externalPaymentsEnabled &&
+    typeof mercadoPagoConstructor !== "function"
+) {
+    throw new Error("Mercado Pago SDK indisponível em produção.");
+}
+
+const mp = externalPaymentsEnabled
+    ? new mercadoPagoConstructor(
+        mercadoPagoPublicKey,
+        { locale: 'pt-BR' }
+    )
+    : null;
+const bricksBuilder = mp?.bricks() || null;
 window.paymentBrickController = null;
 
 btnPagamento?.addEventListener('click', async () => {
+    if (!externalPaymentsEnabled || !bricksBuilder) {
+        showToast(
+            'Pagamentos externos não estão disponíveis neste ambiente.',
+            'info'
+        );
+        return;
+    }
+
     const quote = await atualizarCotacaoAssinatura();
 
     if (!quote) {

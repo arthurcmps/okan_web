@@ -1,0 +1,20 @@
+{
+  "environment": "staging",
+  "firebase": {
+    "apiKey": "<OKAN_STAGING_WEB_API_KEY>",
+    "authDomain": "okan-staging-24829.firebaseapp.com",
+    "projectId": "okan-staging-24829",
+    "storageBucket": "okan-staging-24829.firebasestorage.app",
+    "messagingSenderId": "993246251446",
+    "appId": "1:993246251446:web:829ca869de1d79f3cf1917"
+  },
+  "appCheck": {
+    "enabled": true,
+    "provider": "recaptcha_enterprise",
+    "siteKey": "<OKAN_STAGING_RECAPTCHA_ENTERPRISE_SITE_KEY>"
+  },
+  "payments": {
+    "enabled": false,
+    "publicKey": ""
+  }
+}

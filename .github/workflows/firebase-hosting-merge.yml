@@ -1,24 +1,46 @@
-# Deploy manual do Okan Web para Firebase Hosting.
-# Atualizar a branch main NAO publica automaticamente em producao.
-
-name: Deploy to Firebase Hosting - Manual
+name: Deploy PROD - Manual
 
 on:
   workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Digite PROD para confirmar o deploy ao vivo'
+        required: true
+        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: read
+
 jobs:
   build_and_deploy:
+    if: ${{ inputs.confirmation == 'PROD' }}
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build PROD
+        run: npm run build:prod
+        env:
+          OKAN_WEB_CONFIG_JSON: ${{ secrets.OKAN_WEB_PROD_CONFIG_JSON }}
+
+      - name: Verify PROD artifact
+        run: npm run verify:prod
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_APP_ACADEMIA_2914D }}
           channelId: live
           projectId: app-academia-2914d
+          target: prod

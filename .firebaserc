@@ -1,5 +1,22 @@
 {
   "projects": {
-    "default": "app-academia-2914d"
+    "prod": "app-academia-2914d",
+    "staging": "okan-staging-24829"
+  },
+  "targets": {
+    "app-academia-2914d": {
+      "hosting": {
+        "prod": [
+          "app-academia-2914d"
+        ]
+      }
+    },
+    "okan-staging-24829": {
+      "hosting": {
+        "staging": [
+          "okan-staging-24829"
+        ]
+      }
+    }
   }
 }
