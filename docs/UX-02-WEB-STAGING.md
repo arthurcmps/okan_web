@@ -22,6 +22,7 @@ O build é interrompido quando:
 - o project ID não corresponde ao ambiente;
 - STAGING contém qualquer referência ao project ID de PROD;
 - algum campo Firebase ou App Check está ausente;
+- STAGING não usa `recaptcha_enterprise` ou PROD deixa de usar o provedor v3 atualmente implantado;
 - uma configuração real contém placeholder;
 - App Check está desabilitado;
 - STAGING habilita pagamentos ou contém chave pública do provedor;
@@ -64,7 +65,16 @@ firebase.cmd apps:sdkconfig WEB `
   --project okan-staging-24829
 ```
 
-No Firebase Console, registrar esse aplicativo no App Check com reCAPTCHA v3 e guardar a **site key** correspondente. A site key é pública, mas deve permanecer no arquivo de ambiente para evitar mistura entre projetos.
+No Google Cloud Console do projeto `okan-staging-24829`, criar uma chave Web baseada em pontuação do reCAPTCHA Enterprise. Autorizar somente os domínios:
+
+```text
+okan-staging-24829.web.app
+okan-staging-24829.firebaseapp.com
+```
+
+Não autorizar `localhost` nessa chave implantável. No Firebase Console, registrar o aplicativo em App Check com o provedor **reCAPTCHA Enterprise** e a mesma chave. A chave de site é pública, mas deve permanecer no arquivo de ambiente para evitar mistura entre projetos.
+
+PROD continua temporariamente com `recaptcha_v3`, preservando a configuração já implantada. Sua migração para Enterprise deve ocorrer em mudança separada, com métricas e rollback próprios.
 
 ## 6. Criar a configuração local
 
@@ -81,6 +91,7 @@ Preencher `apiKey` e `appCheck.siteKey` com os valores do projeto STAGING. Confi
 ```json
 "environment": "staging"
 "projectId": "okan-staging-24829"
+"appCheck": { "enabled": true, "provider": "recaptcha_enterprise" }
 "payments": { "enabled": false, "publicKey": "" }
 ```
 
@@ -115,7 +126,7 @@ STAGING utiliza o canal `live` do projeto isolado, não o canal de produção. I
 https://okan-staging-24829.web.app
 ```
 
-Antes do primeiro teste, cadastrar esse domínio na configuração do reCAPTCHA/App Check de STAGING.
+Antes do primeiro teste, cadastrar esse domínio na chave reCAPTCHA Enterprise e no App Check de STAGING.
 
 ```powershell
 firebase.cmd deploy `

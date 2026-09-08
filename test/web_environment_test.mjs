@@ -6,6 +6,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  EXPECTED_APP_CHECK_PROVIDERS,
   EXPECTED_PROJECTS,
   validateOkanWebConfig
 } from "../public/script/environment.js";
@@ -22,6 +23,28 @@ const stagingFixture = JSON.parse(
   )
 );
 
+const prodFixture = {
+  ...stagingFixture,
+  environment: "prod",
+  firebase: {
+    apiKey: "test-prod-api-key",
+    authDomain: "app-academia-2914d.firebaseapp.com",
+    projectId: EXPECTED_PROJECTS.prod,
+    storageBucket: "app-academia-2914d.firebasestorage.app",
+    messagingSenderId: "1080333508962",
+    appId: "1:1080333508962:web:test-fixture"
+  },
+  appCheck: {
+    enabled: true,
+    provider: "recaptcha_v3",
+    siteKey: "test-prod-recaptcha-v3-site-key"
+  },
+  payments: {
+    enabled: true,
+    publicKey: "test-prod-payment-public-key"
+  }
+};
+
 function readSource(relativePath) {
   return readFileSync(path.join(projectRoot, relativePath), "utf8");
 }
@@ -31,6 +54,10 @@ test("staging aceita somente o projeto isolado", () => {
 
   assert.equal(config.environment, "staging");
   assert.equal(config.firebase.projectId, EXPECTED_PROJECTS.staging);
+  assert.equal(
+    config.appCheck.provider,
+    EXPECTED_APP_CHECK_PROVIDERS.staging
+  );
   assert.equal(config.payments.enabled, false);
 });
 
@@ -56,6 +83,29 @@ test("staging rejeita projeto PROD e pagamentos externos", () => {
     }),
     /Pagamentos externos devem permanecer bloqueados/
   );
+
+  assert.throws(
+    () => validateOkanWebConfig({
+      ...stagingFixture,
+      appCheck: {
+        ...stagingFixture.appCheck,
+        provider: "recaptcha_v3"
+      }
+    }),
+    /Provedor App Check inválido/
+  );
+});
+
+test("prod preserva App Check v3 até migração própria", () => {
+  const config = validateOkanWebConfig(prodFixture);
+
+  assert.equal(config.environment, "prod");
+  assert.equal(config.firebase.projectId, EXPECTED_PROJECTS.prod);
+  assert.equal(
+    config.appCheck.provider,
+    EXPECTED_APP_CHECK_PROVIDERS.prod
+  );
+  assert.equal(config.payments.enabled, true);
 });
 
 test("configuração real rejeita placeholders", () => {
@@ -79,6 +129,7 @@ test("fonte pública não possui configuração Firebase fixa", () => {
   assert.doesNotMatch(firebaseSource, /AIza[0-9A-Za-z_-]+/);
   assert.doesNotMatch(firebaseSource, /projectId\s*:\s*["']app-academia-2914d/);
   assert.match(firebaseSource, /validateOkanWebConfig\(okanWebConfig\)/);
+  assert.match(firebaseSource, /ReCaptchaEnterpriseProvider/);
   assert.doesNotMatch(dashboardSource, /sdk\.mercadopago\.com/);
   assert.match(dashboardSource, /OKAN_PAYMENT_SDK/);
 });

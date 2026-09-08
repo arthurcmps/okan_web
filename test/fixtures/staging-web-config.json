@@ -10,7 +10,8 @@
   },
   "appCheck": {
     "enabled": true,
-    "siteKey": "test-staging-recaptcha-site-key"
+    "provider": "recaptcha_enterprise",
+    "siteKey": "test-staging-recaptcha-enterprise-site-key"
   },
   "payments": {
     "enabled": false,

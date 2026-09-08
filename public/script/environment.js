@@ -3,6 +3,11 @@ const EXPECTED_PROJECTS = Object.freeze({
   prod: "app-academia-2914d"
 });
 
+const EXPECTED_APP_CHECK_PROVIDERS = Object.freeze({
+  staging: "recaptcha_enterprise",
+  prod: "recaptcha_v3"
+});
+
 const REQUIRED_FIREBASE_FIELDS = Object.freeze([
   "apiKey",
   "authDomain",
@@ -74,8 +79,20 @@ export function validateOkanWebConfig(input) {
     throw new Error(`App Check deve estar habilitado em ${environment}.`);
   }
 
+  const appCheckProvider = requireText(
+    appCheckInput.provider,
+    "appCheck.provider"
+  );
+
+  if (appCheckProvider !== EXPECTED_APP_CHECK_PROVIDERS[environment]) {
+    throw new Error(
+      `Provedor App Check inválido para ${environment}: ${appCheckProvider}.`
+    );
+  }
+
   const appCheck = Object.freeze({
     enabled: true,
+    provider: appCheckProvider,
     siteKey: requireText(appCheckInput.siteKey, "appCheck.siteKey")
   });
 
@@ -138,4 +155,4 @@ export function installEnvironmentBanner(config) {
   }
 }
 
-export { EXPECTED_PROJECTS };
+export { EXPECTED_APP_CHECK_PROVIDERS, EXPECTED_PROJECTS };

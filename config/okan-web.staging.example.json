@@ -10,7 +10,8 @@
   },
   "appCheck": {
     "enabled": true,
-    "siteKey": "<OKAN_STAGING_RECAPTCHA_V3_SITE_KEY>"
+    "provider": "recaptcha_enterprise",
+    "siteKey": "<OKAN_STAGING_RECAPTCHA_ENTERPRISE_SITE_KEY>"
   },
   "payments": {
     "enabled": false,

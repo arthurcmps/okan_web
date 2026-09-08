@@ -3,7 +3,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+  ReCaptchaV3Provider
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 import {
   installEnvironmentBanner,
   validateOkanWebConfig
@@ -17,8 +21,11 @@ installEnvironmentBanner(webEnvironment);
 
 // Inicializa os serviços
 const app = initializeApp(firebaseConfig);
+const AppCheckProvider = webEnvironment.appCheck.provider === "recaptcha_enterprise"
+  ? ReCaptchaEnterpriseProvider
+  : ReCaptchaV3Provider;
 const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider(webEnvironment.appCheck.siteKey),
+  provider: new AppCheckProvider(webEnvironment.appCheck.siteKey),
   
   // Isso faz com que o token se renove sozinho antes de expirar
   isTokenAutoRefreshEnabled: true
