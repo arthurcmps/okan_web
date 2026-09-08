@@ -25,7 +25,21 @@ A primeira onda centraliza no `:root` de `public/css/style.css`:
 | `--okan-color-warning` | `#FFB020` | atenção sem bloqueio |
 | `--okan-color-info` | `#448AFF` | informação e feedback neutro |
 
-Os componentes CSS centrais foram migrados para `var(--okan-...)`. Cores inline em HTML ou geradas por JavaScript permanecem para ondas posteriores, permitindo revisão e rollback pequenos.
+Os componentes CSS centrais foram migrados para `var(--okan-...)` na primeira onda.
+
+## Segunda onda
+
+A segunda onda migra para os mesmos tokens as cores inline e dinâmicas das páginas operacionais:
+
+- login e cadastro;
+- carregamento e navegação do dashboard;
+- academias, professores e licenças;
+- loja, catálogo e fichas de treino;
+- feedbacks, estados vazios, erros e toasts.
+
+A seleção de fichas e as ações principais da loja passam a usar o destaque secundário terracota. A cor de erro fica reservada para falhas, cancelamentos e ações destrutivas.
+
+As páginas auxiliares `privacidade.html` e `404.html` continuam isoladas nesta etapa e serão tratadas junto da revisão de conteúdo legal e acabamento público, evitando misturar contratos operacionais com páginas estáticas.
 
 ## Contratos preservados
 
