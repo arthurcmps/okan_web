@@ -203,17 +203,17 @@ export async function carregarAcademias() {
         const querySnapshot = await getDocs(collection(db, "academias"));
         document.getElementById('total-gyms').textContent = querySnapshot.size;
         tbody.innerHTML = '';
-        if (querySnapshot.empty) { tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #aaa;">Nenhuma academia.</td></tr>'; return; }
+        if (querySnapshot.empty) { tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--okan-color-text-sub);">Nenhuma academia.</td></tr>'; return; }
 
         querySnapshot.forEach((docSnap) => {
             const acad = docSnap.data(); const id = docSnap.id; 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-weight: bold;">${escapeHtml(acad.nome)}</td><td>${escapeHtml(acad.emailGestor)}</td>
-                <td><span style="color: #00e676;">${escapeHtml(acad.licencasUsadas || 0)}</span> / ${escapeHtml(acad.licencasTotais || 0)}</td>
+                <td><span style="color: var(--okan-color-primary);">${escapeHtml(acad.licencasUsadas || 0)}</span> / ${escapeHtml(acad.licencasTotais || 0)}</td>
                 <td>
                     <button type="button" class="action-btn btn-view" title="Ver detalhes" aria-label="Ver detalhes da academia"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">visibility</span></button>
-                    <button type="button" class="action-btn btn-delete" style="color: #ff5252;" title="Excluir" aria-label="Excluir academia"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">delete</span></button>
+                    <button type="button" class="action-btn btn-delete" style="color: var(--okan-color-error);" title="Excluir" aria-label="Excluir academia"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">delete</span></button>
                 </td>
             `;
             tr.querySelector('.btn-view').addEventListener('click', () => abrirDetalhesAcademia(acad, id));
@@ -250,7 +250,7 @@ export async function configurarPainelAcademia(emailGestor) {
         } else {
             document.querySelectorAll('.view-section').forEach(s => { if(s) s.style.display = 'none'; });
             const sec = document.getElementById('section-detalhes-academia');
-            sec.innerHTML = `<div style="padding: 60px; text-align: center;"><span class="material-symbols-outlined" style="font-size: 64px; color: #ff5252; margin-bottom: 16px;">error</span><h2 style="color: #fff;">Academia Não Encontrada</h2></div>`;
+            sec.innerHTML = `<div style="padding: 60px; text-align: center;"><span class="material-symbols-outlined" style="font-size: 64px; color: var(--okan-color-error); margin-bottom: 16px;">error</span><h2 style="color: var(--okan-color-text-main);">Academia Não Encontrada</h2></div>`;
             sec.style.display = 'block';
         }
     } catch (e) { console.error(e); }
@@ -302,17 +302,17 @@ function abrirDetalhesAcademia(acad, id) {
 
         if (cancelamentoAgendado) {
             badgeStatus.textContent = "Cancelamento Agendado";
-            badgeStatus.style.color = "#ff5252";
-            badgeStatus.style.borderColor = "#ff5252";
-            badgeStatus.style.background = "rgba(255, 82, 82, 0.1)";
+            badgeStatus.style.color = "var(--okan-color-error)";
+            badgeStatus.style.borderColor = "var(--okan-color-error)";
+            badgeStatus.style.background = "var(--okan-color-error-muted)";
             
             if (msgCancelamento) msgCancelamento.style.display = 'block';
             if (btnCancelar) btnCancelar.style.display = 'none';
         } else {
             badgeStatus.textContent = "Assinatura Ativa";
-            badgeStatus.style.color = "#00e676";
-            badgeStatus.style.borderColor = "#00e676";
-            badgeStatus.style.background = "rgba(0, 230, 118, 0.1)";
+            badgeStatus.style.color = "var(--okan-color-primary)";
+            badgeStatus.style.borderColor = "var(--okan-color-primary)";
+            badgeStatus.style.background = "var(--okan-color-primary-muted)";
             
             if (msgCancelamento) msgCancelamento.style.display = 'none';
             if (btnCancelar) btnCancelar.style.display = 'block';
@@ -331,7 +331,7 @@ document.getElementById('btn-cancelar-assinatura')?.addEventListener('click', ()
     if (confirmarExclusaoGlob) {
         confirmarExclusaoGlob(
             `Tem a certeza que deseja cancelar a sua assinatura? <br><br> 
-            <small style="color: #aaa;">Os seus professores continuarão com acesso Premium até ao próximo dia de vencimento, mas não haverá novas cobranças.</small>`, 
+            <small style="color: var(--okan-color-text-sub);">Os seus professores continuarão com acesso Premium até ao próximo dia de vencimento, mas não haverá novas cobranças.</small>`,
             async () => {
                 try {
                     await updateDoc(doc(db, "academias", academiaAtualId), { 
@@ -355,13 +355,15 @@ async function carregarProfessoresDaAcademia() {
     try {
         const profsSnapshot = await getDocs(collection(db, "academias", academiaAtualId, "professores"));
         tbody.innerHTML = '';
-        if (profsSnapshot.empty) { tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #aaa;">Nenhum professor vinculado.</td></tr>'; return; }
+        if (profsSnapshot.empty) { tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--okan-color-text-sub);">Nenhum professor vinculado.</td></tr>'; return; }
 
         profsSnapshot.forEach((docSnap) => {
             const prof = docSnap.data(); const profId = docSnap.id;
             const tr = document.createElement('tr');
-            const statusColor = prof.status === 'Pendente' ? '#ff9800' : '#00e676';
-            tr.innerHTML = `<td><strong>${escapeHtml(prof.email)}</strong></td><td><span style="color: ${escapeHtml(statusColor)}; border: 1px solid ${escapeHtml(statusColor)}; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${escapeHtml(prof.status)}</span></td><td><button type="button" class="action-btn btn-delete-prof" style="color: #ff5252;" title="Remover licença" aria-label="Remover licença do professor"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">person_remove</span></button></td>`;
+            const statusColor = prof.status === 'Pendente'
+                ? 'var(--okan-color-warning)'
+                : 'var(--okan-color-primary)';
+            tr.innerHTML = `<td><strong>${escapeHtml(prof.email)}</strong></td><td><span style="color: ${escapeHtml(statusColor)}; border: 1px solid ${escapeHtml(statusColor)}; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${escapeHtml(prof.status)}</span></td><td><button type="button" class="action-btn btn-delete-prof" style="color: var(--okan-color-error);" title="Remover licença" aria-label="Remover licença do professor"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">person_remove</span></button></td>`;
             tr.querySelector('.btn-delete-prof').addEventListener('click', async () => {
                 if(confirmarExclusaoGlob) confirmarExclusaoGlob(`Remover o acesso Premium de ${prof.email}?`, async () => {
                     try {
