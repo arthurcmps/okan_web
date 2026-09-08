@@ -17,7 +17,7 @@ export async function carregarFeedbacksBeta() {
         tbody.innerHTML = '';
         
         if (snapshot.empty) { 
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #aaa;">Nenhum feedback recebido ainda.</td></tr>'; 
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--okan-color-text-sub);">Nenhum feedback recebido ainda.</td></tr>';
             return; 
         }
 
@@ -30,16 +30,16 @@ export async function carregarFeedbacksBeta() {
             const dataFormatada = fb.timestamp ? fb.timestamp.toDate().toLocaleDateString('pt-BR') : '--';
             
             tr.innerHTML = `
-                <td style="color: #aaa; font-size: 12px;">${escapeHtml(dataFormatada)}</td>
-                <td><strong style="color: #ffc107;">⭐ ${escapeHtml(fb.nota)}/5</strong></td>
-                <td style="font-size: 13px; color: #ddd;">${escapeHtml(fb.confuso || '--')}</td>
-                <td style="font-size: 13px; color: #ff5252;">${escapeHtml(fb.bugs || '--')}</td>
-                <td style="font-size: 13px; color: #00e676;">${escapeHtml(fb.gostou || '--')}</td>
+                <td style="color: var(--okan-color-text-sub); font-size: 12px;">${escapeHtml(dataFormatada)}</td>
+                <td><strong style="color: var(--okan-color-warning);">⭐ ${escapeHtml(fb.nota)}/5</strong></td>
+                <td style="font-size: 13px; color: var(--okan-color-text-main);">${escapeHtml(fb.confuso || '--')}</td>
+                <td style="font-size: 13px; color: var(--okan-color-error);">${escapeHtml(fb.bugs || '--')}</td>
+                <td style="font-size: 13px; color: var(--okan-color-primary);">${escapeHtml(fb.gostou || '--')}</td>
             `;
             tbody.appendChild(tr);
         });
     } catch (error) { 
         console.error(error); 
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #ff5252;">Erro ao carregar feedbacks.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--okan-color-error);">Erro ao carregar feedbacks.</td></tr>';
     }
 }

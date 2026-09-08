@@ -64,15 +64,15 @@ document.addEventListener('keydown', (event) => {
 function criarBadgeVinculo(prof) {
     const span = document.createElement('span');
     if (prof.academiaNome) {
-        span.style.color = '#00e676';
+        span.style.color = 'var(--okan-color-primary)';
         span.style.fontWeight = '500';
         span.textContent = prof.academiaNome;
     } else if (prof.academyId) {
-        span.style.color = '#00e676';
+        span.style.color = 'var(--okan-color-primary)';
         span.style.fontWeight = '500';
         span.textContent = 'Vinculado';
     } else {
-        span.style.color = '#aaa';
+        span.style.color = 'var(--okan-color-text-sub)';
         span.style.fontStyle = 'italic';
         span.textContent = 'Autônomo';
     }
@@ -87,13 +87,13 @@ function criarBadgePremium(isPremium) {
     span.style.fontSize = '12px';
 
     if (isPremium) {
-        span.style.color = '#00e676';
-        span.style.borderColor = '#00e676';
-        span.style.background = 'rgba(0, 230, 118, 0.1)';
+        span.style.color = 'var(--okan-color-primary)';
+        span.style.borderColor = 'var(--okan-color-primary)';
+        span.style.background = 'var(--okan-color-primary-muted)';
         span.textContent = 'Premium';
     } else {
-        span.style.color = '#aaa';
-        span.style.borderColor = '#555';
+        span.style.color = 'var(--okan-color-text-sub)';
+        span.style.borderColor = 'var(--okan-color-border)';
         span.textContent = 'Gratuito';
     }
     return span;
@@ -214,7 +214,7 @@ export async function carregarTodosProfessores() {
 
             td.colSpan = 5;
             td.style.textAlign = 'center';
-            td.style.color = '#aaa';
+            td.style.color = 'var(--okan-color-text-sub)';
             td.textContent =
                 'Nenhum professor na base de dados.';
 
@@ -262,7 +262,7 @@ export async function carregarTodosProfessores() {
 
         tbody.innerHTML =
             '<tr><td colspan="5" ' +
-            'style="text-align: center; color: #ff5252;">' +
+            'style="text-align: center; color: var(--okan-color-error);">' +
             'Erro ao carregar dados.</td></tr>';
     }
 }

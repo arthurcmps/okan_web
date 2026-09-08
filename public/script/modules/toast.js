@@ -18,14 +18,14 @@ export function showToast(message, type = 'info') {
 
     // Define o ícone e a cor baseando-se no tipo (sucesso, erro, info)
     let icon = 'info';
-    let color = '#2196f3'; // Azul padrão
+    let color = 'var(--okan-color-info)';
     
     if (safeType === 'success') { 
         icon = 'check_circle'; 
-        color = '#00e676'; // Verde Okan
+        color = 'var(--okan-color-primary)';
     } else if (safeType === 'error') { 
         icon = 'error'; 
-        color = '#ff5252'; // Vermelho de erro
+        color = 'var(--okan-color-error)';
     }
 
     // Estrutura interna do Toast sem interpretar HTML da mensagem.

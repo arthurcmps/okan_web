@@ -7,6 +7,18 @@ const stylesheet = await readFile(
     'utf8',
 );
 
+const operationalSources = await Promise.all([
+    '../public/index.html',
+    '../public/register.html',
+    '../public/dashboard.html',
+    '../public/script/script.js',
+    '../public/script/modules/academia.js',
+    '../public/script/modules/feedbacks.js',
+    '../public/script/modules/loja.js',
+    '../public/script/modules/professores.js',
+    '../public/script/modules/toast.js',
+].map((path) => readFile(new URL(path, import.meta.url), 'utf8')));
+
 const canonicalColors = new Map([
     ['background', '#120E16'],
     ['surface', '#1E1826'],
@@ -97,4 +109,31 @@ test('legacy palette is absent from central CSS rules', () => {
     ]) {
         assert.doesNotMatch(stylesheet, new RegExp(legacyColor, 'i'));
     }
+});
+
+test('operational HTML and JavaScript use tokens instead of color literals', () => {
+    for (const source of operationalSources) {
+        assert.doesNotMatch(source, /#[\dA-F]{3,8}\b/gi);
+        assert.doesNotMatch(source, /rgba?\s*\(/gi);
+    }
+});
+
+test('every operational color token is declared in the central stylesheet', () => {
+    const declaredTokens = new Set(
+        [...stylesheet.matchAll(/(--okan-[\w-]+)\s*:/g)]
+            .map((match) => match[1]),
+    );
+
+    for (const source of operationalSources) {
+        for (const [, token] of source.matchAll(/var\((--okan-[\w-]+)\)/g)) {
+            assert.ok(declaredTokens.has(token), `${token} must be declared`);
+        }
+    }
+});
+
+test('non-destructive store selection uses the secondary accent', () => {
+    assert.match(
+        stylesheet,
+        /\.tag-chip\.selected\s*\{[^}]*var\(--okan-color-secondary\)/,
+    );
 });

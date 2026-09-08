@@ -37,11 +37,11 @@ export function initLoja(funcaoConfirmarExclusao) {
         chip.addEventListener('click', () => {
             document.querySelectorAll('#seletor-series .tag-chip').forEach(c => {
                 c.classList.remove('selected');
-                c.style.borderColor = '#444';
+                c.style.borderColor = 'var(--okan-color-border)';
                 c.setAttribute('aria-selected', 'false');
             });
             chip.classList.add('selected');
-            chip.style.borderColor = '#ff5252';
+            chip.style.borderColor = 'var(--okan-color-secondary)';
             chip.setAttribute('aria-selected', 'true');
             
             serieAtiva = chip.getAttribute('data-serie');
@@ -134,14 +134,14 @@ export function initLoja(funcaoConfirmarExclusao) {
         });
 
         if (exerciciosFiltrados.length === 0) {
-            lista.innerHTML = '<p style="color: #aaa; text-align: center; padding: 16px;">Nenhum exercício encontrado.</p>';
+            lista.innerHTML = '<p style="color: var(--okan-color-text-sub); text-align: center; padding: 16px;">Nenhum exercício encontrado.</p>';
             return;
         }
 
         exerciciosFiltrados.forEach(ex => {
             const div = document.createElement('div');
             div.style.padding = '12px'; 
-            div.style.borderBottom = '1px solid #333'; 
+            div.style.borderBottom = '1px solid var(--okan-color-border)';
             div.style.display = 'flex';
             div.style.justifyContent = 'space-between';
             div.style.alignItems = 'center';
@@ -149,7 +149,7 @@ export function initLoja(funcaoConfirmarExclusao) {
             const infoDiv = document.createElement('div');
             infoDiv.style.cursor = 'pointer';
             infoDiv.style.flex = '1';
-            infoDiv.innerHTML = `<strong style="color: white;">${escapeHtml(ex.nome)}</strong><br><span style="color: #aaa; font-size: 12px;">${escapeHtml(ex.grupo || 'Sem grupo')}</span>`;
+            infoDiv.innerHTML = `<strong style="color: var(--okan-color-text-main);">${escapeHtml(ex.nome)}</strong><br><span style="color: var(--okan-color-text-sub); font-size: 12px;">${escapeHtml(ex.grupo || 'Sem grupo')}</span>`;
             
             infoDiv.addEventListener('click', () => {
                 indexExercicioTemplateEditando = null; 
@@ -172,7 +172,7 @@ export function initLoja(funcaoConfirmarExclusao) {
             const btnEditCatalogo = document.createElement('button');
             btnEditCatalogo.type = 'button';
             btnEditCatalogo.className = 'action-btn';
-            btnEditCatalogo.innerHTML = '<span class="material-symbols-outlined" style="color: #00e676; font-size: 18px;" aria-hidden="true">edit</span>';
+            btnEditCatalogo.innerHTML = '<span class="material-symbols-outlined" style="color: var(--okan-color-primary); font-size: 18px;" aria-hidden="true">edit</span>';
             btnEditCatalogo.title = "Editar Exercício no Banco";
             btnEditCatalogo.setAttribute('aria-label', 'Editar exercício no catálogo');
             
@@ -206,7 +206,7 @@ export function initLoja(funcaoConfirmarExclusao) {
         if(document.getElementById('filtro-nome-exercicio')) document.getElementById('filtro-nome-exercicio').value = '';
         if(document.getElementById('filtro-grupo-exercicio')) document.getElementById('filtro-grupo-exercicio').value = '';
 
-        lista.innerHTML = '<p style="color: #aaa; text-align: center; padding: 16px;">A buscar catálogo...</p>';
+        lista.innerHTML = '<p style="color: var(--okan-color-text-sub); text-align: center; padding: 16px;">A buscar catálogo...</p>';
         try {
             const snapshot = await getDocs(collection(db, "exercises"));
             todosExerciciosCatalogo = []; 
@@ -331,7 +331,7 @@ export async function carregarTemplatesLoja() {
         const q = query(collection(db, "workout_templates"), where("personalId", "==", "SYSTEM_ADMIN"));
         const snapshot = await getDocs(q);
         tbody.innerHTML = '';
-        if (snapshot.empty) { tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #aaa;">Nenhum produto na loja.</td></tr>'; return; }
+        if (snapshot.empty) { tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--okan-color-text-sub);">Nenhum produto na loja.</td></tr>'; return; }
 
         snapshot.forEach((documento) => {
             const tpl = documento.data(); const id = documento.id;
@@ -350,11 +350,11 @@ export async function carregarTemplatesLoja() {
 
             tr.innerHTML = `
                 <td style="font-weight: bold;">${escapeHtml(tpl.nome)}</td>
-                <td style="color: #ff5252;">${escapeHtml(precoStr)}</td>
-                <td style="font-size: 12px; color: #aaa;">${escapeHtml(infoFichas)}${escapeHtml(tagsStr)}</td>
+                <td style="color: var(--okan-color-secondary);">${escapeHtml(precoStr)}</td>
+                <td style="font-size: 12px; color: var(--okan-color-text-sub);">${escapeHtml(infoFichas)}${escapeHtml(tagsStr)}</td>
                 <td>
                     <button type="button" class="action-btn btn-edit-tpl" title="Editar produto" aria-label="Editar produto"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">edit</span></button>
-                    <button type="button" class="action-btn btn-delete-tpl" style="color: #ff5252;" title="Excluir da loja" aria-label="Excluir produto da loja"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">delete</span></button>
+                    <button type="button" class="action-btn btn-delete-tpl" style="color: var(--okan-color-error);" title="Excluir da loja" aria-label="Excluir produto da loja"><span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">delete</span></button>
                 </td>
             `;
 
@@ -422,7 +422,7 @@ function criarItemExercicio(ex, index) {
         const obsSpan = document.createElement('span');
         obsSpan.style.display = 'block';
         obsSpan.style.fontSize = '12px';
-        obsSpan.style.color = '#00e676';
+        obsSpan.style.color = 'var(--okan-color-primary)';
         obsSpan.style.marginTop = '4px';
         obsSpan.style.fontStyle = 'italic';
         obsSpan.textContent = `Obs: ${ex.observacao}`;
@@ -438,7 +438,7 @@ function criarItemExercicio(ex, index) {
     const btnEditar = document.createElement('button');
     btnEditar.type = 'button';
     btnEditar.className = 'action-btn';
-    btnEditar.style.color = '#fff';
+    btnEditar.style.color = 'var(--okan-color-text-main)';
     btnEditar.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">edit</span>';
     btnEditar.title = 'Editar exercício';
     btnEditar.setAttribute('aria-label', 'Editar exercício do treino');
@@ -462,7 +462,7 @@ function criarItemExercicio(ex, index) {
     const btnRemover = document.createElement('button');
     btnRemover.type = 'button';
     btnRemover.className = 'action-btn';
-    btnRemover.style.color = '#ff5252';
+    btnRemover.style.color = 'var(--okan-color-error)';
     btnRemover.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">close</span>';
     btnRemover.title = 'Remover exercício';
     btnRemover.setAttribute('aria-label', 'Remover exercício do treino');
@@ -484,7 +484,7 @@ function atualizarListaExerciciosUI() {
     const exerciciosAtivos = seriesDoTemplateAtual[serieAtiva] || [];
     
     if (exerciciosAtivos.length === 0) {
-        ul.innerHTML = `<p style="color: #aaa; text-align: center; padding: 16px; font-size: 14px;">A Ficha ${escapeHtml(serieAtiva)} está vazia. Adicione exercícios pelo catálogo.</p>`;
+        ul.innerHTML = `<p style="color: var(--okan-color-text-sub); text-align: center; padding: 16px; font-size: 14px;">A Ficha ${escapeHtml(serieAtiva)} está vazia. Adicione exercícios pelo catálogo.</p>`;
         return;
     }
 

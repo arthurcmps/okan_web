@@ -15,7 +15,7 @@ linkEsqueciSenha.addEventListener('click', (e) => {
     e.preventDefault(); 
     
     const emailValue = emailInput.value.trim();
-    errorMessage.style.color = "#ff5252";
+    errorMessage.style.color = "var(--okan-color-error)";
 
     if (!emailValue) {
         errorMessage.textContent = "Por favor, digite seu e-mail no campo acima para redefinir a senha.";
@@ -23,16 +23,16 @@ linkEsqueciSenha.addEventListener('click', (e) => {
     }
 
     errorMessage.textContent = "A enviar e-mail de redefinição...";
-    errorMessage.style.color = "#aaaaaa";
+    errorMessage.style.color = "var(--okan-color-text-sub)";
 
     sendPasswordResetEmail(auth, emailValue)
         .then(() => {
-            errorMessage.style.color = "#00e676"; 
+            errorMessage.style.color = "var(--okan-color-primary)";
             errorMessage.textContent = "E-mail de redefinição enviado! Verifique sua caixa de entrada (e spam).";
         })
         .catch((error) => {
             console.error("Erro ao tentar redefinir senha:", error);
-            errorMessage.style.color = "#ff5252"; 
+            errorMessage.style.color = "var(--okan-color-error)";
             
             if (error.code === 'auth/user-not-found') {
                 errorMessage.textContent = "Não encontramos nenhuma conta com este e-mail.";
@@ -67,7 +67,7 @@ loginForm.addEventListener('submit', async (e) => {
     loginBtn.textContent = "A entrar...";
     loginBtn.disabled = true;
     errorMessage.textContent = "";
-    errorMessage.style.color = "#ff5252"; 
+    errorMessage.style.color = "var(--okan-color-error)";
 
     try {
         await signInWithEmailAndPassword(auth, email, password);

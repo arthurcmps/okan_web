@@ -24,7 +24,9 @@
     --okan-color-border-subtle: #2A2333;
     --okan-color-overlay: rgba(0, 0, 0, 0.8);
     --okan-color-primary-muted: rgba(204, 255, 0, 0.1);
+    --okan-color-secondary-muted: rgba(224, 122, 95, 0.12);
     --okan-color-error-muted: rgba(255, 69, 58, 0.1);
+    --okan-color-surface-glass: rgba(242, 240, 245, 0.02);
     --okan-color-interaction-muted: rgba(242, 240, 245, 0.08);
     --okan-color-interaction-active: rgba(242, 240, 245, 0.16);
 
@@ -187,7 +189,7 @@ select:focus-visible,
 /* --- CONSTRUTOR DE TEMPLATES --- */
 .tags-container { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag-chip { background-color: var(--okan-color-surface-raised); color: var(--okan-color-text-sub); padding: 6px 12px; border-radius: var(--okan-radius-lg); font-size: 12px; cursor: pointer; border: 1px solid var(--okan-color-border); transition: var(--okan-motion-fast); user-select: none; }
-.tag-chip.selected { background-color: var(--okan-color-error-muted); color: var(--okan-color-error); border-color: var(--okan-color-error);}
+.tag-chip.selected { background-color: var(--okan-color-secondary-muted); color: var(--okan-color-secondary); border-color: var(--okan-color-secondary);}
 .tag-chip input { display: none; }
 .exercise-list { list-style: none; padding: 0; }
 .exercise-item { background-color: var(--okan-color-surface-raised); padding: 12px; border-radius: var(--okan-radius-sm); display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
