@@ -3,90 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Okan Admin | Cadastro de Academia</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Okan para Academias | Cadastro</title>
+    <link rel="stylesheet" href="css/style.css?v=4.0">
 </head>
-<body style="height: auto; min-height: 100vh; padding: 40px 0;">
-    <div class="login-container" style="max-width: 600px; margin: 0 auto;">
-        <div class="login-box" style="text-align: left;">
-            <h1 style="text-align: center;">Nova Academia</h1>
-            <p style="text-align: center;">Cadastre a sua unidade para ter acesso à plataforma Okan Business.</p>
+<body class="auth-register-page">
+    <div class="login-container auth-register-container">
+        <div class="login-box auth-box auth-box-left">
+            <header class="auth-brand" aria-labelledby="auth-title">
+                <span class="auth-product-name">Okan para Academias</span>
+                <h1 id="auth-title">Cadastre sua academia</h1>
+                <p>Organize sua equipe e acompanhe a operação em um só lugar.</p>
+            </header>
             
-            <form id="register-form">
-                <h3 style="color: var(--okan-color-primary); margin-bottom: 16px; font-size: 16px; border-bottom: 1px solid var(--okan-color-border); padding-bottom: 8px;">1. Dados da Academia</h3>
+            <form id="register-form" aria-describedby="error-message">
+                <h2 class="auth-section-title">1. Dados da Academia</h2>
                 
                 <div class="input-group">
-                    <label>Nome da Academia</label>
+                    <label for="reg-gym-name">Nome da Academia</label>
                     <input type="text" id="reg-gym-name" required placeholder="Ex: SmartFit Centro">
                 </div>
 
                 <div class="form-row">
                     <div class="input-group">
-                        <label>CNPJ</label>
+                        <label for="reg-cnpj">CNPJ</label>
                         <input type="text" id="reg-cnpj" required maxlength="18" placeholder="00.000.000/0000-00">
                     </div>
                     <div class="input-group">
-                        <label>Telefone da Unidade</label>
+                        <label for="reg-telefone">Telefone da Unidade</label>
                         <input type="tel" id="reg-telefone" required maxlength="15" placeholder="(00) 00000-0000">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="input-group" style="flex: 0.4;">
-                        <label>CEP</label>
+                        <label for="reg-cep">CEP</label>
                         <input type="text" id="reg-cep" required maxlength="9" placeholder="00000-000">
                     </div>
                     <div class="input-group" style="flex: 1;">
-                        <label>Rua/Av. e Número</label>
+                        <label for="reg-endereco">Rua/Av. e Número</label>
                         <input type="text" id="reg-endereco" required placeholder="Sua rua, 123">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="input-group">
-                        <label>Bairro</label>
+                        <label for="reg-bairro">Bairro</label>
                         <input type="text" id="reg-bairro" required placeholder="Bairro">
                     </div>
                     <div class="input-group" style="flex: 0.3;">
-                        <label>UF</label>
+                        <label for="reg-uf">UF</label>
                         <input type="text" id="reg-uf" required maxlength="2" style="text-transform: uppercase;" placeholder="RJ">
                     </div>
                 </div>
 
-                <h3 style="color: var(--okan-color-primary); margin-top: 32px; margin-bottom: 16px; font-size: 16px; border-bottom: 1px solid var(--okan-color-border); padding-bottom: 8px;">2. Dados de Acesso (Gestor)</h3>
+                <h2 class="auth-section-title auth-section-title-spaced">2. Dados de Acesso (Gestor)</h2>
 
                 <div class="form-row">
                     <div class="input-group">
-                        <label>Seu Nome (Gestor)</label>
+                        <label for="reg-admin-name">Seu Nome (Gestor)</label>
                         <input type="text" id="reg-admin-name" required placeholder="Ex: João Silva">
                     </div>
                     <div class="input-group">
-                        <label>E-mail Corporativo</label>
-                        <input type="email" id="reg-email" required placeholder="contato@smartfit.com">
+                        <label for="reg-email">E-mail Corporativo</label>
+                        <input type="email" id="reg-email" required autocomplete="username" placeholder="contato@smartfit.com">
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="input-group">
-                        <label>Criar Senha</label>
-                        <input type="password" id="reg-password" required placeholder="Mínimo 6 letras">
+                        <label for="reg-password">Criar Senha</label>
+                        <div class="password-field">
+                            <input type="password" id="reg-password" required autocomplete="new-password" placeholder="Mínimo 6 letras">
+                            <button type="button" id="toggle-reg-password" class="password-toggle" aria-controls="reg-password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+                        </div>
                     </div>
                     <div class="input-group">
-                        <label>Confirmar Senha</label>
-                        <input type="password" id="reg-confirm-password" required placeholder="••••••••">
+                        <label for="reg-confirm-password">Confirmar Senha</label>
+                        <div class="password-field">
+                            <input type="password" id="reg-confirm-password" required autocomplete="new-password" placeholder="••••••••">
+                            <button type="button" id="toggle-reg-confirm-password" class="password-toggle" aria-controls="reg-confirm-password" aria-label="Mostrar confirmação da senha" aria-pressed="false">Mostrar</button>
+                        </div>
                     </div>
                 </div>
                 
                 <button type="submit" id="register-btn" class="btn-primary" style="width: 100%; margin-top: 24px; padding: 16px; font-size: 16px;">Cadastrar Academia</button>
             </form>
-            <p id="error-message" class="error" style="text-align: center;"></p>
+            <p id="error-message" class="error auth-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
 
-            <div style="margin-top: 32px; font-size: 14px; color: var(--okan-color-text-sub); text-align: center;">
-                Já tem conta? <a href="index.html" style="color: var(--okan-color-primary); text-decoration: none; font-weight: bold;">Faça Login</a>
+            <p class="auth-legal-copy">
+                Ao cadastrar, você confirma que leu nossa <a href="privacidade.html">Política de Privacidade</a>.
+            </p>
+
+            <div class="auth-secondary-action">
+                Já tem conta? <a href="index.html">Faça login</a>
             </div>
         </div>
     </div>
 
-    <script type="module" src="script/register.js"></script>
+    <script type="module" src="script/register.js?v=3.0"></script>
 </body>
 </html>

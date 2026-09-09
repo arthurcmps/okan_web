@@ -5,6 +5,7 @@ import {
 
 import { auth } from "./firebase.js";
 import { registerAcademy } from "./services/academy-registration-service.js";
+import { setupPasswordVisibility } from "./modules/password-visibility.js";
 
 // =========================================================
 // 1. MASCARAS E BUSCA DE CEP
@@ -86,6 +87,18 @@ const registerForm = document.getElementById("register-form");
 const errorMessage = document.getElementById("error-message");
 const btnRegister = document.getElementById("register-btn");
 
+setupPasswordVisibility({
+    inputId: "reg-password",
+    toggleId: "toggle-reg-password"
+});
+
+setupPasswordVisibility({
+    inputId: "reg-confirm-password",
+    toggleId: "toggle-reg-confirm-password",
+    showAriaLabel: "Mostrar confirmação da senha",
+    hideAriaLabel: "Ocultar confirmação da senha"
+});
+
 registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -131,6 +144,7 @@ registerForm.addEventListener("submit", async (e) => {
 
     btnRegister.textContent = "A configurar ambiente...";
     btnRegister.disabled = true;
+    btnRegister.setAttribute("aria-busy", "true");
     errorMessage.textContent = "";
 
     let authenticatedUser = null;
@@ -232,5 +246,6 @@ registerForm.addEventListener("submit", async (e) => {
 
         btnRegister.textContent = "Cadastrar Academia";
         btnRegister.disabled = false;
+        btnRegister.removeAttribute("aria-busy");
     }
 });
