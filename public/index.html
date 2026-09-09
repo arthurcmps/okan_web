@@ -3,24 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Okan Admin | Login</title>
-    <link rel="stylesheet" href="css/style.css?v=1.0">
+    <title>Okan para Academias | Login</title>
+    <link rel="stylesheet" href="css/style.css?v=4.0">
 </head>
 <body>
     <div class="login-container">
-        <div class="login-box">
-            <h1>Okan Admin</h1>
-            <p>Portal de Gestão de Academias</p>
+        <div class="login-box auth-box">
+            <header class="auth-brand" aria-labelledby="auth-title">
+                <span class="auth-product-name">Okan para Academias</span>
+                <h1 id="auth-title">Gestão que conecta pessoas e resultados</h1>
+                <p>Entre para acompanhar sua academia, equipe e licenças.</p>
+            </header>
             
-            <form id="login-form">
+            <form id="login-form" aria-describedby="error-message">
                 <div class="input-group">
                     <label for="email">E-mail</label>
-                    <input type="email" id="email" required placeholder="admin@okan.com">
+                    <input type="email" id="email" required autocomplete="username" placeholder="admin@okan.com">
                 </div>
                 
                 <div class="input-group">
                     <label for="password">Senha</label>
-                    <input type="password" id="password" required placeholder="••••••••">
+                    <div class="password-field">
+                        <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••">
+                        <button type="button" id="toggle-password" class="password-toggle" aria-controls="password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+                    </div>
                 </div>
                 
                 <button type="submit" id="login-btn">Entrar no Painel</button>
@@ -29,22 +35,22 @@
             <div class="divider">ou</div>
             
             <button type="button" id="google-login-btn" class="btn-google">
-                <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google" style="width: 20px;">
-                Entrar com o Google
+                <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="" aria-hidden="true" style="width: 20px;">
+                <span id="google-login-label">Entrar com o Google</span>
             </button>
             
             <div class="forgot-password-container">
                 <a href="#" id="esqueci-senha-link">Esqueci minha senha</a>
             </div>
             
-            <p id="error-message" class="error"></p>
+            <p id="error-message" class="error auth-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
 
-            <div style="margin-top: 24px; font-size: 14px; color: var(--okan-color-text-sub);">
-                É dono de uma academia? <a href="register.html" style="color: var(--okan-color-primary); text-decoration: none; font-weight: bold;">Cadastre-se aqui</a>
+            <div class="auth-secondary-action">
+                É responsável por uma academia? <a href="register.html">Cadastre-se aqui</a>
             </div>
 
         </div>
     </div>
-    <script type="module" src="script/script.js?v=2.0"></script>
+    <script type="module" src="script/script.js?v=3.0"></script>
 </body>
 </html>
