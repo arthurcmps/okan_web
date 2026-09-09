@@ -1,6 +1,7 @@
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 // IMPORTAÇÃO CENTRALIZADA
 import { auth } from "./firebase.js"; 
+import { setupPasswordVisibility } from "./modules/password-visibility.js";
 
 const loginForm = document.getElementById('login-form');
 const emailInput = document.getElementById('email');
@@ -8,8 +9,14 @@ const passwordInput = document.getElementById('password');
 const errorMessage = document.getElementById('error-message');
 const loginBtn = document.getElementById('login-btn');
 const googleLoginBtn = document.getElementById('google-login-btn');
+const googleLoginLabel = document.getElementById('google-login-label');
 const linkEsqueciSenha = document.getElementById('esqueci-senha-link');
 const provider = new GoogleAuthProvider();
+
+setupPasswordVisibility({
+    inputId: 'password',
+    toggleId: 'toggle-password'
+});
 
 linkEsqueciSenha.addEventListener('click', (e) => {
     e.preventDefault(); 
@@ -45,7 +52,9 @@ linkEsqueciSenha.addEventListener('click', (e) => {
 });
 
 googleLoginBtn.addEventListener('click', async () => {
-    googleLoginBtn.textContent = "A carregar...";
+    googleLoginLabel.textContent = "A carregar...";
+    googleLoginBtn.disabled = true;
+    googleLoginBtn.setAttribute('aria-busy', 'true');
     errorMessage.textContent = "";
 
     try {
@@ -54,7 +63,9 @@ googleLoginBtn.addEventListener('click', async () => {
     } catch (error) {
         console.error("Erro no login com Google:", error);
         errorMessage.textContent = "Erro ao autenticar com o Google.";
-        googleLoginBtn.textContent = "Entrar com o Google";
+        googleLoginLabel.textContent = "Entrar com o Google";
+        googleLoginBtn.disabled = false;
+        googleLoginBtn.removeAttribute('aria-busy');
     }
 });
 
@@ -66,6 +77,7 @@ loginForm.addEventListener('submit', async (e) => {
     
     loginBtn.textContent = "A entrar...";
     loginBtn.disabled = true;
+    loginBtn.setAttribute('aria-busy', 'true');
     errorMessage.textContent = "";
     errorMessage.style.color = "var(--okan-color-error)";
 
@@ -84,5 +96,6 @@ loginForm.addEventListener('submit', async (e) => {
         
         loginBtn.textContent = "Entrar no Painel";
         loginBtn.disabled = false;
+        loginBtn.removeAttribute('aria-busy');
     } 
 });
