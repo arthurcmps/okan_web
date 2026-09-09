@@ -80,16 +80,39 @@ body {
     min-height: 100vh; 
 }
 
-.login-container { width: 100%; max-width: 400px; padding: 20px; }
-.login-box { background-color: var(--okan-color-surface); padding: 40px; border-radius: var(--okan-radius-lg); box-shadow: var(--okan-shadow-panel); text-align: center; }
-.login-box h1 { color: var(--okan-color-primary); margin-bottom: 8px; }
-.login-box p { color: var(--okan-color-text-sub); margin-bottom: 32px; font-size: 14px; }
+.login-container { width: 100%; max-width: 420px; padding: 20px; }
+.login-box { background-color: var(--okan-color-surface); padding: 40px; border-radius: var(--okan-radius-lg); box-shadow: var(--okan-shadow-panel); text-align: center; border: 1px solid var(--okan-color-border-subtle); }
+.auth-register-page { height: auto; min-height: 100vh; padding: 40px 0; }
+.auth-register-container { max-width: 640px; margin: 0 auto; }
+.auth-box-left { text-align: left; }
+.auth-brand { margin-bottom: var(--okan-space-8); text-align: center; }
+.auth-product-name { display: inline-block; margin-bottom: var(--okan-space-3); color: var(--okan-color-primary); font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.auth-brand h1 { max-width: 520px; margin: 0 auto var(--okan-space-3); color: var(--okan-color-text-main); font-size: clamp(26px, 5vw, 34px); line-height: 1.15; }
+.auth-brand p { max-width: 480px; margin: 0 auto; color: var(--okan-color-text-sub); font-size: 14px; line-height: 1.5; }
+.auth-section-title { margin-bottom: var(--okan-space-4); padding-bottom: var(--okan-space-2); border-bottom: 1px solid var(--okan-color-border); color: var(--okan-color-primary); font-size: 16px; }
+.auth-section-title-spaced { margin-top: var(--okan-space-8); }
+
+.password-field { position: relative; }
+.password-field input { padding-right: 88px; }
+.password-toggle { position: absolute; top: 50%; right: 8px; min-width: 68px; min-height: 36px; padding: 6px 8px; transform: translateY(-50%); border: 1px solid transparent; border-radius: var(--okan-radius-sm); background: transparent; color: var(--okan-color-primary); font-size: 12px; font-weight: 700; cursor: pointer; }
+.password-toggle:hover { background-color: var(--okan-color-primary-muted); }
+.password-toggle:focus-visible { border-color: var(--okan-color-primary); outline: 2px solid var(--okan-color-primary); outline-offset: 2px; }
 
 .error { color: var(--okan-color-error); margin-top: 16px; font-size: 14px; min-height: 20px; }
+.auth-feedback { display: flex; min-height: 44px; margin: var(--okan-space-4) 0 0; align-items: center; justify-content: center; line-height: 1.4; text-align: center; }
+.auth-secondary-action { margin-top: var(--okan-space-6); color: var(--okan-color-text-sub); font-size: 14px; text-align: center; }
+.auth-secondary-action a,
+.auth-legal-copy a { color: var(--okan-color-primary); font-weight: 700; text-decoration: none; }
+.auth-secondary-action a:hover,
+.auth-legal-copy a:hover { text-decoration: underline; }
+.login-box p.auth-legal-copy { margin: var(--okan-space-4) 0 0; color: var(--okan-color-text-muted); font-size: 12px; line-height: 1.5; text-align: center; }
 .divider { text-align: center; margin: 20px 0; color: var(--okan-color-text-muted); font-size: 14px; }
 
 .btn-google { background-color: #ffffff; color: #444444; padding: 14px; border-radius: var(--okan-radius-sm); font-weight: bold; cursor: pointer; border: none; display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; font-size: 16px; transition: var(--okan-motion-fast); }
 .btn-google:hover { background-color: #f1f1f1; }
+.btn-google:disabled,
+#login-btn:disabled,
+#register-btn:disabled { opacity: 0.62; cursor: wait; }
 
 #login-btn { width: 100%; padding: 14px; background-color: var(--okan-color-primary); color: var(--okan-color-primary-contrast); border: none; border-radius: var(--okan-radius-sm); font-size: 16px; font-weight: bold; cursor: pointer; transition: var(--okan-motion-fast); }
 #login-btn:hover { background-color: var(--okan-color-primary-hover); }
