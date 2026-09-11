@@ -146,6 +146,8 @@ body {
 .nav-links li { padding: 16px 24px; display: flex; align-items: center; gap: 12px; color: var(--okan-color-text-sub); cursor: pointer; transition: var(--okan-motion-fast); user-select: none; }
 .nav-links li:hover, .nav-links li.active { background-color: var(--okan-color-primary-muted); color: var(--okan-color-primary); border-right: 4px solid var(--okan-color-primary); }
 .nav-links .material-symbols-outlined { font-size: 22px; }
+.mobile-more-button,
+.mobile-more-menu { display: none; }
 .sidebar-footer { padding: 24px; border-top: 1px solid var(--okan-color-border); }
 
 .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; height: 100vh; }
@@ -253,15 +255,18 @@ select:focus-visible,
     .nav-links {
         display: flex;
         flex-direction: row;
+        flex: 1;
+        min-width: 0;
         padding: 0;
         margin: 0;
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        width: auto;
+        overflow: hidden;
     }
 
     .nav-links li {
-        padding: 12px 16px;
+        min-width: 0;
+        min-height: 64px;
+        padding: 10px 6px;
         flex-direction: column;
         gap: 4px;
         font-size: 11px;
@@ -272,30 +277,93 @@ select:focus-visible,
         flex: 1;
     }
 
+    #menu-feedbacks {
+        display: none;
+    }
+
     .nav-links li:hover, .nav-links li.active {
         border-right: none;
         border-bottom: 3px solid var(--okan-color-primary);
         background-color: transparent;
     }
 
-    /* Ajuste do botão de Sair no mobile */
-    .sidebar-footer {
-        padding: 0;
-        border-top: none;
+    .mobile-more-button {
         display: flex;
+        min-width: 68px;
+        min-height: 64px;
+        padding: 10px 8px;
+        flex-direction: column;
         align-items: center;
-    }
-    
-    #logout-btn {
-        padding: 12px 16px;
-        font-size: 0; /* Esconde a palavra "Sair" e deixa só o ícone */
-        border: none;
+        justify-content: center;
+        gap: 4px;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
         background: transparent;
+        color: var(--okan-color-text-sub);
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+    }
+
+    .mobile-more-button:hover,
+    .mobile-more-button.active,
+    .mobile-more-button[aria-expanded="true"] {
+        border-bottom-color: var(--okan-color-primary);
+        color: var(--okan-color-primary);
+    }
+
+    .mobile-more-button:focus-visible,
+    .mobile-more-action:focus-visible {
+        outline: 2px solid var(--okan-color-primary);
+        outline-offset: -4px;
+    }
+
+    .mobile-more-menu:not([hidden]) {
+        position: fixed;
+        right: 12px;
+        bottom: calc(72px + env(safe-area-inset-bottom));
+        display: flex;
+        width: min(280px, calc(100vw - 24px));
+        padding: 8px;
+        flex-direction: column;
+        gap: 4px;
+        z-index: 1001;
+        border: 1px solid var(--okan-color-border);
+        border-radius: var(--okan-radius-md);
+        background: var(--okan-color-surface);
+        box-shadow: var(--okan-shadow-panel);
+    }
+
+    .mobile-more-action {
+        display: flex;
+        min-height: 48px;
+        width: 100%;
+        padding: 12px 16px;
+        align-items: center;
+        gap: 12px;
+        border: 0;
+        border-radius: var(--okan-radius-sm);
+        background: transparent;
+        color: var(--okan-color-text-main);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .mobile-more-action:hover,
+    .mobile-more-action:active {
+        background: var(--okan-color-primary-muted);
+        color: var(--okan-color-primary);
+    }
+
+    .mobile-more-action-danger {
         color: var(--okan-color-error);
     }
-    #logout-btn .material-symbols-outlined {
-        font-size: 24px;
-        margin: 0;
+
+    /* O logout mobile usa o mesmo handler do botão canônico dentro de Mais. */
+    .sidebar-footer {
+        display: none;
     }
 
     /* 3. Área Principal e Topbar */
