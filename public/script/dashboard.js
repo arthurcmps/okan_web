@@ -102,6 +102,101 @@ const sectionMap = {
     'detalhes-academia': document.getElementById('section-detalhes-academia'),
     'planos': document.getElementById('section-planos')
 };
+const mobileMoreButton = document.getElementById('mobile-more-button');
+const mobileMoreMenu = document.getElementById('mobile-more-menu');
+
+function fecharMenuMobileMais({ restaurarFoco = false } = {}) {
+    if (!mobileMoreButton || !mobileMoreMenu) return;
+
+    mobileMoreMenu.hidden = true;
+    mobileMoreButton.setAttribute('aria-expanded', 'false');
+    mobileMoreButton.setAttribute('aria-label', 'Abrir mais opções do painel');
+
+    if (restaurarFoco) mobileMoreButton.focus();
+}
+
+function abrirMenuMobileMais() {
+    if (!mobileMoreButton || !mobileMoreMenu) return;
+
+    mobileMoreMenu.hidden = false;
+    mobileMoreButton.setAttribute('aria-expanded', 'true');
+    mobileMoreButton.setAttribute('aria-label', 'Fechar mais opções do painel');
+
+    const primeiraAcao = [...mobileMoreMenu.querySelectorAll('button')]
+        .find(button => !button.hidden);
+
+    primeiraAcao?.focus();
+}
+
+function sincronizarOpcoesMobileMais() {
+    if (!mobileMoreMenu) return;
+
+    mobileMoreMenu.querySelectorAll('[data-nav-proxy]').forEach(action => {
+        const targetId = action.dataset.navProxy;
+        const target = document.getElementById(targetId);
+
+        action.hidden = !target || target.style.display === 'none';
+    });
+}
+
+function atualizarEstadoMobileMais(link) {
+    if (!mobileMoreButton) return;
+
+    const isSecondaryDestination = link.id === 'menu-feedbacks';
+    mobileMoreButton.classList.toggle('active', isSecondaryDestination);
+
+    if (isSecondaryDestination) {
+        mobileMoreButton.setAttribute('aria-current', 'page');
+    } else {
+        mobileMoreButton.removeAttribute('aria-current');
+    }
+}
+
+mobileMoreButton?.addEventListener('click', () => {
+    if (mobileMoreButton.getAttribute('aria-expanded') === 'true') {
+        fecharMenuMobileMais({ restaurarFoco: true });
+        return;
+    }
+
+    sincronizarOpcoesMobileMais();
+    abrirMenuMobileMais();
+});
+
+mobileMoreMenu?.querySelectorAll('[data-nav-proxy]').forEach(action => {
+    action.addEventListener('click', () => {
+        const target = document.getElementById(action.dataset.navProxy);
+        target?.click();
+        fecharMenuMobileMais({ restaurarFoco: true });
+    });
+});
+
+document.getElementById('mobile-logout-button')?.addEventListener('click', () => {
+    fecharMenuMobileMais();
+    document.getElementById('logout-btn')?.click();
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || mobileMoreMenu?.hidden !== false) return;
+
+    event.preventDefault();
+    fecharMenuMobileMais({ restaurarFoco: true });
+});
+
+document.addEventListener('click', event => {
+    if (
+        mobileMoreMenu?.hidden !== false ||
+        mobileMoreMenu.contains(event.target) ||
+        mobileMoreButton?.contains(event.target)
+    ) {
+        return;
+    }
+
+    fecharMenuMobileMais();
+});
+
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) fecharMenuMobileMais();
+});
 
 onAuthStateChanged(auth, async (user) => {
     const loader = document.getElementById('loader-overlay');
@@ -145,6 +240,8 @@ onAuthStateChanged(auth, async (user) => {
                     await signOut(auth);
                     window.location.href = "index.html";
                 }
+
+                sincronizarOpcoesMobileMais();
             } else {
                 await signOut(auth);
                 window.location.href = "index.html";
@@ -186,6 +283,8 @@ function ativarItemMenu(link) {
     });
     link.classList.add('active');
     link.setAttribute('aria-current', 'page');
+    atualizarEstadoMobileMais(link);
+    fecharMenuMobileMais();
 
     Object.values(sectionMap).forEach(s => {
         if (s) s.style.display = 'none';
