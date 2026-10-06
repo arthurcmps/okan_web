@@ -50,3 +50,54 @@
 .dev-note {
   font-size: 0.875rem;
 }
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.auth-form label {
+  font-weight: 700;
+}
+
+.auth-form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #70757a;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #202124;
+}
+
+.auth-button {
+  min-height: 44px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #202124;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.auth-form input:focus-visible,
+.auth-button:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.auth-error {
+  margin-top: 20px;
+  padding: 12px;
+  border: 1px solid #b3261e;
+  border-radius: 8px;
+  color: #b3261e;
+  overflow-wrap: anywhere;
+}
