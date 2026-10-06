@@ -101,3 +101,14 @@
   color: #b3261e;
   overflow-wrap: anywhere;
 }
+
+.membership-panel {
+  margin: 24px 0;
+  padding-top: 24px;
+  border-top: 1px solid #dedfe3;
+}
+
+.membership-panel h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}

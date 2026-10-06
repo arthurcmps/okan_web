@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Auth, User } from 'firebase/auth'
+import AcademyMembershipPanel from '../academies/AcademyMembershipPanel'
 
 import {
   getAuthErrorMessage,
@@ -103,10 +104,10 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
               </div>
             </dl>
 
-            <p className="dev-note">
-              Na próxima etapa, consultaremos o vínculo desta conta
-              com a academia.
-            </p>
+            <AcademyMembershipPanel
+              key={user.uid}
+              userId={user.uid}
+            />
 
             <button
               className="auth-button"
