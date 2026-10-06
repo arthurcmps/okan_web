@@ -11,7 +11,9 @@ import {
 } from './academy-membership-list.ts'
 
 export type AcademyStudentMembership =
-  Omit<AcademyMembershipContext, 'canManage'>
+  Omit<AcademyMembershipContext, 'canManage'> & {
+    readonly studentName: string | null
+  }
 
 export interface AcademyStudentsPage {
   readonly students: readonly AcademyStudentMembership[]
@@ -29,6 +31,31 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     typeof value === 'object' &&
     !Array.isArray(value)
   )
+}
+
+function normalizeStudentName(value: unknown): string | null {
+  if (value === undefined || value === null) {
+    return null
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error('INVALID_STUDENT_NAME')
+  }
+
+  const name = value.trim()
+
+  if (
+    name.length === 0 ||
+    name.length > 200 ||
+    Array.from(name).some((character) => {
+      const code = character.charCodeAt(0)
+      return code <= 31 || code === 127
+    })
+  ) {
+    throw new Error('INVALID_STUDENT_NAME')
+  }
+
+  return name
 }
 
 export function normalizeAcademyStudentsPage(
@@ -117,6 +144,7 @@ export function normalizeAcademyStudentsPage(
       userId: membership.userId,
       roles: membership.roles,
       status: membership.status,
+      studentName: normalizeStudentName(item.studentName),
     }))
 
     previousId = membership.membershipId

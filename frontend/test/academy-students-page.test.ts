@@ -224,3 +224,83 @@ test('descarta campos extras e preserva a resposta original', () => {
   assert.equal(Object.isFrozen(student), true)
   assert.equal(Object.isFrozen(student.roles), true)
 })
+
+test('preserva nome sem alterar vínculo ou resposta original', () => {
+  const response = {
+    students: [{
+      ...createStudent(1),
+      studentName: '  João Silva  ',
+      email: 'student@example.com',
+      cpf: 'valor-ficticio',
+    }],
+    nextCursor: null,
+  }
+
+  const original = structuredClone(response)
+
+  const page = normalizeAcademyStudentsPage(
+    response,
+    { academyId: ACADEMY_ID },
+  )
+
+  const student = page.students[0]!
+
+  assert.equal(student.studentName, 'João Silva')
+  assert.equal(student.userId, 'student-1')
+  assert.equal(student.status, 'active')
+  assert.equal(Object.hasOwn(student, 'email'), false)
+  assert.equal(Object.hasOwn(student, 'cpf'), false)
+  assert.deepEqual(response, original)
+})
+
+test('nome ausente ou null permite apresentação alternativa', () => {
+  for (const student of [
+    createStudent(1),
+    { ...createStudent(1), studentName: null },
+  ]) {
+    const page = normalizeAcademyStudentsPage(
+      { students: [student], nextCursor: null },
+      { academyId: ACADEMY_ID },
+    )
+
+    assert.equal(page.students[0]?.studentName, null)
+  }
+})
+
+test('rejeita nomes inválidos recebidos na página', () => {
+  for (const studentName of [
+    '',
+    '   ',
+    123,
+    true,
+    {},
+    [],
+    'Ana\nSilva',
+    'Ana\tSilva',
+    `Ana${String.fromCharCode(0)}Silva`,
+    `Ana${String.fromCharCode(127)}Silva`,
+    'A'.repeat(201),
+  ]) {
+    assert.throws(() => normalizeAcademyStudentsPage(
+      {
+        students: [{ ...createStudent(1), studentName }],
+        nextCursor: null,
+      },
+      { academyId: ACADEMY_ID },
+    ), /INVALID_STUDENT_NAME/)
+  }
+})
+
+test('preserva caracteres de markup como texto', () => {
+  const studentName = '<strong>Ana Silva</strong>'
+
+  const page = normalizeAcademyStudentsPage(
+    {
+      students: [{ ...createStudent(1), studentName }],
+      nextCursor: null,
+    },
+    { academyId: ACADEMY_ID },
+  )
+
+  assert.equal(page.students[0]?.studentName, studentName)
+})

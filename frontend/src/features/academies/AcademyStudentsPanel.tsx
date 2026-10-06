@@ -300,7 +300,9 @@ function AcademyStudentsPanel({
                 className="membership-card"
                 key={student.membershipId}
               >
-                <h4>Aluno {index + 1}</h4>
+                <h4>
+                  {student.studentName ?? `Aluno ${index + 1}`}
+                </h4>
 
                 <dl className="dev-settings">
                   <div>
