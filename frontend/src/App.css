@@ -135,3 +135,32 @@
   background: #ffffff;
   color: #202124;
 }
+
+.membership-list {
+  display: grid;
+  gap: 16px;
+  margin: 24px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.membership-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #dedfe3;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.membership-card h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.membership-card .dev-settings {
+  margin: 16px 0;
+}
+
+.membership-card .auth-button {
+  width: 100%;
+}
