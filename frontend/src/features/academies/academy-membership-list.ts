@@ -8,8 +8,13 @@ import type {
 
 export const MEMBERSHIP_PAGE_SIZE = 20
 
+export interface AcademyMembershipListItem
+  extends AcademyMembershipContext {
+  readonly academyName: string | null
+}
+
 export interface AcademyMembershipPage {
-  readonly memberships: readonly AcademyMembershipContext[]
+  readonly memberships: readonly AcademyMembershipListItem[]
   readonly nextCursor: string | null
 }
 
@@ -24,6 +29,31 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     typeof value === 'object' &&
     !Array.isArray(value)
   )
+}
+
+function normalizeAcademyName(value: unknown): string | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error('INVALID_ACADEMY_DISPLAY_NAME')
+  }
+
+  const name = value.trim()
+
+  if (
+    name.length === 0 ||
+    name.length > 200 ||
+    Array.from(name).some((character) => {
+      const code = character.charCodeAt(0)
+      return code <= 31 || code === 127
+    })
+  ) {
+    throw new Error('INVALID_ACADEMY_DISPLAY_NAME')
+  }
+
+  return name
 }
 
 export function isMembershipCursor(value: unknown): value is string {
@@ -64,7 +94,7 @@ export function normalizeAcademyMembershipPage(
     throw new Error('INVALID_MEMBERSHIP_PAGE')
   }
 
-  const memberships: AcademyMembershipContext[] = []
+  const memberships: AcademyMembershipListItem[] = []
   const academyIds = new Set<string>()
   let previousId = cursor
 
@@ -94,7 +124,12 @@ export function normalizeAcademyMembershipPage(
     }
 
     academyIds.add(membership.academyId)
-    memberships.push(membership)
+
+    memberships.push(Object.freeze({
+      ...membership,
+      academyName: normalizeAcademyName(item.academyName),
+    }))
+
     previousId = membership.membershipId
   }
 

@@ -210,3 +210,86 @@ test('descarta campos adicionais e não modifica a resposta original', () => {
   assert.equal(Object.isFrozen(page.memberships[0]), true)
   assert.equal(Object.isFrozen(page.memberships[0]?.roles), true)
 })
+
+test('preserva nome da academia sem alterar permissões ou origem', () => {
+  const item = {
+    ...createMembership(1),
+    academyName: 'Academia Saúde',
+  }
+
+  const original = structuredClone(item)
+
+  const page = normalizeAcademyMembershipPage(
+    { memberships: [item], nextCursor: null },
+    { userId: USER_ID },
+  )
+
+  assert.equal(page.memberships[0]?.academyName, 'Academia Saúde')
+  assert.equal(page.memberships[0]?.canManage, true)
+  assert.deepEqual(item, original)
+  assert.equal(Object.isFrozen(page.memberships[0]), true)
+})
+
+test('nome ausente ou null permite apresentação alternativa', () => {
+  for (const item of [
+    createMembership(1),
+    { ...createMembership(1), academyName: null },
+  ]) {
+    const page = normalizeAcademyMembershipPage(
+      { memberships: [item], nextCursor: null },
+      { userId: USER_ID },
+    )
+
+    assert.equal(page.memberships[0]?.academyName, null)
+  }
+})
+
+test('rejeita nomes inválidos recebidos na página', () => {
+  for (const academyName of [
+    '',
+    '   ',
+    123,
+    true,
+    {},
+    ['Academia'],
+    'Academia\u0000Teste',
+    'Academia\nTeste',
+    'A'.repeat(201),
+  ]) {
+    assert.throws(() => normalizeAcademyMembershipPage(
+      {
+        memberships: [{
+          ...createMembership(1),
+          academyName,
+        }],
+        nextCursor: null,
+      },
+      { userId: USER_ID },
+    ), {
+      message: 'INVALID_ACADEMY_DISPLAY_NAME',
+    })
+  }
+})
+
+test('nome é preservado como texto e campos administrativos são descartados', () => {
+  const academyName = '<strong>Academia</strong>'
+
+  const page = normalizeAcademyMembershipPage(
+    {
+      memberships: [{
+        ...createMembership(1),
+        academyName,
+        ownerUid: 'gestor-interno',
+        emailGestor: 'gestor@example.com',
+      }],
+      nextCursor: null,
+    },
+    { userId: USER_ID },
+  )
+
+  const item = page.memberships[0]!
+
+  assert.equal(item.academyName, academyName)
+  assert.equal(Object.hasOwn(item, 'ownerUid'), false)
+  assert.equal(Object.hasOwn(item, 'emailGestor'), false)
+})

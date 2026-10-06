@@ -11,13 +11,17 @@ import type {
   AcademyMembershipContext,
 } from './academy-membership-context'
 
+import type {
+  AcademyMembershipListItem,
+} from './academy-membership-list'
+
 interface AcademyMembershipPanelProps {
   userId: string
   onSelect: (membership: AcademyMembershipContext) => void
 }
 
 interface ListState {
-  memberships: readonly AcademyMembershipContext[]
+  memberships: readonly AcademyMembershipListItem[]
   nextCursor: string | null
   loaded: boolean
   loading: boolean
@@ -58,7 +62,7 @@ function AcademyMembershipPanel({
 
   const fetchPage = useCallback(async (
     cursor: string | null,
-    previousMemberships: readonly AcademyMembershipContext[],
+    previousMemberships: readonly AcademyMembershipListItem[],
   ) => {
     if (requestRunning.current) {
       return
@@ -232,9 +236,12 @@ function AcademyMembershipPanel({
             ? current.memberships.filter(
                 (item) => item.membershipId !== selected.membershipId,
               )
-            : current.memberships.map(
+                        : current.memberships.map(
                 (item) => item.membershipId === selected.membershipId
-                  ? membership
+                  ? {
+                      ...membership,
+                      academyName: item.academyName,
+                    }
                   : item,
               ),
           notice: membership === null
@@ -315,7 +322,9 @@ function AcademyMembershipPanel({
               className="membership-card"
               key={membership.membershipId}
             >
-              <h3>Academia {index + 1}</h3>
+              <h3>
+                {membership.academyName ?? `Academia ${index + 1}`}
+              </h3>
 
               <dl className="dev-settings">
                 <div>
