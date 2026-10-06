@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Auth, User } from 'firebase/auth'
-import AcademyMembershipPanel from '../academies/AcademyMembershipPanel'
+import AcademySession from '../academies/AcademySession'
 
 import {
   getAuthErrorMessage,
@@ -104,7 +104,7 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
               </div>
             </dl>
 
-            <AcademyMembershipPanel
+            <AcademySession
               key={user.uid}
               userId={user.uid}
             />

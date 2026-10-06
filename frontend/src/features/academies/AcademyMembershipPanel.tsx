@@ -11,6 +11,7 @@ import type {
 
 interface AcademyMembershipPanelProps {
   userId: string
+  onSelect: (membership: AcademyMembershipContext) => void
 }
 
 type QueryState =
@@ -38,6 +39,7 @@ const statusLabels = {
 
 function AcademyMembershipPanel({
   userId,
+  onSelect,
 }: AcademyMembershipPanelProps) {
   const [academyId, setAcademyId] = useState('')
   const [state, setState] = useState<QueryState>({ status: 'idle' })
@@ -51,16 +53,16 @@ function AcademyMembershipPanel({
     }
   }, [])
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
+  async function runQuery(
+    requestedAcademyId: string,
+    selectAfterQuery: boolean,
+  ) {
     if (requestRunning.current) {
       return
     }
 
     requestRunning.current = true
     const version = ++requestVersion.current
-    const requestedAcademyId = academyId.trim()
 
     setState({ status: 'loading' })
 
@@ -70,13 +72,24 @@ function AcademyMembershipPanel({
         userId,
       )
 
-      if (version === requestVersion.current) {
-        setState({
-          status: 'success',
-          academyId: requestedAcademyId,
-          membership,
-        })
+      if (version !== requestVersion.current) {
+        return
       }
+
+      if (
+        selectAfterQuery &&
+        membership &&
+        membership.status === 'active'
+      ) {
+        onSelect(membership)
+        return
+      }
+
+      setState({
+        status: 'success',
+        academyId: requestedAcademyId,
+        membership,
+      })
     } catch (error) {
       if (version === requestVersion.current) {
         setState({
@@ -89,11 +102,17 @@ function AcademyMembershipPanel({
     }
   }
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await runQuery(academyId.trim(), false)
+  }
+
   const busy = state.status === 'loading'
+  const result = state.status === 'success' ? state : null
 
   return (
     <section className="membership-panel" aria-labelledby="membership-title">
-      <h2 id="membership-title">Vínculo com a academia</h2>
+      <h2 id="membership-title">Selecionar academia</h2>
 
       <form
         className="auth-form"
@@ -129,9 +148,7 @@ function AcademyMembershipPanel({
       </form>
 
       <div aria-live="polite">
-        {state.status === 'loading' && (
-          <p>Consultando o backend DEV...</p>
-        )}
+        {busy && <p>Consultando o backend DEV...</p>}
 
         {state.status === 'error' && (
           <p className="auth-error" role="alert">
@@ -139,39 +156,53 @@ function AcademyMembershipPanel({
           </p>
         )}
 
-        {state.status === 'success' && (
+        {result && (
           <>
             <p>
-              Academia consultada: <strong>{state.academyId}</strong>
+              Academia consultada: <strong>{result.academyId}</strong>
             </p>
 
-            {state.membership === null ? (
+            {result.membership === null ? (
               <p>Esta conta não possui vínculo com a academia informada.</p>
             ) : (
-              <dl className="dev-settings">
-                <div>
-                  <dt>Estado</dt>
-                  <dd>{statusLabels[state.membership.status]}</dd>
-                </div>
+              <>
+                <dl className="dev-settings">
+                  <div>
+                    <dt>Estado</dt>
+                    <dd>{statusLabels[result.membership.status]}</dd>
+                  </div>
 
-                <div>
-                  <dt>Papéis</dt>
-                  <dd>
-                    {state.membership.roles
-                      .map((role) => roleLabels[role])
-                      .join(', ')}
-                  </dd>
-                </div>
+                  <div>
+                    <dt>Papéis</dt>
+                    <dd>
+                      {result.membership.roles
+                        .map((role) => roleLabels[role])
+                        .join(', ')}
+                    </dd>
+                  </div>
 
-                <div>
-                  <dt>Permissão administrativa</dt>
-                  <dd>
-                    {state.membership.canManage
-                      ? 'Permitida'
-                      : 'Não permitida'}
-                  </dd>
-                </div>
-              </dl>
+                  <div>
+                    <dt>Permissão administrativa</dt>
+                    <dd>
+                      {result.membership.canManage
+                        ? 'Permitida'
+                        : 'Não permitida'}
+                    </dd>
+                  </div>
+                </dl>
+
+                {result.membership.status === 'active' ? (
+                  <button
+                    className="auth-button"
+                    type="button"
+                    onClick={() => runQuery(result.academyId, true)}
+                  >
+                    Usar esta academia
+                  </button>
+                ) : (
+                  <p>Somente vínculos ativos podem ser selecionados.</p>
+                )}
+              </>
             )}
           </>
         )}
