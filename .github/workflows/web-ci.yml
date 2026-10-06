@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - feature/gestao-academias
 
 permissions:
   contents: read
@@ -35,3 +36,31 @@ jobs:
 
       - name: Ensure source tree remains clean
         run: git diff --exit-code
+
+  frontend:
+    name: Verify React frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check TypeScript, tests, lint and build
+        run: npm run check
+
+      - name: Ensure source tree remains clean
+        run: git diff --exit-code
+        
