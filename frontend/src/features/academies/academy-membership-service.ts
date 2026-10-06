@@ -1,5 +1,4 @@
 import { FirebaseError } from 'firebase/app'
-import { httpsCallable } from 'firebase/functions'
 
 import { getFirebaseClient } from '../../core/firebase/firebase-client'
 import { createAcademyMembershipQuery } from './academy-membership-query'
@@ -12,21 +11,20 @@ export async function getAcademyMembershipContext(
   academyId: string,
   expectedUserId: string,
 ): Promise<AcademyMembershipContext | null> {
-  const { auth, functions } = getFirebaseClient()
+  const { auth } = getFirebaseClient()
 
   const queryMembership = createAcademyMembershipQuery({
     getCurrentSession: () => auth.currentUser,
 
     requestMembership: async (request) => {
-      const callable = httpsCallable<MembershipRequest, unknown>(
-        functions,
-        'getAcademyMembershipContext',
-        { timeout: 30000 },
+      const { callDevFunction } = await import(
+        '../../core/firebase/functions-client'
       )
 
-      const response = await callable(request)
-
-      return response.data
+      return callDevFunction<MembershipRequest, unknown>(
+        'getAcademyMembershipContext',
+        request,
+      )
     },
   })
 
@@ -69,5 +67,5 @@ export function getMembershipErrorMessage(error: unknown): string {
     }
   }
 
-  return 'Não foi possível validar o vínculo retornado pelo backend.'
+  return 'Não foi possível concluir ou validar a consulta de vínculo.'
 }

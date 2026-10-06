@@ -5,18 +5,6 @@ import { connectAuthEmulator, getAuth } from 'firebase/auth'
 import type { Auth } from 'firebase/auth'
 
 import {
-  connectFirestoreEmulator,
-  getFirestore,
-} from 'firebase/firestore'
-import type { Firestore } from 'firebase/firestore'
-
-import {
-  connectFunctionsEmulator,
-  getFunctions,
-} from 'firebase/functions'
-import type { Functions } from 'firebase/functions'
-
-import {
   assertDevEnvironment,
   devEnvironment,
 } from '../config/dev-environment'
@@ -24,8 +12,6 @@ import {
 export interface FirebaseClient {
   app: FirebaseApp
   auth: Auth
-  firestore: Firestore
-  functions: Functions
 }
 
 let client: FirebaseClient | undefined =
@@ -57,30 +43,9 @@ export function getFirebaseClient(): FirebaseClient {
     `http://${devEnvironment.host}:${devEnvironment.ports.auth}`,
   )
 
-  const firestore = getFirestore(app)
-
-  connectFirestoreEmulator(
-    firestore,
-    devEnvironment.host,
-    devEnvironment.ports.firestore,
-  )
-
-  const functions = getFunctions(
-    app,
-    devEnvironment.functionsRegion,
-  )
-
-  connectFunctionsEmulator(
-    functions,
-    devEnvironment.host,
-    devEnvironment.ports.functions,
-  )
-
   client = {
     app,
     auth,
-    firestore,
-    functions,
   }
 
   return client
