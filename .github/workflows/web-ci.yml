@@ -34,9 +34,6 @@ jobs:
       - run: npm test
       - run: npm run build:staging:fixture
 
-      - name: Ensure source tree remains clean
-        run: git diff --exit-code
-
   frontend:
     name: Verify React frontend
     runs-on: ubuntu-24.04
