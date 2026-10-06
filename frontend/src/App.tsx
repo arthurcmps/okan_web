@@ -1,121 +1,92 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { getFirebaseClient } from './core/firebase/firebase-client'
+import { devEnvironment } from './core/config/dev-environment'
 import './App.css'
 
+type InitializationResult =
+  | { success: true; projectId: string }
+  | { success: false; message: string }
+
+function initializeDevFirebase(): InitializationResult {
+  try {
+    const { app } = getFirebaseClient()
+
+    return {
+      success: true,
+      projectId: app.options.projectId ?? devEnvironment.projectId,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível configurar o ambiente.',
+    }
+  }
+}
+
+const initialization = initializeDevFirebase()
+
 function App() {
-  const [count, setCount] = useState(0)
+  if (!initialization.success) {
+    return (
+      <main className="dev-page">
+        <section className="dev-panel" role="alert">
+          <h1>Ambiente indisponível</h1>
+          <p>{initialization.message}</p>
+        </section>
+      </main>
+    )
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+    <main className="dev-page">
+      <section className="dev-panel">
+        <p className="dev-label">OKAN · Desenvolvimento</p>
+
+        <h1>Nova base web</h1>
+
+        <p>Firebase configurado para os emuladores locais.</p>
+
+        <dl className="dev-settings">
+          <div>
+            <dt>Projeto</dt>
+            <dd>{initialization.projectId}</dd>
+          </div>
+
+          <div>
+            <dt>Authentication</dt>
+            <dd>
+              {devEnvironment.host}:{devEnvironment.ports.auth}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Firestore</dt>
+            <dd>
+              {devEnvironment.host}:{devEnvironment.ports.firestore}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Functions</dt>
+            <dd>
+              {devEnvironment.host}:{devEnvironment.ports.functions}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Região das funções</dt>
+            <dd>{devEnvironment.functionsRegion}</dd>
+          </div>
+        </dl>
+
+        <p className="dev-note">
+          A disponibilidade dos serviços será verificada na próxima
+          etapa, com o login e a consulta de vínculos.
+        </p>
       </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </main>
   )
 }
 
