@@ -164,3 +164,19 @@
 .membership-card .auth-button {
   width: 100%;
 }
+
+.academy-students-panel {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #dedfe3;
+}
+
+.academy-students-panel > h3 {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+}
+
+.academy-students-panel .membership-card h4 {
+  margin: 0;
+  font-size: 1.125rem;
+}

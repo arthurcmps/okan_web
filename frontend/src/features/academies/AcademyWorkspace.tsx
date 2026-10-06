@@ -8,6 +8,8 @@ import type {
   AcademyMembershipContext,
 } from './academy-membership-context'
 
+import AcademyStudentsPanel from './AcademyStudentsPanel'
+
 interface AcademyWorkspaceProps {
   membership: AcademyMembershipContext
   onRevalidated: (membership: AcademyMembershipContext) => void
@@ -142,6 +144,16 @@ function AcademyWorkspace({
           {errorMessage}
         </p>
       )}
+
+            {!busy &&
+        membership.status === 'active' &&
+        membership.canManage &&
+        membership.roles.includes('gym_admin') && (
+          <AcademyStudentsPanel
+            key={membership.membershipId}
+            membership={membership}
+          />
+        )}
     </section>
   )
 }
