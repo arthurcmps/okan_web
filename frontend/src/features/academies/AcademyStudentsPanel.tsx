@@ -11,6 +11,12 @@ import type {
   AcademyStudentMembership,
 } from './academy-students-page'
 
+import AcademyStudentStatusControls from './AcademyStudentStatusControls'
+
+import type {
+  StudentStatusOutcome,
+} from './AcademyStudentStatusControls'
+
 interface AcademyStudentsPanelProps {
   membership: AcademyMembershipContext
 }
@@ -76,6 +82,26 @@ function getStudentsErrorMessage(error: unknown): string {
   return 'Não foi possível concluir ou validar a consulta de alunos.'
 }
 
+function isAccessFailure(error: unknown): boolean {
+  if (error instanceof FirebaseError) {
+    return (
+      error.code === 'functions/permission-denied' ||
+      error.code === 'functions/unauthenticated'
+    )
+  }
+
+  if (error instanceof Error) {
+    return [
+      'AUTHENTICATION_REQUIRED',
+      'AUTHENTICATION_CHANGED',
+      'ACADEMY_CONTEXT_CHANGED',
+      'ACADEMY_MANAGEMENT_FORBIDDEN',
+    ].includes(error.message)
+  }
+
+  return false
+}
+
 function AcademyStudentsPanel({
   membership,
 }: AcademyStudentsPanelProps) {
@@ -87,6 +113,14 @@ function AcademyStudentsPanel({
     loaded: false,
     error: null,
   })
+
+  const [mutationContext, setMutationContext] =
+    useState<AcademyMembershipContext | null>(null)
+
+  const [notice, setNotice] = useState<{
+    context: AcademyMembershipContext
+    text: string
+  } | null>(null)
 
   const currentAcademy = useRef<AcademyMembershipContext | null>(null)
   const requestVersion = useRef(0)
@@ -217,7 +251,75 @@ function AcademyStudentsPanel({
   }, [membership])
 
   const visibleState = state.context === membership ? state : null
-  const busy = visibleState === null || visibleState.loading
+  const changingStatus = mutationContext === membership
+  const loadingStudents = visibleState === null || visibleState.loading
+  const busy = loadingStudents || changingStatus
+
+    function handleStatusStart(): number | null {
+    if (
+      requestRunning.current ||
+      !visibleState ||
+      currentAcademy.current !== membership
+    ) {
+      return null
+    }
+
+    requestRunning.current = true
+    const token = ++requestVersion.current
+
+    setMutationContext(membership)
+    setNotice(null)
+
+    return token
+  }
+
+  function handleStatusFinish(
+    token: number,
+    outcome: StudentStatusOutcome,
+  ) {
+    if (
+      token !== requestVersion.current ||
+      currentAcademy.current !== membership
+    ) {
+      return
+    }
+
+    requestRunning.current = false
+    setMutationContext(null)
+
+    if (!outcome.success) {
+      if (isAccessFailure(outcome.error)) {
+        setState({
+          context: membership,
+          students: [],
+          nextCursor: null,
+          loading: false,
+          loaded: false,
+          error: getStudentsErrorMessage(outcome.error),
+        })
+      }
+
+      return
+    }
+
+    setNotice({
+      context: membership,
+      text: outcome.result.alreadyProcessed
+        ? 'Pedido já processado. Consultando o estado atual dos alunos.'
+        : 'Alteração confirmada. Atualizando a lista de alunos.',
+    })
+
+    setState({
+      context: membership,
+      students: [],
+      nextCursor: null,
+      loading: true,
+      loaded: false,
+      error: null,
+    })
+
+    void fetchPage(null, [])
+  }
 
   function handleRefresh() {
     if (requestRunning.current || !visibleState) {
@@ -274,15 +376,23 @@ function AcademyStudentsPanel({
         Atualizar alunos
       </button>
 
-      {busy && (
+      {loadingStudents && (
         <p role="status">Carregando alunos...</p>
-      )}
+          )}
 
-      {visibleState?.error && (
-        <p className="auth-error" role="alert">
-          {visibleState.error}
-        </p>
-      )}
+          {changingStatus && (
+            <p role="status">Processando alteração do vínculo...</p>
+          )}
+
+          {notice?.context === membership && (
+            <p role="status">{notice.text}</p>
+          )}
+
+          {visibleState?.error && (
+            <p className="auth-error" role="alert">
+              {visibleState.error}
+            </p>
+          )}
 
       {visibleState?.loaded && visibleState.students.length === 0 && (
         <p>Nenhum vínculo de aluno foi encontrado nesta academia.</p>
@@ -324,6 +434,14 @@ function AcademyStudentsPanel({
                     </dd>
                   </div>
                 </dl>
+                  <AcademyStudentStatusControls
+                  student={student}
+                  operatorUid={membership.userId}
+                  disabled={busy}
+                  getCurrentAcademy={() => currentAcademy.current}
+                  onStart={handleStatusStart}
+                  onFinish={handleStatusFinish}
+                />
               </li>
             ))}
           </ul>

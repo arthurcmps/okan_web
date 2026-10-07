@@ -180,3 +180,11 @@
   margin: 0;
   font-size: 1.125rem;
 }
+
+.student-status-controls {
+  margin-top: 16px;
+}
+
+.student-status-controls .auth-error {
+  margin-top: 12px;
+}
