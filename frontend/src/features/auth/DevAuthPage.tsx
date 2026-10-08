@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import type { Auth, User } from 'firebase/auth'
 
 import AcademySession from '../academies/AcademySession'
+import AcademyRegistrationPage from '../academies/AcademyRegistrationPage'
 
 import {
   getAuthErrorMessage,
@@ -24,6 +25,7 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showRegistration, setShowRegistration] = useState(false)
   const [operation, setOperation] = useState<AuthOperation | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -44,6 +46,18 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
       },
     )
   }, [auth])
+
+  function openRegistration() {
+    if (operationRunning.current) {
+      return
+    }
+
+    setErrorMessage(null)
+    setMessage(null)
+    setPassword('')
+    setShowPassword(false)
+    setShowRegistration(true)
+  }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -124,6 +138,21 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
     }
   }
 
+  if (sessionReady && showRegistration) {
+    return (
+      <AcademyRegistrationPage
+        initialEmail={user?.email ?? email}
+        onBack={() => setShowRegistration(false)}
+        onComplete={() => {
+          setUser(auth.currentUser)
+          setShowRegistration(false)
+          setMessage('Academia cadastrada e acesso do gestor preparado.')
+          setErrorMessage(null)
+        }}
+      />
+    )
+  }
+
   return (
     <main className="dev-page">
       <section className="dev-panel">
@@ -151,6 +180,15 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
               key={user.uid}
               userId={user.uid}
             />
+
+            <button
+              className="auth-button auth-button-secondary"
+              type="button"
+              disabled={busy}
+              onClick={openRegistration}
+            >
+              Retomar cadastro de academia
+            </button>
 
             <button
               className="auth-button"
@@ -233,6 +271,15 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
                 {operation === 'reset'
                   ? 'Solicitando redefinição...'
                   : 'Esqueci minha senha'}
+              </button>
+
+              <button
+                className="auth-button auth-button-secondary"
+                type="button"
+                disabled={busy}
+                onClick={openRegistration}
+              >
+                Cadastrar academia
               </button>
             </form>
           </>
