@@ -11,6 +11,7 @@ import type {
 import AcademyStudentsPanel from './AcademyStudentsPanel'
 import AcademyLinkRequestPanel from './AcademyLinkRequestPanel'
 import AcademySentLinkRequestsPanel from './AcademySentLinkRequestsPanel'
+import AcademyProfilePanel from './AcademyProfilePanel'
 
 interface AcademyWorkspaceProps {
   membership: AcademyMembershipContext
@@ -147,11 +148,16 @@ function AcademyWorkspace({
         </p>
       )}
 
-                  {!busy &&
+              {!busy &&
         membership.status === 'active' &&
         membership.canManage &&
         membership.roles.includes('gym_admin') && (
           <>
+            <AcademyProfilePanel
+              key={`academy-profile-${membership.membershipId}`}
+              membership={membership}
+            />
+
             <AcademyLinkRequestPanel
               key={`link-request-${membership.membershipId}`}
               membership={membership}
