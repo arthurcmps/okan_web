@@ -12,5 +12,5 @@
     "erasableSyntaxOnly": true,
     "skipLibCheck": true
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts", "../src/features/academies/academy-registration-input.ts"]
 }
