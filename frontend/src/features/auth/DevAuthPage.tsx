@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Auth, User } from 'firebase/auth'
+
 import AcademySession from '../academies/AcademySession'
 
 import {
@@ -8,21 +9,27 @@ import {
   login,
   logout,
   observeSession,
+  resetPassword,
 } from './auth-service'
 
 interface DevAuthPageProps {
   auth: Auth
 }
 
+type AuthOperation = 'login' | 'logout' | 'reset'
+
 function DevAuthPage({ auth }: DevAuthPageProps) {
   const [user, setUser] = useState<User | null>(null)
   const [sessionReady, setSessionReady] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [operation, setOperation] = useState<AuthOperation | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
 
   const operationRunning = useRef(false)
+  const busy = operation !== null
 
   useEffect(() => {
     return observeSession(
@@ -46,8 +53,9 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
     }
 
     operationRunning.current = true
-    setBusy(true)
+    setOperation('login')
     setErrorMessage(null)
+    setMessage(null)
 
     try {
       await login(auth, email, password)
@@ -55,7 +63,8 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
       setErrorMessage(getAuthErrorMessage(error))
     } finally {
       setPassword('')
-      setBusy(false)
+      setShowPassword(false)
+      setOperation(null)
       operationRunning.current = false
     }
   }
@@ -66,17 +75,51 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
     }
 
     operationRunning.current = true
-    setBusy(true)
+    setOperation('logout')
     setErrorMessage(null)
+    setMessage(null)
 
     try {
       await logout(auth)
       setEmail('')
       setPassword('')
+      setShowPassword(false)
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error))
     } finally {
-      setBusy(false)
+      setOperation(null)
+      operationRunning.current = false
+    }
+  }
+
+  async function handleResetPassword() {
+    if (operationRunning.current) {
+      return
+    }
+
+    if (email.trim() === '') {
+      setMessage(null)
+      setErrorMessage(
+        'Informe seu e-mail no campo acima para recuperar a senha.',
+      )
+      return
+    }
+
+    operationRunning.current = true
+    setOperation('reset')
+    setErrorMessage(null)
+    setMessage(null)
+
+    try {
+      await resetPassword(auth, email)
+
+      setMessage(
+        'Se houver uma conta para este e-mail, você receberá as instruções de redefinição.',
+      )
+    } catch (error) {
+      setErrorMessage(getAuthErrorMessage(error))
+    } finally {
+      setOperation(null)
       operationRunning.current = false
     }
   }
@@ -115,7 +158,7 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
               disabled={busy}
               onClick={handleLogout}
             >
-              {busy ? 'Saindo...' : 'Sair da conta'}
+              {operation === 'logout' ? 'Saindo...' : 'Sair da conta'}
             </button>
           </>
         ) : (
@@ -130,6 +173,7 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
               aria-busy={busy}
             >
               <label htmlFor="login-email">Email</label>
+
               <input
                 id="login-email"
                 name="email"
@@ -140,14 +184,19 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
                 required
                 disabled={busy}
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value)
+                  setMessage(null)
+                  setErrorMessage(null)
+                }}
               />
 
               <label htmlFor="login-password">Senha</label>
+
               <input
                 id="login-password"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 required
                 disabled={busy}
@@ -156,15 +205,40 @@ function DevAuthPage({ auth }: DevAuthPageProps) {
               />
 
               <button
+                className="auth-button auth-button-secondary"
+                type="button"
+                disabled={busy}
+                aria-controls="login-password"
+                aria-pressed={showPassword}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                onClick={() => setShowPassword((previous) => !previous)}
+              >
+                {showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              </button>
+
+              <button
                 className="auth-button"
                 type="submit"
                 disabled={busy}
               >
-                {busy ? 'Entrando...' : 'Entrar'}
+                {operation === 'login' ? 'Entrando...' : 'Entrar'}
+              </button>
+
+              <button
+                className="auth-button auth-button-secondary"
+                type="button"
+                disabled={busy}
+                onClick={handleResetPassword}
+              >
+                {operation === 'reset'
+                  ? 'Solicitando redefinição...'
+                  : 'Esqueci minha senha'}
               </button>
             </form>
           </>
         )}
+
+        {message && <p role="status">{message}</p>}
 
         {errorMessage && (
           <p className="auth-error" role="alert">
