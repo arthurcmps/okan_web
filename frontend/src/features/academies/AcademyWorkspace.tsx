@@ -10,6 +10,8 @@ import type {
 
 import AcademyStudentsPanel from './AcademyStudentsPanel'
 
+import AcademyLinkRequestPanel from './AcademyLinkRequestPanel'
+
 interface AcademyWorkspaceProps {
   membership: AcademyMembershipContext
   onRevalidated: (membership: AcademyMembershipContext) => void
@@ -145,14 +147,21 @@ function AcademyWorkspace({
         </p>
       )}
 
-            {!busy &&
+                  {!busy &&
         membership.status === 'active' &&
         membership.canManage &&
         membership.roles.includes('gym_admin') && (
-          <AcademyStudentsPanel
-            key={membership.membershipId}
-            membership={membership}
-          />
+          <>
+            <AcademyLinkRequestPanel
+              key={`link-request-${membership.membershipId}`}
+              membership={membership}
+            />
+
+            <AcademyStudentsPanel
+              key={membership.membershipId}
+              membership={membership}
+            />
+          </>
         )}
     </section>
   )
