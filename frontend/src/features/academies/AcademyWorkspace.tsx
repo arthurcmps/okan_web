@@ -9,8 +9,8 @@ import type {
 } from './academy-membership-context'
 
 import AcademyStudentsPanel from './AcademyStudentsPanel'
-
 import AcademyLinkRequestPanel from './AcademyLinkRequestPanel'
+import AcademySentLinkRequestsPanel from './AcademySentLinkRequestsPanel'
 
 interface AcademyWorkspaceProps {
   membership: AcademyMembershipContext
@@ -154,6 +154,11 @@ function AcademyWorkspace({
           <>
             <AcademyLinkRequestPanel
               key={`link-request-${membership.membershipId}`}
+              membership={membership}
+            />
+
+            <AcademySentLinkRequestsPanel
+              key={`sent-link-requests-${membership.membershipId}`}
               membership={membership}
             />
 
