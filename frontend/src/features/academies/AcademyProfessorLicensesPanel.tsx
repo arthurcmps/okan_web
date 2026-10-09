@@ -10,8 +10,11 @@ import type {
 import {
   createAcademyProfessorLicenseQueryService,
 } from './academy-professor-license-query-service'
+import {
+  createAcademyProfessorLicenseCommandService,
+} from './academy-professor-license-command-service'
 
-interface AcademyProfessorLicensesPanelProps {
+interface Props {
   membership: AcademyMembershipContext
 }
 
@@ -34,32 +37,41 @@ function getErrorMessage(error: unknown): string {
 
     case 'functions/permission-denied':
     case 'ACADEMY_MANAGEMENT_FORBIDDEN':
-      return 'Seu vínculo atual não permite consultar esta academia.'
+      return 'Seu vínculo atual não permite administrar esta academia.'
 
     case 'ACADEMY_CONTEXT_CHANGED':
       return 'A academia selecionada mudou. Consulte novamente.'
+
+    case 'functions/resource-exhausted':
+      return 'Todas as licenças contratadas estão em uso.'
+
+    case 'INVALID_PROFESSOR_EMAIL':
+      return 'Informe um e-mail válido para o professor.'
 
     case 'functions/not-found':
       return 'Academia não encontrada.'
 
     case 'functions/failed-precondition':
+    case 'INVALID_LICENSE_MUTATION_RESPONSE':
     case 'INVALID_PROFESSOR_LICENSE_RESPONSE':
     case 'PROFESSOR_LICENSE_CONTEXT_MISMATCH':
-      return 'A consulta está indisponível ou os dados precisam de revisão.'
+      return 'A operação está indisponível ou os dados precisam de revisão.'
 
     default:
-      return 'Não foi possível consultar as licenças. Tente novamente.'
+      return 'Não foi possível concluir a operação.'
   }
 }
 
-function AcademyProfessorLicensesPanel({
-  membership,
-}: AcademyProfessorLicensesPanelProps) {
+function AcademyProfessorLicensesPanel({ membership }: Props) {
   const [context, setContext] = useState(membership)
   const [page, setPage] = useState<AcademyProfessorLicensePage | null>(null)
   const [licenses, setLicenses] =
     useState<readonly AcademyProfessorLicense[]>([])
-  const [busy, setBusy] = useState(false)
+  const [email, setEmail] = useState('')
+  const [busy, setBusy] = useState<'list' | 'grant' | 'revoke' | null>(null)
+  const [confirmationId, setConfirmationId] = useState<string | null>(null)
+  const [needsRefresh, setNeedsRefresh] = useState(true)
+  const [message, setMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const currentAcademy = useRef<AcademyMembershipContext | null>(null)
@@ -70,7 +82,11 @@ function AcademyProfessorLicensesPanel({
     setContext(membership)
     setPage(null)
     setLicenses([])
-    setBusy(false)
+    setEmail('')
+    setBusy(null)
+    setConfirmationId(null)
+    setNeedsRefresh(true)
+    setMessage(null)
     setErrorMessage(null)
   }
 
@@ -87,7 +103,7 @@ function AcademyProfessorLicensesPanel({
   async function loadLicenses(loadMore: boolean) {
     if (
       requestRunning.current ||
-      (loadMore && (!page || page.nextCursor === null))
+      (loadMore && (!page || page.nextCursor === null || needsRefresh))
     ) {
       return
     }
@@ -96,129 +112,312 @@ function AcademyProfessorLicensesPanel({
     const version = ++requestVersion.current
     const cursor = loadMore ? page?.nextCursor ?? null : null
 
-    setBusy(true)
+    setBusy('list')
+    setConfirmationId(null)
+    setMessage(null)
     setErrorMessage(null)
 
     if (!loadMore) {
       setPage(null)
       setLicenses([])
+      setNeedsRefresh(true)
     }
 
     try {
-      const listLicenses = createAcademyProfessorLicenseQueryService(
+      const list = createAcademyProfessorLicenseQueryService(
         () => currentAcademy.current,
       )
 
-      const result = await listLicenses(
+      const result = await list(
         membership.academyId,
         membership.userId,
         cursor,
       )
 
-      if (version !== requestVersion.current) {
-        return
-      }
+      if (version !== requestVersion.current) return
 
       setLicenses((previous) => (
-        loadMore
-          ? [...previous, ...result.licenses]
-          : result.licenses
+        loadMore ? [...previous, ...result.licenses] : result.licenses
       ))
       setPage(result)
+      setNeedsRefresh(false)
     } catch (error) {
       if (version === requestVersion.current) {
         setPage(null)
         setLicenses([])
+        setNeedsRefresh(true)
         setErrorMessage(getErrorMessage(error))
       }
     } finally {
       if (version === requestVersion.current) {
         requestRunning.current = false
-        setBusy(false)
+        setBusy(null)
       }
     }
   }
 
+  async function mutate(
+    operation: 'grant' | 'revoke',
+    license?: AcademyProfessorLicense,
+  ) {
+    if (
+      requestRunning.current ||
+      needsRefresh ||
+      !page ||
+      (
+        operation === 'revoke' &&
+        (!license || confirmationId !== license.licenseId)
+      )
+    ) {
+      return
+    }
+
+    requestRunning.current = true
+    const version = ++requestVersion.current
+
+    setBusy(operation)
+    setConfirmationId(null)
+    setNeedsRefresh(true)
+    setMessage(null)
+    setErrorMessage(null)
+
+    let confirmed = false
+
+    try {
+      const commands = createAcademyProfessorLicenseCommandService(
+        () => currentAcademy.current,
+      )
+
+      if (operation === 'grant') {
+        const result = await commands.grantLicense(
+          membership.academyId,
+          membership.userId,
+          email,
+        )
+
+        if (version !== requestVersion.current) return
+
+        setEmail('')
+        setMessage(result.alreadyProcessed
+          ? 'Este e-mail já possui uma licença nesta academia.'
+          : 'Licença cadastrada para o professor.')
+      } else if (license) {
+        const result = await commands.revokeLicense(
+          membership.academyId,
+          membership.userId,
+          license.licenseId,
+        )
+
+        if (version !== requestVersion.current) return
+
+        setMessage(result.alreadyProcessed
+          ? 'A licença já havia sido removida.'
+          : 'Licença removida.')
+      }
+
+      confirmed = true
+    } catch (error) {
+      if (version === requestVersion.current) {
+        setErrorMessage(
+          `${getErrorMessage(error)} Consulte a lista atualizada antes de tentar novamente.`,
+        )
+      }
+    }
+
+    if (version !== requestVersion.current) return
+
+    try {
+      const list = createAcademyProfessorLicenseQueryService(
+        () => currentAcademy.current,
+      )
+
+      const result = await list(
+        membership.academyId,
+        membership.userId,
+      )
+
+      if (version !== requestVersion.current) return
+
+      setPage(result)
+      setLicenses(result.licenses)
+      setNeedsRefresh(false)
+    } catch {
+      if (version === requestVersion.current) {
+        setPage(null)
+        setLicenses([])
+        setErrorMessage(confirmed
+          ? 'A alteração foi confirmada, mas a lista não pôde ser atualizada. Clique em Atualizar licenças.'
+          : 'Não foi possível confirmar a alteração nem atualizar a lista. Clique em Atualizar licenças antes de continuar.')
+      }
+    } finally {
+      if (version === requestVersion.current) {
+        requestRunning.current = false
+        setBusy(null)
+      }
+    }
+  }
+
+  const actionsDisabled = busy !== null || needsRefresh || !page
+
   return (
-    <section aria-labelledby="professor-licenses-title" aria-busy={busy}>
+    <section
+      aria-labelledby="professor-licenses-title"
+      aria-busy={busy !== null}
+    >
       <h3 id="professor-licenses-title">Professores e licenças</h3>
 
       <p>
-        Consulte as licenças cadastradas para os professores desta academia.
+        Cadastre uma licença pelo e-mail do professor e acompanhe
+        a capacidade disponível da academia.
       </p>
 
       <button
         className="auth-button"
         type="button"
-        disabled={busy}
+        disabled={busy !== null}
         onClick={() => loadLicenses(false)}
       >
-        {busy ? 'Consultando...' : 'Atualizar licenças'}
+        {busy === 'list' ? 'Consultando...' : 'Atualizar licenças'}
       </button>
 
-      {!page && !busy && !errorMessage && (
-        <p>Clique em Atualizar licenças para consultar a lista.</p>
+      {!page && busy === null && !errorMessage && (
+        <p>Atualize as licenças para consultar a lista e liberar as ações.</p>
       )}
 
-      {busy && <p role="status">Consultando as licenças...</p>}
-
-      {errorMessage && (
-        <p className="auth-error" role="alert">
-          {errorMessage}
+      {busy !== null && (
+        <p role="status">
+          {busy === 'list'
+            ? 'Consultando as licenças...'
+            : 'Processando a alteração e atualizando a lista...'}
         </p>
       )}
 
+      {message && <p role="status">{message}</p>}
+
+      {errorMessage && (
+        <p className="auth-error" role="alert">{errorMessage}</p>
+      )}
+
       {page && (
+        <dl className="dev-settings">
+          <div>
+            <dt>Licenças contratadas</dt>
+            <dd>{page.licensesTotal}</dd>
+          </div>
+          <div>
+            <dt>Licenças em uso</dt>
+            <dd>{page.licensesUsed}</dd>
+          </div>
+          <div>
+            <dt>Licenças disponíveis</dt>
+            <dd>{page.licensesAvailable}</dd>
+          </div>
+        </dl>
+      )}
+
+      <form onSubmit={(event) => {
+        event.preventDefault()
+        void mutate('grant')
+      }}>
+        <label htmlFor="professor-license-email">
+          E-mail do professor
+        </label>
+
+        <input
+          id="professor-license-email"
+          type="email"
+          autoComplete="off"
+          maxLength={254}
+          required
+          value={email}
+          disabled={actionsDisabled}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+
+        <button
+          className="auth-button"
+          type="submit"
+          disabled={actionsDisabled || email.trim() === ''}
+        >
+          Conceder licença
+        </button>
+      </form>
+
+      {page?.licensesAvailable === 0 && (
+        <p>
+          Não há capacidade disponível para cadastrar uma nova licença.
+          Um e-mail já cadastrado não consome outra licença.
+        </p>
+      )}
+
+      {page && licenses.length === 0 && (
+        <p>Nenhum professor possui licença cadastrada nesta academia.</p>
+      )}
+
+      {licenses.length > 0 && (
         <>
-          <dl className="dev-settings">
-            <div>
-              <dt>Licenças contratadas</dt>
-              <dd>{page.licensesTotal}</dd>
-            </div>
+          <p>{licenses.length} licença(s) carregada(s).</p>
 
-            <div>
-              <dt>Licenças em uso</dt>
-              <dd>{page.licensesUsed}</dd>
-            </div>
+          <ul>
+            {licenses.map((license) => (
+              <li key={license.licenseId}>
+                <article>
+                  <h4>{license.email}</h4>
+                  <p>Estado: <strong>{license.status}</strong></p>
 
-            <div>
-              <dt>Licenças disponíveis</dt>
-              <dd>{page.licensesAvailable}</dd>
-            </div>
-          </dl>
-
-          {licenses.length === 0 ? (
-            <p>Nenhum professor possui licença cadastrada nesta academia.</p>
-          ) : (
-            <>
-              <p>{licenses.length} licença(s) carregada(s).</p>
-
-              <ul>
-                {licenses.map((license) => (
-                  <li key={license.licenseId}>
-                    <article>
-                      <h4>{license.email}</h4>
+                  {confirmationId === license.licenseId ? (
+                    <>
                       <p>
-                        Estado: <strong>{license.status}</strong>
+                        Confirma a remoção da licença de {license.email}?
+                        A conta do professor será preservada.
                       </p>
-                    </article>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
 
-          {page.nextCursor !== null && (
-            <button
-              className="auth-button auth-button-secondary"
-              type="button"
-              disabled={busy}
-              onClick={() => loadLicenses(true)}
-            >
-              Carregar mais
-            </button>
-          )}
+                      <div className="academy-actions">
+                        <button
+                          className="auth-button"
+                          type="button"
+                          disabled={actionsDisabled}
+                          onClick={() => mutate('revoke', license)}
+                        >
+                          Confirmar remoção
+                        </button>
+
+                        <button
+                          className="auth-button auth-button-secondary"
+                          type="button"
+                          disabled={busy !== null}
+                          onClick={() => setConfirmationId(null)}
+                        >
+                          Voltar
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      className="auth-button auth-button-secondary"
+                      type="button"
+                      disabled={actionsDisabled}
+                      onClick={() => setConfirmationId(license.licenseId)}
+                    >
+                      Remover licença
+                    </button>
+                  )}
+                </article>
+              </li>
+            ))}
+          </ul>
         </>
+      )}
+
+      {page?.nextCursor && !needsRefresh && (
+        <button
+          className="auth-button auth-button-secondary"
+          type="button"
+          disabled={busy !== null}
+          onClick={() => loadLicenses(true)}
+        >
+          Carregar mais
+        </button>
       )}
     </section>
   )
