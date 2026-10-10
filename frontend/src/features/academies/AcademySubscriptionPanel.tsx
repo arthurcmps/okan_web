@@ -63,10 +63,16 @@ function errorMessage(error: unknown): string {
 
     case 'functions/permission-denied':
     case 'ACADEMY_MANAGEMENT_FORBIDDEN':
-      return 'Seu vínculo não permite esta operação. A cotação exige o proprietário da academia.'
+      return 'Não foi possível concluir a operação. Tente novamente.'
 
     case 'ACADEMY_CONTEXT_CHANGED':
       return 'A academia selecionada mudou. Consulte novamente.'
+
+    case 'functions/aborted':
+      return 'Os dados da assinatura mudaram. Atualize e tente novamente.'
+
+    case 'functions/unavailable':
+      return 'Não foi possível confirmar a operação no servidor.'
 
     case 'functions/not-found':
       return 'Academia não encontrada.'
@@ -96,8 +102,11 @@ function AcademySubscriptionPanel({ membership }: Props) {
   const [quote, setQuote] = useState<AcademySubscriptionQuote | null>(null)
   const [quantity, setQuantity] = useState('3')
   const [billingDay, setBillingDay] = useState('10')
-  const [busy, setBusy] = useState<'get' | 'quote' | null>(null)
+  const [busy, setBusy] = useState<'get' | 'quote' | 'cancel' | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const [confirmCancellation, setConfirmCancellation] = useState(false)
+  const [cancellationNotice, setCancellationNotice] = useState<string | null>(null)
 
   const currentAcademy = useRef<AcademyMembershipContext | null>(null)
   const version = useRef(0)
@@ -111,6 +120,8 @@ function AcademySubscriptionPanel({ membership }: Props) {
     setBillingDay('10')
     setBusy(null)
     setError(null)
+    setConfirmCancellation(false)
+    setCancellationNotice(null)
   }
 
   useEffect(() => {
@@ -132,6 +143,8 @@ function AcademySubscriptionPanel({ membership }: Props) {
     setBusy(operation)
     setError(null)
     setQuote(null)
+    setConfirmCancellation(false)
+    setCancellationNotice(null)
 
     if (operation === 'get') setPanel(null)
 
@@ -178,12 +191,74 @@ function AcademySubscriptionPanel({ membership }: Props) {
     }
   }
 
+    async function cancelSubscription() {
+    if (running.current || !confirmCancellation) return
+
+    running.current = true
+    const requestVersion = ++version.current
+    let cancellationConfirmed = false
+
+    setBusy('cancel')
+    setError(null)
+    setCancellationNotice(null)
+    setQuote(null)
+
+    try {
+      const service = createAcademySubscriptionService(
+        () => currentAcademy.current,
+      )
+
+      const result = await service.cancel(
+        membership.academyId,
+        membership.userId,
+      )
+
+      if (requestVersion !== version.current) return
+
+      cancellationConfirmed = true
+      setConfirmCancellation(false)
+      setPanel(null)
+
+      setCancellationNotice(result.alreadyCanceled
+        ? 'A assinatura já estava cancelada. O servidor confirmou o estado.'
+        : 'Cancelamento confirmado pelo servidor.')
+
+      const updatedPanel = await service.getPanel(
+        membership.academyId,
+        membership.userId,
+      )
+
+      if (requestVersion !== version.current) return
+
+      setPanel(updatedPanel)
+    } catch (caught) {
+      if (requestVersion === version.current) {
+        setConfirmCancellation(false)
+
+        setError(cancellationConfirmed
+          ? 'Não foi possível atualizar o painel. Use Atualizar assinatura.'
+          : `${errorMessage(caught)} Atualize a assinatura para conferir o estado.`)
+      }
+    } finally {
+      if (requestVersion === version.current) {
+        running.current = false
+        setBusy(null)
+      }
+    }
+  }
+
   const subscription = panel?.subscription ?? null
   const hasSubscription = subscription !== null && (
     subscription.status === 'creating' ||
     subscription.status === 'active' ||
     subscription.status === 'paused'
   )
+
+  const canCancel = subscription !== null && (
+    subscription.status === 'active' ||
+    subscription.status === 'paused'
+  )
+
   const canQuote = panel !== null &&
     !panel.legacyBilling.requiresMigration &&
     !hasSubscription
@@ -213,12 +288,18 @@ function AcademySubscriptionPanel({ membership }: Props) {
         <p>Atualize a assinatura para consultar os dados.</p>
       )}
 
-      {busy && (
+            {busy && (
         <p role="status">
           {busy === 'get'
             ? 'Consultando a assinatura...'
-            : 'Consultando os valores no servidor...'}
+            : busy === 'quote'
+              ? 'Consultando os valores no servidor...'
+              : 'Cancelando e confirmando a assinatura...'}
         </p>
+      )}
+
+      {cancellationNotice && (
+        <p role="status">{cancellationNotice}</p>
       )}
 
       {error && <p className="auth-error" role="alert">{error}</p>}
@@ -297,6 +378,48 @@ function AcademySubscriptionPanel({ membership }: Props) {
               Esta academia já possui uma assinatura em andamento.
               Uma nova contratação está bloqueada.
             </p>
+          )}
+
+                    {canCancel && (
+            <div>
+              {!confirmCancellation ? (
+                <button
+                  className="auth-button"
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => setConfirmCancellation(true)}
+                >
+                  Cancelar assinatura
+                </button>
+              ) : (
+                <div>
+                  <p>
+                    Confirmar o cancelamento da assinatura de{' '}
+                    <strong>{panel.academyName ?? 'esta academia'}</strong>?
+                    O acesso seguirá o estado confirmado pelo servidor.
+                  </p>
+
+                  <button
+                    className="auth-button"
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => void cancelSubscription()}
+                  >
+                    {busy === 'cancel'
+                      ? 'Cancelando...'
+                      : 'Confirmar cancelamento'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => setConfirmCancellation(false)}
+                  >
+                    Voltar
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           {canQuote && (
