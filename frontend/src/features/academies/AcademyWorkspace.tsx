@@ -13,6 +13,7 @@ import AcademyLinkRequestPanel from './AcademyLinkRequestPanel'
 import AcademySentLinkRequestsPanel from './AcademySentLinkRequestsPanel'
 import AcademyProfilePanel from './AcademyProfilePanel'
 import AcademyProfessorLicensesPanel from './AcademyProfessorLicensesPanel'
+import AcademySubscriptionPanel from './AcademySubscriptionPanel'
 
 interface AcademyWorkspaceProps {
   membership: AcademyMembershipContext
@@ -156,6 +157,11 @@ function AcademyWorkspace({
           <>
             <AcademyProfilePanel
               key={`academy-profile-${membership.membershipId}`}
+              membership={membership}
+            />
+
+            <AcademySubscriptionPanel
+              key={`academy-subscription-${membership.membershipId}`}
               membership={membership}
             />
 
