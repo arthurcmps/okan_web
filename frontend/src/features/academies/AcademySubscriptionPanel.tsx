@@ -1,12 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { assertDevEnvironment } from '../../core/config/dev-environment'
+
+import {
+  clearDevSubscriptionAttempt,
+  loadDevSubscriptionAttempt,
+  prepareDevSubscriptionAttempt,
+} from './academy-subscription-dev-attempt'
+
+import type {
+  DevSubscriptionAttempt,
+} from './academy-subscription-dev-attempt'
+
 import type { AcademyMembershipContext } from './academy-membership-context'
+
 import type {
   AcademySubscriptionPanelResult,
   AcademySubscriptionQuote,
   BillingStatus,
   SubscriptionStatus,
 } from './academy-subscription-result'
+
 import { createAcademySubscriptionService } from './academy-subscription-service'
 
 interface Props {
@@ -63,7 +77,7 @@ function errorMessage(error: unknown): string {
 
     case 'functions/permission-denied':
     case 'ACADEMY_MANAGEMENT_FORBIDDEN':
-      return 'Não foi possível concluir a operação. Tente novamente.'
+      return 'Seu vínculo não permite esta operação. É necessário ser o proprietário da academia.'
 
     case 'ACADEMY_CONTEXT_CHANGED':
       return 'A academia selecionada mudou. Consulte novamente.'
@@ -90,23 +104,45 @@ function errorMessage(error: unknown): string {
     case 'ACADEMY_SUBSCRIPTION_CONTEXT_MISMATCH':
       return 'Não foi possível validar os dados recebidos. Consulte novamente.'
 
+    case 'ACADEMY_SUBSCRIPTION_ATTEMPT_PENDING':
+      return 'Existe uma tentativa com outra cotação. Atualize a assinatura para recuperá-la.'
+
+    case 'INVALID_PENDING_SUBSCRIPTION':
+      return 'Os dados da tentativa local precisam de revisão antes de continuar.'
+
+    case 'functions/already-exists':
+      return 'A academia já possui uma assinatura. Atualize para consultar o estado.'
+
+    case 'ACADEMY_SUBSCRIPTION_IN_PROGRESS':
+      return 'Aguarde a operação em andamento.'
+
     default:
-      return 'Não foi possível concluir a consulta. Tente novamente.'
+      return 'Não foi possível concluir a operação. Tente novamente.'
   }
 }
 
 function AcademySubscriptionPanel({ membership }: Props) {
   const [context, setContext] = useState(membership)
+
   const [panel, setPanel] =
     useState<AcademySubscriptionPanelResult | null>(null)
+
   const [quote, setQuote] = useState<AcademySubscriptionQuote | null>(null)
   const [quantity, setQuantity] = useState('3')
   const [billingDay, setBillingDay] = useState('10')
-  const [busy, setBusy] = useState<'get' | 'quote' | 'cancel' | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
+  const [busy, setBusy] =
+    useState<'get' | 'quote' | 'cancel' | 'start' | null>(null)
+
+  const [error, setError] = useState<string | null>(null)
   const [confirmCancellation, setConfirmCancellation] = useState(false)
   const [cancellationNotice, setCancellationNotice] = useState<string | null>(null)
+
+  const [pendingAttempt, setPendingAttempt] =
+    useState<DevSubscriptionAttempt | null>(null)
+
+  const [confirmSimulation, setConfirmSimulation] = useState(false)
+  const [startNotice, setStartNotice] = useState<string | null>(null)
 
   const currentAcademy = useRef<AcademyMembershipContext | null>(null)
   const version = useRef(0)
@@ -122,6 +158,9 @@ function AcademySubscriptionPanel({ membership }: Props) {
     setError(null)
     setConfirmCancellation(false)
     setCancellationNotice(null)
+    setPendingAttempt(null)
+    setConfirmSimulation(false)
+    setStartNotice(null)
   }
 
   useEffect(() => {
@@ -145,6 +184,8 @@ function AcademySubscriptionPanel({ membership }: Props) {
     setQuote(null)
     setConfirmCancellation(false)
     setCancellationNotice(null)
+    setConfirmSimulation(false)
+    setStartNotice(null)
 
     if (operation === 'get') setPanel(null)
 
@@ -167,6 +208,23 @@ function AcademySubscriptionPanel({ membership }: Props) {
           result.licensesUsed,
           1,
         )))
+
+        const pending = loadDevSubscriptionAttempt(
+          window.sessionStorage,
+          membership.academyId,
+          membership.userId,
+        )
+
+        setPendingAttempt(pending)
+
+        if (
+          pending &&
+          (!result.subscription || result.subscription.status === 'creating')
+        ) {
+          setQuote(pending.quote)
+          setQuantity(String(pending.quote.licenseQuantity))
+          setBillingDay(String(pending.quote.billingDay))
+        }
       } else {
         const result = await service.quote(
           membership.academyId,
@@ -191,13 +249,15 @@ function AcademySubscriptionPanel({ membership }: Props) {
     }
   }
 
-    async function cancelSubscription() {
+  async function cancelSubscription() {
     if (running.current || !confirmCancellation) return
 
     running.current = true
     const requestVersion = ++version.current
     let cancellationConfirmed = false
 
+    setConfirmSimulation(false)
+    setStartNotice(null)
     setBusy('cancel')
     setError(null)
     setCancellationNotice(null)
@@ -218,6 +278,23 @@ function AcademySubscriptionPanel({ membership }: Props) {
       cancellationConfirmed = true
       setConfirmCancellation(false)
       setPanel(null)
+
+      const pending = loadDevSubscriptionAttempt(
+        window.sessionStorage,
+        membership.academyId,
+        membership.userId,
+      )
+
+      if (pending) {
+        clearDevSubscriptionAttempt(
+          window.sessionStorage,
+          membership.academyId,
+          membership.userId,
+          pending.attemptId,
+        )
+      }
+
+      setPendingAttempt(null)
 
       setCancellationNotice(result.alreadyCanceled
         ? 'A assinatura já estava cancelada. O servidor confirmou o estado.'
@@ -247,7 +324,102 @@ function AcademySubscriptionPanel({ membership }: Props) {
     }
   }
 
+  async function simulateSubscription() {
+    if (
+      running.current ||
+      !quote ||
+      !canSimulate ||
+      !confirmSimulation
+    ) {
+      return
+    }
+
+    running.current = true
+    const requestVersion = ++version.current
+    let confirmed = false
+
+    setBusy('start')
+    setError(null)
+    setCancellationNotice(null)
+    setStartNotice(null)
+    setConfirmCancellation(false)
+
+    try {
+      assertDevEnvironment(
+        import.meta.env.DEV && import.meta.env.MODE === 'development',
+        window.location.hostname,
+      )
+
+      const pending = prepareDevSubscriptionAttempt(
+        window.sessionStorage,
+        membership.academyId,
+        membership.userId,
+        quote,
+        () => crypto.randomUUID(),
+      )
+
+      setPendingAttempt(pending)
+
+      const service = createAcademySubscriptionService(
+        () => currentAcademy.current,
+      )
+
+      const result = await service.start(
+        membership.academyId,
+        membership.userId,
+        {
+          quote: pending.quote,
+          attemptId: pending.attemptId,
+          cardTokenId: 'OKAN_DEV_CARD_TOKEN',
+        },
+      )
+
+      if (requestVersion !== version.current) return
+
+      confirmed = true
+      setPanel(null)
+      setQuote(null)
+      setConfirmSimulation(false)
+
+      setStartNotice(result.alreadyCompleted || result.recovered
+        ? 'A tentativa anterior foi recuperada no emulador. Nenhuma cobrança real foi criada.'
+        : 'Assinatura simulada criada no emulador. Nenhuma cobrança real foi criada.')
+
+      clearDevSubscriptionAttempt(
+        window.sessionStorage,
+        membership.academyId,
+        membership.userId,
+        pending.attemptId,
+      )
+
+      setPendingAttempt(null)
+
+      const updatedPanel = await service.getPanel(
+        membership.academyId,
+        membership.userId,
+      )
+
+      if (requestVersion !== version.current) return
+
+      setPanel(updatedPanel)
+    } catch (caught) {
+      if (requestVersion === version.current) {
+        setConfirmSimulation(false)
+
+        setError(confirmed
+          ? 'A simulação foi confirmada, mas o painel não foi atualizado. Use Atualizar assinatura.'
+          : `${errorMessage(caught)} Atualize a assinatura para conferir e recuperar a tentativa.`)
+      }
+    } finally {
+      if (requestVersion === version.current) {
+        running.current = false
+        setBusy(null)
+      }
+    }
+  }
+
   const subscription = panel?.subscription ?? null
+
   const hasSubscription = subscription !== null && (
     subscription.status === 'creating' ||
     subscription.status === 'active' ||
@@ -262,6 +434,15 @@ function AcademySubscriptionPanel({ membership }: Props) {
   const canQuote = panel !== null &&
     !panel.legacyBilling.requiresMigration &&
     !hasSubscription
+
+  const canSimulate =
+    import.meta.env.DEV &&
+    panel !== null &&
+    quote !== null &&
+    (
+      canQuote ||
+      (pendingAttempt !== null && subscription?.status === 'creating')
+    )
 
   return (
     <section
@@ -288,19 +469,23 @@ function AcademySubscriptionPanel({ membership }: Props) {
         <p>Atualize a assinatura para consultar os dados.</p>
       )}
 
-            {busy && (
+      {busy && (
         <p role="status">
           {busy === 'get'
             ? 'Consultando a assinatura...'
             : busy === 'quote'
               ? 'Consultando os valores no servidor...'
-              : 'Cancelando e confirmando a assinatura...'}
+              : busy === 'cancel'
+                ? 'Cancelando e confirmando a assinatura...'
+                : 'Criando a assinatura simulada...'}
         </p>
       )}
 
       {cancellationNotice && (
         <p role="status">{cancellationNotice}</p>
       )}
+
+      {startNotice && <p role="status">{startNotice}</p>}
 
       {error && <p className="auth-error" role="alert">{error}</p>}
 
@@ -380,7 +565,7 @@ function AcademySubscriptionPanel({ membership }: Props) {
             </p>
           )}
 
-                    {canCancel && (
+          {canCancel && (
             <div>
               {!confirmCancellation ? (
                 <button
@@ -432,6 +617,7 @@ function AcademySubscriptionPanel({ membership }: Props) {
               <label htmlFor="subscription-license-quantity">
                 Quantidade total de licenças
               </label>
+
               <input
                 id="subscription-license-quantity"
                 type="number"
@@ -439,7 +625,7 @@ function AcademySubscriptionPanel({ membership }: Props) {
                 step={1}
                 required
                 value={quantity}
-                disabled={busy !== null}
+                disabled={busy !== null || pendingAttempt !== null}
                 onChange={(event) => {
                   setQuantity(event.target.value)
                   setQuote(null)
@@ -450,10 +636,11 @@ function AcademySubscriptionPanel({ membership }: Props) {
               <label htmlFor="subscription-billing-day">
                 Dia de cobrança
               </label>
+
               <select
                 id="subscription-billing-day"
                 value={billingDay}
-                disabled={busy !== null}
+                disabled={busy !== null || pendingAttempt !== null}
                 onChange={(event) => {
                   setBillingDay(event.target.value)
                   setQuote(null)
@@ -469,7 +656,7 @@ function AcademySubscriptionPanel({ membership }: Props) {
               <button
                 className="auth-button"
                 type="submit"
-                disabled={busy !== null}
+                disabled={busy !== null || pendingAttempt !== null}
               >
                 Consultar valor mensal
               </button>
@@ -480,17 +667,73 @@ function AcademySubscriptionPanel({ membership }: Props) {
             <div role="status">
               <h4>Cotação recebida</h4>
               <p>{quote.licenseQuantity} licença(s) para professores.</p>
+
               <p>
                 Valor por licença: {formatMoney(quote.unitMonthlyAmount)}.
               </p>
+
               <p>
                 Total mensal: <strong>{formatMoney(quote.monthlyAmount)}</strong>.
               </p>
+
               <p>Dia de cobrança: {quote.billingDay}.</p>
+
               <p>
                 Esta consulta não criou uma assinatura nem uma cobrança.
-                A contratação será disponibilizada na próxima etapa.
+                No DEV, você pode testar a contratação com dados simulados.
               </p>
+
+              {canSimulate && (
+                <div>
+                  <p>
+                    Modo DEV: não será solicitado cartão nem criada cobrança real.
+                  </p>
+
+                  {pendingAttempt && (
+                    <p>A tentativa anterior foi preservada para recuperação.</p>
+                  )}
+
+                  {!confirmSimulation ? (
+                    <button
+                      className="auth-button"
+                      type="button"
+                      disabled={busy !== null}
+                      onClick={() => setConfirmSimulation(true)}
+                    >
+                      {pendingAttempt
+                        ? 'Recuperar tentativa'
+                        : 'Simular contratação'}
+                    </button>
+                  ) : (
+                    <div>
+                      <p>
+                        Confirmar a simulação de {quote.licenseQuantity} licença(s),
+                        com valor mensal de {formatMoney(quote.monthlyAmount)} e
+                        cobrança no dia {quote.billingDay}?
+                      </p>
+
+                      <button
+                        className="auth-button"
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() => void simulateSubscription()}
+                      >
+                        {busy === 'start'
+                          ? 'Simulando...'
+                          : 'Confirmar simulação'}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() => setConfirmSimulation(false)}
+                      >
+                        Voltar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </>
