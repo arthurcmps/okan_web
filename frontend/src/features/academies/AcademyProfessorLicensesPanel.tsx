@@ -52,6 +52,10 @@ function getErrorMessage(error: unknown): string {
       return 'Academia não encontrada.'
 
     case 'functions/failed-precondition':
+            return error instanceof Error
+        ? error.message
+        : 'A operação está indisponível ou os dados precisam de revisão.'
+
     case 'INVALID_LICENSE_MUTATION_RESPONSE':
     case 'INVALID_PROFESSOR_LICENSE_RESPONSE':
     case 'PROFESSOR_LICENSE_CONTEXT_MISMATCH':
